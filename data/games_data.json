@@ -1,0 +1,204 @@
+{
+  "fantasy_content": {
+    "xml:lang": "en-US",
+    "yahoo:uri": "/fantasy/v2/users;use_login=1/games",
+    "users": {
+      "0": {
+        "user": [
+          {
+            "guid": "KXA3W3CETCFEXMK2XNDMEN26RA"
+          },
+          {
+            "games": {
+              "0": {
+                "game": [
+                  {
+                    "game_key": "364",
+                    "game_id": "364",
+                    "name": "Basketball",
+                    "code": "nba",
+                    "type": "full",
+                    "url": "https://basketball.fantasysports.yahoo.com/2016/nba",
+                    "season": "2016",
+                    "is_registration_over": 1,
+                    "is_game_over": 1,
+                    "is_offseason": 1
+                  }
+                ]
+              },
+              "1": {
+                "game": {
+                  "game_key": "369",
+                  "game_id": "369",
+                  "name": "Tourney Pick'em",
+                  "code": "yahoops",
+                  "type": "pickem-team-list",
+                  "url": "https://tournament.fantasysports.yahoo.com/mens-basketball-bracket",
+                  "season": "2017",
+                  "is_registration_over": 1,
+                  "is_game_over": 1,
+                  "is_offseason": 1,
+                  "editorial_season": "2016",
+                  "picks_status": "postedit",
+                  "contest_group_id": "1",
+                  "scenario_generator": 1
+                }
+              },
+              "2": {
+                "game": [
+                  {
+                    "game_key": "375",
+                    "game_id": "375",
+                    "name": "Basketball",
+                    "code": "nba",
+                    "type": "full",
+                    "url": "https://basketball.fantasysports.yahoo.com/2017/nba",
+                    "season": "2017",
+                    "is_registration_over": 1,
+                    "is_game_over": 1,
+                    "is_offseason": 1
+                  }
+                ]
+              },
+              "3": {
+                "game": [
+                  {
+                    "game_key": "385",
+                    "game_id": "385",
+                    "name": "Basketball",
+                    "code": "nba",
+                    "type": "full",
+                    "url": "https://basketball.fantasysports.yahoo.com/2018/nba",
+                    "season": "2018",
+                    "is_registration_over": 1,
+                    "is_game_over": 1,
+                    "is_offseason": 1
+                  }
+                ]
+              },
+              "4": {
+                "game": [
+                  {
+                    "game_key": "395",
+                    "game_id": "395",
+                    "name": "Basketball",
+                    "code": "nba",
+                    "type": "full",
+                    "url": "https://basketball.fantasysports.yahoo.com/2019/nba",
+                    "season": "2019",
+                    "is_registration_over": 1,
+                    "is_game_over": 1,
+                    "is_offseason": 1
+                  }
+                ]
+              },
+              "5": {
+                "game": [
+                  {
+                    "game_key": "402",
+                    "game_id": "402",
+                    "name": "Basketball",
+                    "code": "nba",
+                    "type": "full",
+                    "url": "https://basketball.fantasysports.yahoo.com/2020/nba",
+                    "season": "2020",
+                    "is_registration_over": 1,
+                    "is_game_over": 1,
+                    "is_offseason": 1
+                  }
+                ]
+              },
+              "6": {
+                "game": [
+                  {
+                    "game_key": "410",
+                    "game_id": "410",
+                    "name": "Basketball",
+                    "code": "nba",
+                    "type": "full",
+                    "url": "https://basketball.fantasysports.yahoo.com/2021/nba",
+                    "season": "2021",
+                    "is_registration_over": 1,
+                    "is_game_over": 1,
+                    "is_offseason": 1
+                  }
+                ]
+              },
+              "7": {
+                "game": [
+                  {
+                    "game_key": "418",
+                    "game_id": "418",
+                    "name": "Basketball",
+                    "code": "nba",
+                    "type": "full",
+                    "url": "https://basketball.fantasysports.yahoo.com/2022/nba",
+                    "season": "2022",
+                    "is_registration_over": 1,
+                    "is_game_over": 1,
+                    "is_offseason": 1
+                  }
+                ]
+              },
+              "8": {
+                "game": [
+                  {
+                    "game_key": "428",
+                    "game_id": "428",
+                    "name": "Basketball",
+                    "code": "nba",
+                    "type": "full",
+                    "url": "https://basketball.fantasysports.yahoo.com/2023/nba",
+                    "season": "2023",
+                    "is_registration_over": 1,
+                    "is_game_over": 1,
+                    "is_offseason": 1
+                  }
+                ]
+              },
+              "9": {
+                "game": [
+                  {
+                    "game_key": "454",
+                    "game_id": "454",
+                    "name": "Basketball",
+                    "code": "nba",
+                    "type": "full",
+                    "url": "https://basketball.fantasysports.yahoo.com/nba",
+                    "season": "2024",
+                    "is_registration_over": 1,
+                    "is_game_over": 1,
+                    "is_offseason": 0
+                  }
+                ]
+              },
+              "10": {
+                "game": {
+                  "game_key": "459",
+                  "game_id": "459",
+                  "name": "Men's Bracket Mayhem",
+                  "code": "yahoops",
+                  "type": "pickem-team-list",
+                  "url": "https://tournament.fantasysports.yahoo.com/mens-basketball-bracket",
+                  "season": "2025",
+                  "is_registration_over": 1,
+                  "is_game_over": 1,
+                  "is_offseason": 0,
+                  "editorial_season": "2024",
+                  "picks_status": "postedit",
+                  "contest_group_id": "1",
+                  "scenario_generator": 1
+                }
+              },
+              "count": 11
+            }
+          }
+        ]
+      },
+      "count": 1
+    },
+    "time": "1414.9718284607ms",
+    "copyright": "Certain Data by Sportradar, Stats Perform and Rotowire",
+    "refresh_rate": "60"
+  }
+}

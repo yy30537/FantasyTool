@@ -1,0 +1,745 @@
+{
+  "dynamic_players": {
+    "454.p.3704": {
+      "current_team_key": "nba.t.13",
+      "current_team_name": "Los Angeles Lakers",
+      "current_team_abbr": "LAL",
+      "display_position": "SF,PF",
+      "primary_position": "SF",
+      "position_type": "P",
+      "uniform_number": "23",
+      "headshot_url": "https://s.yimg.com/iu/api/res/1.2/d0ar3r622Gyr2j8MzXacTQ--~C/YXBwaWQ9eXNwb3J0cztjaD0yMzM2O2NyPTE7Y3c9MTc5MDtkeD04NTc7ZHk9MDtmaT11bGNyb3A7aD02MDtxPTEwMDt3PTQ2/https://s.yimg.com/xe/i/us/sp/v/nba_cutout/players_l/10292024/3704.png",
+      "is_undroppable": false,
+      "eligible_positions": [
+        {
+          "position": "SF"
+        },
+        {
+          "position": "PF"
+        },
+        {
+          "position": "F"
+        },
+        {
+          "position": "Util"
+        }
+      ],
+      "yahoo_url": "https://sports.yahoo.com/nba/players/3704",
+      "season": "2024",
+      "league_key": "454.l.53472",
+      "last_updated": "2025-05-30T22:52:33.837527"
+    },
+    "454.p.3930": {
+      "current_team_key": "nba.t.24",
+      "current_team_name": "San Antonio Spurs",
+      "current_team_abbr": "SAS",
+      "display_position": "PG",
+      "primary_position": "PG",
+      "position_type": "P",
+      "uniform_number": "3",
+      "headshot_url": "https://s.yimg.com/iu/api/res/1.2/f3NHuLfAWEhHfx6pkCFJ3A--~C/YXBwaWQ9eXNwb3J0cztjaD0yMzM2O2NyPTE7Y3c9MTc5MDtkeD04NTc7ZHk9MDtmaT11bGNyb3A7aD02MDtxPTEwMDt3PTQ2/https://s.yimg.com/xe/i/us/sp/v/nba_cutout/players_l/10292024/3930.png",
+      "is_undroppable": false,
+      "eligible_positions": [
+        {
+          "position": "PG"
+        },
+        {
+          "position": "G"
+        },
+        {
+          "position": "Util"
+        }
+      ],
+      "yahoo_url": "https://sports.yahoo.com/nba/players/3930",
+      "season": "2024",
+      "league_key": "454.l.53472",
+      "last_updated": "2025-05-30T22:52:33.837577"
+    },
+    "454.p.4152": {
+      "current_team_key": "nba.t.20",
+      "current_team_name": "Philadelphia 76ers",
+      "current_team_abbr": "PHI",
+      "display_position": "PG",
+      "primary_position": "PG",
+      "position_type": "P",
+      "uniform_number": "7",
+      "status": "INJ",
+      "headshot_url": "https://s.yimg.com/iu/api/res/1.2/YjBSUKEwGIb2XWEVRB0ThQ--~C/YXBwaWQ9eXNwb3J0cztjaD0yMzM2O2NyPTE7Y3c9MTc5MDtkeD04NTc7ZHk9MDtmaT11bGNyb3A7aD02MDtxPTEwMDt3PTQ2/https://s.yimg.com/xe/i/us/sp/v/nba_cutout/players_l/10282024/4152.png",
+      "is_undroppable": false,
+      "eligible_positions": [
+        {
+          "position": "PG"
+        },
+        {
+          "position": "G"
+        },
+        {
+          "position": "Util"
+        },
+        {
+          "position": "IL"
+        },
+        {
+          "position": "IL+"
+        }
+      ],
+      "yahoo_url": "https://sports.yahoo.com/nba/players/4152",
+      "season": "2024",
+      "league_key": "454.l.53472",
+      "last_updated": "2025-05-30T22:52:33.837599"
+    },
+    "454.p.4163": {
+      "current_team_key": "nba.t.18",
+      "current_team_name": "New York Knicks",
+      "current_team_abbr": "NYK",
+      "display_position": "SF",
+      "primary_position": "SF",
+      "position_type": "P",
+      "uniform_number": "17",
+      "headshot_url": "https://s.yimg.com/iu/api/res/1.2/nDzbzEi6qKIB9rhLbQMV7w--~C/YXBwaWQ9eXNwb3J0cztjaD0yMzM2O2NyPTE7Y3c9MTc5MDtkeD04NTc7ZHk9MDtmaT11bGNyb3A7aD02MDtxPTEwMDt3PTQ2/https://s.yimg.com/xe/i/us/sp/v/nba_cutout/players_l/05132025/4163.png",
+      "is_undroppable": false,
+      "eligible_positions": [
+        {
+          "position": "SF"
+        },
+        {
+          "position": "F"
+        },
+        {
+          "position": "Util"
+        }
+      ],
+      "yahoo_url": "https://sports.yahoo.com/nba/players/4163",
+      "season": "2024",
+      "league_key": "454.l.53472",
+      "last_updated": "2025-05-30T22:52:33.837626"
+    },
+    "454.p.4244": {
+      "current_team_key": "nba.t.21",
+      "current_team_name": "Phoenix Suns",
+      "current_team_abbr": "PHX",
+      "display_position": "SF,PF",
+      "primary_position": "SF",
+      "position_type": "P",
+      "uniform_number": "35",
+      "status": "INJ",
+      "headshot_url": "https://s.yimg.com/iu/api/res/1.2/is1eYDfMO9G0Lbw9ZpQkUg--~C/YXBwaWQ9eXNwb3J0cztjaD0yMzM2O2NyPTE7Y3c9MTc5MDtkeD04NTc7ZHk9MDtmaT11bGNyb3A7aD02MDtxPTEwMDt3PTQ2/https://s.yimg.com/xe/i/us/sp/v/nba_cutout/players_l/11042024/4244.png",
+      "is_undroppable": false,
+      "eligible_positions": [
+        {
+          "position": "SF"
+        },
+        {
+          "position": "PF"
+        },
+        {
+          "position": "F"
+        },
+        {
+          "position": "Util"
+        },
+        {
+          "position": "IL"
+        },
+        {
+          "position": "IL+"
+        }
+      ],
+      "yahoo_url": "https://sports.yahoo.com/nba/players/4244",
+      "season": "2024",
+      "league_key": "454.l.53472",
+      "last_updated": "2025-05-30T22:52:33.837644"
+    },
+    "454.p.4245": {
+      "current_team_key": "nba.t.2",
+      "current_team_name": "Boston Celtics",
+      "current_team_abbr": "BOS",
+      "display_position": "PF,C",
+      "primary_position": "PF",
+      "position_type": "P",
+      "uniform_number": "42",
+      "headshot_url": "https://s.yimg.com/iu/api/res/1.2/AplI4wgCA72ZQ0GRBdXSew--~C/YXBwaWQ9eXNwb3J0cztjaD0yMzM2O2NyPTE7Y3c9MTc5MDtkeD04NTc7ZHk9MDtmaT11bGNyb3A7aD02MDtxPTEwMDt3PTQ2/https://s.yimg.com/xe/i/us/sp/v/nba_cutout/players_l/10222024/4245.png",
+      "is_undroppable": false,
+      "eligible_positions": [
+        {
+          "position": "PF"
+        },
+        {
+          "position": "F"
+        },
+        {
+          "position": "C"
+        },
+        {
+          "position": "Util"
+        }
+      ],
+      "yahoo_url": "https://sports.yahoo.com/nba/players/4245",
+      "season": "2024",
+      "league_key": "454.l.53472",
+      "last_updated": "2025-05-30T22:52:33.837660"
+    },
+    "454.p.4246": {
+      "current_team_key": "nba.t.16",
+      "current_team_name": "Minnesota Timberwolves",
+      "current_team_abbr": "MIN",
+      "display_position": "PG",
+      "primary_position": "PG",
+      "position_type": "P",
+      "uniform_number": "10",
+      "headshot_url": "https://s.yimg.com/iu/api/res/1.2/7bUMMaF0w6t9b7RrdoUFNA--~C/YXBwaWQ9eXNwb3J0cztjaD0yMzM2O2NyPTE7Y3c9MTc5MDtkeD04NTc7ZHk9MDtmaT11bGNyb3A7aD02MDtxPTEwMDt3PTQ2/https://s.yimg.com/xe/i/us/sp/v/nba_cutout/players_l/10292024/4246.png",
+      "is_undroppable": false,
+      "eligible_positions": [
+        {
+          "position": "PG"
+        },
+        {
+          "position": "G"
+        },
+        {
+          "position": "Util"
+        }
+      ],
+      "yahoo_url": "https://sports.yahoo.com/nba/players/4246",
+      "season": "2024",
+      "league_key": "454.l.53472",
+      "last_updated": "2025-05-30T22:52:33.837686"
+    },
+    "454.p.4247": {
+      "current_team_key": "nba.t.10",
+      "current_team_name": "Houston Rockets",
+      "current_team_abbr": "HOU",
+      "display_position": "PF,C",
+      "primary_position": "PF",
+      "position_type": "P",
+      "uniform_number": "32",
+      "headshot_url": "https://s.yimg.com/iu/api/res/1.2/HVjo27.juJKKV3lppUmf8Q--~C/YXBwaWQ9eXNwb3J0cztjaD0yMzM2O2NyPTE7Y3c9MTc5MDtkeD04NTc7ZHk9MDtmaT11bGNyb3A7aD02MDtxPTEwMDt3PTQ2/https://s.yimg.com/xe/i/us/sp/v/nba_cutout/players_l/10292024/4247.png",
+      "is_undroppable": false,
+      "eligible_positions": [
+        {
+          "position": "PF"
+        },
+        {
+          "position": "F"
+        },
+        {
+          "position": "C"
+        },
+        {
+          "position": "Util"
+        }
+      ],
+      "yahoo_url": "https://sports.yahoo.com/nba/players/4247",
+      "season": "2024",
+      "league_key": "454.l.53472",
+      "last_updated": "2025-05-30T22:52:33.837700"
+    },
+    "454.p.4387": {
+      "current_team_key": "nba.t.29",
+      "current_team_name": "Memphis Grizzlies",
+      "current_team_abbr": "MEM",
+      "display_position": "PG",
+      "primary_position": "PG",
+      "position_type": "P",
+      "uniform_number": "23",
+      "status": "NA",
+      "headshot_url": "https://s.yimg.com/iu/api/res/1.2/0ZnYY3eH0hjXtQCpeuCXeg--~C/YXBwaWQ9eXNwb3J0cztjaD0yMzM2O2NyPTE7Y3c9MTc5MDtkeD04NTc7ZHk9MDtmaT11bGNyb3A7aD02MDtxPTEwMDt3PTQ2/https://s.yimg.com/xe/i/us/sp/v/nba_cutout/players_l/10252023/4387.png",
+      "is_undroppable": false,
+      "eligible_positions": [
+        {
+          "position": "PG"
+        },
+        {
+          "position": "G"
+        },
+        {
+          "position": "Util"
+        }
+      ],
+      "yahoo_url": "https://sports.yahoo.com/nba/players/4387",
+      "season": "2024",
+      "league_key": "454.l.53472",
+      "last_updated": "2025-05-30T22:52:33.837716"
+    },
+    "454.p.4390": {
+      "current_team_key": "nba.t.7",
+      "current_team_name": "Denver Nuggets",
+      "current_team_abbr": "DEN",
+      "display_position": "PG,SG",
+      "primary_position": "PG",
+      "position_type": "P",
+      "uniform_number": "4",
+      "status": "O",
+      "headshot_url": "https://s.yimg.com/iu/api/res/1.2/ZeYD53TxPv4mNZRe.ku9Jw--~C/YXBwaWQ9eXNwb3J0cztjaD0yMzM2O2NyPTE7Y3c9MTc5MDtkeD04NTc7ZHk9MDtmaT11bGNyb3A7aD02MDtxPTEwMDt3PTQ2/https://s.yimg.com/xe/i/us/sp/v/nba_cutout/players_l/10282024/4390.png",
+      "is_undroppable": false,
+      "eligible_positions": [
+        {
+          "position": "PG"
+        },
+        {
+          "position": "SG"
+        },
+        {
+          "position": "G"
+        },
+        {
+          "position": "Util"
+        },
+        {
+          "position": "IL+"
+        }
+      ],
+      "yahoo_url": "https://sports.yahoo.com/nba/players/4390",
+      "season": "2024",
+      "league_key": "454.l.53472",
+      "last_updated": "2025-05-30T22:52:33.837732"
+    },
+    "454.p.4391": {
+      "current_team_key": "nba.t.14",
+      "current_team_name": "Miami Heat",
+      "current_team_abbr": "MIA",
+      "display_position": "PF,C",
+      "primary_position": "PF",
+      "position_type": "P",
+      "uniform_number": "42",
+      "headshot_url": "https://s.yimg.com/iu/api/res/1.2/BryAFIm7OrzwloydvnrbIQ--~C/YXBwaWQ9eXNwb3J0cztjaD0yMzM2O2NyPTE7Y3c9MTc5MDtkeD04NTc7ZHk9MDtmaT11bGNyb3A7aD02MDtxPTEwMDt3PTQ2/https://s.yimg.com/xe/i/us/sp/v/nba_cutout/players_l/10292024/4391.png",
+      "is_undroppable": false,
+      "eligible_positions": [
+        {
+          "position": "PF"
+        },
+        {
+          "position": "F"
+        },
+        {
+          "position": "C"
+        },
+        {
+          "position": "Util"
+        }
+      ],
+      "yahoo_url": "https://sports.yahoo.com/nba/players/4391",
+      "season": "2024",
+      "league_key": "454.l.53472",
+      "last_updated": "2025-05-30T22:52:33.837762"
+    },
+    "454.p.4469": {
+      "current_team_key": "nba.t.20",
+      "current_team_name": "Philadelphia 76ers",
+      "current_team_abbr": "PHI",
+      "display_position": "SG,SF",
+      "primary_position": "SG",
+      "position_type": "P",
+      "uniform_number": "23",
+      "status": "INJ",
+      "headshot_url": "https://s.yimg.com/iu/api/res/1.2/v4cEyv7LS29F_YNzTQW42Q--~C/YXBwaWQ9eXNwb3J0cztjaD0yMzM2O2NyPTE7Y3c9MTc5MDtkeD04NTc7ZHk9MDtmaT11bGNyb3A7aD02MDtxPTEwMDt3PTQ2/https://s.yimg.com/xe/i/us/sp/v/nba_cutout/players_l/10282024/4469.png",
+      "is_undroppable": false,
+      "eligible_positions": [
+        {
+          "position": "SG"
+        },
+        {
+          "position": "G"
+        },
+        {
+          "position": "SF"
+        },
+        {
+          "position": "F"
+        },
+        {
+          "position": "Util"
+        },
+        {
+          "position": "IL"
+        },
+        {
+          "position": "IL+"
+        }
+      ],
+      "yahoo_url": "https://sports.yahoo.com/nba/players/4469",
+      "season": "2024",
+      "league_key": "454.l.53472",
+      "last_updated": "2025-05-30T22:52:33.837779"
+    },
+    "454.p.4472": {
+      "current_team_key": "nba.t.15",
+      "current_team_name": "Milwaukee Bucks",
+      "current_team_abbr": "MIL",
+      "display_position": "C",
+      "primary_position": "C",
+      "position_type": "P",
+      "uniform_number": "11",
+      "headshot_url": "https://s.yimg.com/iu/api/res/1.2/8KS7TvhcV_J1AWUS7Cbglg--~C/YXBwaWQ9eXNwb3J0cztjaD0yMzM2O2NyPTE7Y3c9MTc5MDtkeD04NTc7ZHk9MDtmaT11bGNyb3A7aD02MDtxPTEwMDt3PTQ2/https://s.yimg.com/xe/i/us/sp/v/nba_cutout/players_l/10292024/4472.png",
+      "is_undroppable": false,
+      "eligible_positions": [
+        {
+          "position": "C"
+        },
+        {
+          "position": "Util"
+        }
+      ],
+      "yahoo_url": "https://sports.yahoo.com/nba/players/4472",
+      "season": "2024",
+      "league_key": "454.l.53472",
+      "last_updated": "2025-05-30T22:52:33.837797"
+    },
+    "454.p.4487": {
+      "current_team_key": "nba.t.12",
+      "current_team_name": "LA Clippers",
+      "current_team_abbr": "LAC",
+      "display_position": "SF,PF",
+      "primary_position": "SF",
+      "position_type": "P",
+      "uniform_number": "33",
+      "headshot_url": "https://s.yimg.com/iu/api/res/1.2/PBrdyJT1wi2BYHSnHpHPBw--~C/YXBwaWQ9eXNwb3J0cztjaD0yMzM2O2NyPTE7Y3c9MTc5MDtkeD04NTc7ZHk9MDtmaT11bGNyb3A7aD02MDtxPTEwMDt3PTQ2/https://s.yimg.com/xe/i/us/sp/v/nba_cutout/players_l/10222024/4487.png",
+      "is_undroppable": false,
+      "eligible_positions": [
+        {
+          "position": "SF"
+        },
+        {
+          "position": "PF"
+        },
+        {
+          "position": "F"
+        },
+        {
+          "position": "Util"
+        }
+      ],
+      "yahoo_url": "https://sports.yahoo.com/nba/players/4487",
+      "season": "2024",
+      "league_key": "454.l.53472",
+      "last_updated": "2025-05-30T22:52:33.837813"
+    },
+    "454.p.4497": {
+      "current_team_key": "nba.t.7",
+      "current_team_name": "Denver Nuggets",
+      "current_team_abbr": "DEN",
+      "display_position": "C",
+      "primary_position": "C",
+      "position_type": "P",
+      "uniform_number": "6",
+      "headshot_url": "https://s.yimg.com/iu/api/res/1.2/_M.VEj6ztkpsr5sjSIrFgA--~C/YXBwaWQ9eXNwb3J0cztjaD0yMzM2O2NyPTE7Y3c9MTc5MDtkeD04NTc7ZHk9MDtmaT11bGNyb3A7aD02MDtxPTEwMDt3PTQ2/https://s.yimg.com/xe/i/us/sp/v/nba_cutout/players_l/10282024/4497.png",
+      "is_undroppable": false,
+      "eligible_positions": [
+        {
+          "position": "C"
+        },
+        {
+          "position": "Util"
+        }
+      ],
+      "yahoo_url": "https://sports.yahoo.com/nba/players/4497",
+      "season": "2024",
+      "league_key": "454.l.53472",
+      "last_updated": "2025-05-30T22:52:33.837829"
+    },
+    "454.p.4563": {
+      "current_team_key": "nba.t.12",
+      "current_team_name": "LA Clippers",
+      "current_team_abbr": "LAC",
+      "display_position": "PG,SG",
+      "primary_position": "PG",
+      "position_type": "P",
+      "uniform_number": "1",
+      "headshot_url": "https://s.yimg.com/iu/api/res/1.2/qGkYKGrgoLSoSNXtRwsQ1g--~C/YXBwaWQ9eXNwb3J0cztjaD0yMzM2O2NyPTE7Y3c9MTc5MDtkeD04NTc7ZHk9MDtmaT11bGNyb3A7aD02MDtxPTEwMDt3PTQ2/https://s.yimg.com/xe/i/us/sp/v/nba_cutout/players_l/10222024/4563.png",
+      "is_undroppable": false,
+      "eligible_positions": [
+        {
+          "position": "PG"
+        },
+        {
+          "position": "SG"
+        },
+        {
+          "position": "G"
+        },
+        {
+          "position": "Util"
+        }
+      ],
+      "yahoo_url": "https://sports.yahoo.com/nba/players/4563",
+      "season": "2024",
+      "league_key": "454.l.53472",
+      "last_updated": "2025-05-30T22:52:33.837849"
+    },
+    "454.p.4612": {
+      "current_team_key": "nba.t.9",
+      "current_team_name": "Golden State Warriors",
+      "current_team_abbr": "GSW",
+      "display_position": "PG,SG",
+      "primary_position": "PG",
+      "position_type": "P",
+      "uniform_number": "30",
+      "status": "INJ",
+      "headshot_url": "https://s.yimg.com/iu/api/res/1.2/WEbirq_b9BeoGnWJpZn2Yg--~C/YXBwaWQ9eXNwb3J0cztjaD0yMzM2O2NyPTE7Y3c9MTc5MDtkeD04NTc7ZHk9MDtmaT11bGNyb3A7aD02MDtxPTEwMDt3PTQ2/https://s.yimg.com/xe/i/us/sp/v/nba_cutout/players_l/10292024/4612.png",
+      "is_undroppable": false,
+      "eligible_positions": [
+        {
+          "position": "PG"
+        },
+        {
+          "position": "SG"
+        },
+        {
+          "position": "G"
+        },
+        {
+          "position": "Util"
+        },
+        {
+          "position": "IL"
+        },
+        {
+          "position": "IL+"
+        }
+      ],
+      "yahoo_url": "https://sports.yahoo.com/nba/players/4612",
+      "season": "2024",
+      "league_key": "454.l.53472",
+      "last_updated": "2025-05-30T22:52:33.837870"
+    },
+    "454.p.4614": {
+      "current_team_key": "nba.t.23",
+      "current_team_name": "Sacramento Kings",
+      "current_team_abbr": "SAC",
+      "display_position": "SF,PF",
+      "primary_position": "SF",
+      "position_type": "P",
+      "uniform_number": "10",
+      "headshot_url": "https://s.yimg.com/iu/api/res/1.2/Ck4MMRiet76barMtMMpSSg--~C/YXBwaWQ9eXNwb3J0cztjaD0yMzM2O2NyPTE7Y3c9MTc5MDtkeD04NTc7ZHk9MDtmaT11bGNyb3A7aD02MDtxPTEwMDt3PTQ2/https://s.yimg.com/xe/i/us/sp/v/nba_cutout/players_l/10292024/4614.png",
+      "is_undroppable": false,
+      "eligible_positions": [
+        {
+          "position": "SF"
+        },
+        {
+          "position": "PF"
+        },
+        {
+          "position": "F"
+        },
+        {
+          "position": "Util"
+        }
+      ],
+      "yahoo_url": "https://sports.yahoo.com/nba/players/4614",
+      "season": "2024",
+      "league_key": "454.l.53472",
+      "last_updated": "2025-05-30T22:52:33.837887"
+    },
+    "454.p.4621": {
+      "current_team_key": "nba.t.11",
+      "current_team_name": "Indiana Pacers",
+      "current_team_abbr": "IND",
+      "display_position": "PF",
+      "primary_position": "PF",
+      "position_type": "P",
+      "uniform_number": "16",
+      "headshot_url": "https://s.yimg.com/iu/api/res/1.2/nSxq9ub2ILuyvb3pA6URNg--~C/YXBwaWQ9eXNwb3J0cztjaD0yMzM2O2NyPTE7Y3c9MTc5MDtkeD04NTc7ZHk9MDtmaT11bGNyb3A7aD02MDtxPTEwMDt3PTQ2/https://s.yimg.com/xe/i/us/sp/v/nba_cutout/players_l/10292024/4621.png",
+      "is_undroppable": false,
+      "eligible_positions": [
+        {
+          "position": "PF"
+        },
+        {
+          "position": "F"
+        },
+        {
+          "position": "Util"
+        }
+      ],
+      "yahoo_url": "https://sports.yahoo.com/nba/players/4621",
+      "season": "2024",
+      "league_key": "454.l.53472",
+      "last_updated": "2025-05-30T22:52:33.837908"
+    },
+    "454.p.4622": {
+      "current_team_key": "nba.t.2",
+      "current_team_name": "Boston Celtics",
+      "current_team_abbr": "BOS",
+      "display_position": "PG,SG",
+      "primary_position": "PG",
+      "position_type": "P",
+      "uniform_number": "4",
+      "headshot_url": "https://s.yimg.com/iu/api/res/1.2/VaWJ3fFdBb4pJlJT3LIOHw--~C/YXBwaWQ9eXNwb3J0cztjaD0yMzM2O2NyPTE7Y3c9MTc5MDtkeD04NTc7ZHk9MDtmaT11bGNyb3A7aD02MDtxPTEwMDt3PTQ2/https://s.yimg.com/xe/i/us/sp/v/nba_cutout/players_l/10222024/4622.png",
+      "is_undroppable": false,
+      "eligible_positions": [
+        {
+          "position": "PG"
+        },
+        {
+          "position": "SG"
+        },
+        {
+          "position": "G"
+        },
+        {
+          "position": "Util"
+        }
+      ],
+      "yahoo_url": "https://sports.yahoo.com/nba/players/4622",
+      "season": "2024",
+      "league_key": "454.l.53472",
+      "last_updated": "2025-05-30T22:52:33.837924"
+    },
+    "454.p.4631": {
+      "current_team_key": "nba.t.30",
+      "current_team_name": "Charlotte Hornets",
+      "current_team_abbr": "CHA",
+      "display_position": "PF,C",
+      "primary_position": "PF",
+      "position_type": "P",
+      "uniform_number": "67",
+      "headshot_url": "https://s.yimg.com/iu/api/res/1.2/wWoHWEBJgMCEqlhUrcXGIQ--~C/YXBwaWQ9eXNwb3J0cztjaD0yMzM2O2NyPTE7Y3c9MTc5MDtkeD04NTc7ZHk9MDtmaT11bGNyb3A7aD02MDtxPTEwMDt3PTQ2/https://s.yimg.com/xe/i/us/sp/v/nba_cutout/players_l/10242024/4631.png",
+      "is_undroppable": false,
+      "eligible_positions": [
+        {
+          "position": "PF"
+        },
+        {
+          "position": "F"
+        },
+        {
+          "position": "C"
+        },
+        {
+          "position": "Util"
+        }
+      ],
+      "yahoo_url": "https://sports.yahoo.com/nba/players/4631",
+      "season": "2024",
+      "league_key": "454.l.53472",
+      "last_updated": "2025-05-30T22:52:33.837940"
+    },
+    "454.p.4647": {
+      "current_team_key": "nba.t.15",
+      "current_team_name": "Milwaukee Bucks",
+      "current_team_abbr": "MIL",
+      "display_position": "PG",
+      "primary_position": "PG",
+      "position_type": "P",
+      "uniform_number": "21",
+      "status": "NA",
+      "headshot_url": "https://s.yimg.com/iu/api/res/1.2/ziP0nAsWFw2I1Lpj.JTpLQ--~C/YXBwaWQ9eXNwb3J0cztjaD0yMzM2O2NyPTE7Y3c9MTc5MDtkeD04NTc7ZHk9MDtmaT11bGNyb3A7aD02MDtxPTEwMDt3PTQ2/https://s.yimg.com/xe/i/us/sp/v/nba_cutout/players_l/03182024/4647.png",
+      "is_undroppable": false,
+      "eligible_positions": [
+        {
+          "position": "PG"
+        },
+        {
+          "position": "G"
+        },
+        {
+          "position": "Util"
+        }
+      ],
+      "yahoo_url": "https://sports.yahoo.com/nba/players/4647",
+      "season": "2024",
+      "league_key": "454.l.53472",
+      "last_updated": "2025-05-30T22:52:33.837955"
+    },
+    "454.p.4660": {
+      "current_team_key": "nba.t.12",
+      "current_team_name": "LA Clippers",
+      "current_team_abbr": "LAC",
+      "display_position": "PG,SG",
+      "primary_position": "PG",
+      "position_type": "P",
+      "uniform_number": "88",
+      "headshot_url": "https://s.yimg.com/iu/api/res/1.2/HhIFUsempgmG_BekF5EdqQ--~C/YXBwaWQ9eXNwb3J0cztjaD0yMzM2O2NyPTE7Y3c9MTc5MDtkeD04NTc7ZHk9MDtmaT11bGNyb3A7aD02MDtxPTEwMDt3PTQ2/https://s.yimg.com/xe/i/us/sp/v/nba_cutout/players_l/10292024/4660.png",
+      "is_undroppable": false,
+      "eligible_positions": [
+        {
+          "position": "PG"
+        },
+        {
+          "position": "SG"
+        },
+        {
+          "position": "G"
+        },
+        {
+          "position": "Util"
+        }
+      ],
+      "yahoo_url": "https://sports.yahoo.com/nba/players/4660",
+      "season": "2024",
+      "league_key": "454.l.53472",
+      "last_updated": "2025-05-30T22:52:33.837972"
+    },
+    "454.p.4682": {
+      "current_team_key": "nba.t.28",
+      "current_team_name": "Toronto Raptors",
+      "current_team_abbr": "TOR",
+      "display_position": "SG",
+      "primary_position": "SG",
+      "position_type": "P",
+      "uniform_number": "17",
+      "status": "INJ",
+      "headshot_url": "https://s.yimg.com/iu/api/res/1.2/KdwL.GyVDiA31I516zRT9A--~C/YXBwaWQ9eXNwb3J0cztjaD0yMzM2O2NyPTE7Y3c9MTc5MDtkeD04NTc7ZHk9MDtmaT11bGNyb3A7aD02MDtxPTEwMDt3PTQ2/https://s.yimg.com/xe/i/us/sp/v/nba_cutout/players_l/10292024/4682.png",
+      "is_undroppable": false,
+      "eligible_positions": [
+        {
+          "position": "SG"
+        },
+        {
+          "position": "G"
+        },
+        {
+          "position": "Util"
+        },
+        {
+          "position": "IL"
+        },
+        {
+          "position": "IL+"
+        }
+      ],
+      "yahoo_url": "https://sports.yahoo.com/nba/players/4682",
+      "season": "2024",
+      "league_key": "454.l.53472",
+      "last_updated": "2025-05-30T22:52:33.838003"
+    },
+    "454.p.4724": {
+      "current_team_key": "nba.t.30",
+      "current_team_name": "Charlotte Hornets",
+      "current_team_abbr": "CHA",
+      "display_position": "SF,PF",
+      "primary_position": "SF",
+      "position_type": "P",
+      "uniform_number": "33",
+      "status": "NA",
+      "headshot_url": "https://s.yimg.com/iu/api/res/1.2/V8.hncZl6Y6m4QqaLgKp1Q--~C/YXBwaWQ9eXNwb3J0cztjaD0yMzM2O2NyPTE7Y3c9MTc5MDtkeD04NTc7ZHk9MDtmaT11bGNyb3A7aD02MDtxPTEwMDt3PTQ2/https://s.yimg.com/xe/i/us/sp/v/nba_cutout/players_l/02132024/4724.png",
+      "is_undroppable": false,
+      "eligible_positions": [
+        {
+          "position": "SF"
+        },
+        {
+          "position": "PF"
+        },
+        {
+          "position": "F"
+        },
+        {
+          "position": "Util"
+        }
+      ],
+      "yahoo_url": "https://sports.yahoo.com/nba/players/4724",
+      "season": "2024",
+      "league_key": "454.l.53472",
+      "last_updated": "2025-05-30T22:52:33.838021"
+    }
+  },
+  "metadata": {
+    "league_key": "454.l.53472",
+    "season": "2024",
+    "total_players": 25,
+    "created_at": "2025-05-30T22:52:33.838069",
+    "description": "联盟 454.l.53472 的球员动态信息"
+  }
+}

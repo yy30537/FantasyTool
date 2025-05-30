@@ -1,3 +1,5 @@
+// 需要更新prisma的schema，完成后添加新的查询methods
+
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();

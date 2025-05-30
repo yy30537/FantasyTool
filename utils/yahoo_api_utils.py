@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Yahoo Fantasy API 通用工具模块
-包含共享的API调用、数据解析和文件操作功能
+Yahoo Fantasy API 通用工具模块 - 单联盟模式
+专注于单个联盟的深度数据获取
 """
 import requests
 import json
@@ -20,45 +20,71 @@ BASE_DIR = pathlib.Path(os.path.dirname(os.path.dirname(os.path.abspath(__file__
 TOKENS_DIR = BASE_DIR / "tokens"
 DATA_DIR = BASE_DIR / "data"
 
-# 数据子目录
-GAMES_DIR = DATA_DIR / "games"
-LEAGUES_DIR = DATA_DIR / "leagues"
-LEAGUE_SETTINGS_DIR = DATA_DIR / "league_settings"
-LEAGUE_STANDINGS_DIR = DATA_DIR / "league_standings"
-LEAGUE_SCOREBOARDS_DIR = DATA_DIR / "league_scoreboards"
-TEAMS_DIR = DATA_DIR / "teams"
-PLAYERS_DIR = DATA_DIR / "players"
-
-# 创建必要的目录
-def ensure_directories():
-    """确保所有必要的目录存在"""
-    directories = [
-        TOKENS_DIR, 
-        DATA_DIR, 
-        GAMES_DIR, 
-        LEAGUES_DIR, 
-        LEAGUE_SETTINGS_DIR,
-        LEAGUE_STANDINGS_DIR,
-        LEAGUE_SCOREBOARDS_DIR,
-        TEAMS_DIR,
-        PLAYERS_DIR
-    ]
-    
-    for directory in directories:
-        if not directory.exists():
-            directory.mkdir(exist_ok=True, parents=True)
-            print(f"创建目录: {directory.absolute()}")
-
-# 初始化目录
-ensure_directories()
-
-# 令牌文件路径
-DEFAULT_TOKEN_FILE = TOKENS_DIR / "yahoo_token.token"
+# 基础数据目录
+GAMES_DIR = DATA_DIR
+LEAGUES_DIR = DATA_DIR
 
 # OAuth配置（最好从环境变量加载）
 CLIENT_ID = os.getenv("YAHOO_CLIENT_ID", "dj0yJmk9U0NqTDRYdXd0NW9yJmQ9WVdrOVRGaGhkRUZLTmxnbWNHbzlNQT09JnM9Y29uc3VtZXJzZWNyZXQmc3Y9MCZ4PTFk")
 CLIENT_SECRET = os.getenv("YAHOO_CLIENT_SECRET", "a5b3a6e1ff6a3e982036ec873a78f6fa46431508")
 TOKEN_URL = "https://api.login.yahoo.com/oauth2/get_token"
+
+def ensure_data_directories():
+    """确保基础数据目录存在"""
+    directories = [TOKENS_DIR, DATA_DIR]
+    
+    for directory in directories:
+        if not directory.exists():
+            directory.mkdir(parents=True, exist_ok=True)
+            print(f"创建目录: {directory}")
+
+def create_league_directory(league_key):
+    """为选定的联盟创建专用目录结构
+    
+    Args:
+        league_key: 联盟键，如 "385.l.24889"
+    
+    Returns:
+        dict: 包含所有子目录路径的字典
+    """
+    league_dir = DATA_DIR / f"selected_league_{league_key}"
+    
+    # 创建子目录结构
+    directories = {
+        'base': league_dir,
+        'rosters': league_dir / "rosters",
+        'players': league_dir / "players"
+    }
+    
+    for dir_path in directories.values():
+        if not dir_path.exists():
+            dir_path.mkdir(parents=True, exist_ok=True)
+            print(f"创建联盟目录: {dir_path}")
+    
+    return directories
+
+def get_league_directory(league_key):
+    """获取联盟目录路径
+    
+    Args:
+        league_key: 联盟键
+        
+    Returns:
+        dict: 包含所有子目录路径的字典
+    """
+    league_dir = DATA_DIR / f"selected_league_{league_key}"
+    
+    return {
+        'base': league_dir,
+        'rosters': league_dir / "rosters",
+        'players': league_dir / "players"
+    }
+
+# 在模块加载时创建基础目录
+ensure_data_directories()
+
+# 令牌文件路径
+DEFAULT_TOKEN_FILE = TOKENS_DIR / "yahoo_token.token"
 
 def load_token():
     """从文件加载令牌"""
@@ -93,38 +119,14 @@ def load_token():
     
     return None
 
-# 获取特定数据类型的目录
-def get_data_dir(data_type):
-    """根据数据类型返回相应的目录"""
-    data_dirs = {
-        "games": GAMES_DIR,
-        "leagues": LEAGUES_DIR,
-        "league_settings": LEAGUE_SETTINGS_DIR,
-        "league_standings": LEAGUE_STANDINGS_DIR,
-        "league_scoreboards": LEAGUE_SCOREBOARDS_DIR,
-        "teams": TEAMS_DIR,
-        "players": PLAYERS_DIR
-    }
-    
-    return data_dirs.get(data_type, DATA_DIR)
-
-def save_json_data(data, file_path, data_type=None):
+def save_json_data(data, file_path):
     """保存数据到JSON文件
     
     Args:
         data: 要保存的数据
-        file_path: 文件路径，可以是相对于数据目录的路径或绝对路径
-        data_type: 数据类型，用于确定保存目录，如果为None则使用file_path
+        file_path: 文件路径
     """
     try:
-        # 如果提供了数据类型，则使用对应的目录
-        if data_type and isinstance(file_path, (str, pathlib.Path)):
-            # 获取文件名
-            file_name = os.path.basename(str(file_path))
-            # 拼接新路径
-            dir_path = get_data_dir(data_type)
-            file_path = dir_path / file_name
-        
         # 确保目录存在
         os.makedirs(os.path.dirname(os.path.abspath(file_path)), exist_ok=True)
         
@@ -136,22 +138,13 @@ def save_json_data(data, file_path, data_type=None):
         print(f"保存数据到 {file_path} 时出错: {str(e)}")
         return False
 
-def load_json_data(file_path, data_type=None):
+def load_json_data(file_path):
     """从JSON文件加载数据
     
     Args:
-        file_path: 文件路径，可以是相对于数据目录的路径或绝对路径
-        data_type: 数据类型，用于确定加载目录，如果为None则使用file_path
+        file_path: 文件路径
     """
     try:
-        # 如果提供了数据类型，则使用对应的目录
-        if data_type and isinstance(file_path, (str, pathlib.Path)):
-            # 获取文件名
-            file_name = os.path.basename(str(file_path))
-            # 拼接新路径
-            dir_path = get_data_dir(data_type)
-            file_path = dir_path / file_name
-        
         if not os.path.exists(file_path):
             print(f"文件不存在: {file_path}")
             return None
@@ -269,21 +262,6 @@ def get_api_data(url, max_retries=3):
     
     return None
 
-def extract_value_from_path(data, path):
-    """从嵌套字典中提取值"""
-    try:
-        current = data
-        for key in path:
-            if isinstance(current, dict) and key in current:
-                current = current[key]
-            elif isinstance(current, list) and isinstance(key, int) and key < len(current):
-                current = current[key]
-            else:
-                return None
-        return current
-    except Exception:
-        return None
-
 def parse_yahoo_date(date_str):
     """解析Yahoo日期格式"""
     if not date_str:
@@ -291,4 +269,163 @@ def parse_yahoo_date(date_str):
     try:
         return datetime.strptime(date_str, "%Y-%m-%d")
     except Exception:
-        return None 
+        return None
+
+def print_league_selection_info(leagues_data):
+    """打印联盟选择信息"""
+    print("\n" + "="*80)
+    print("可选择的Fantasy联盟")
+    print("="*80)
+    
+    all_leagues = []
+    league_counter = 1
+    
+    for game_key, leagues in leagues_data.items():
+        for league in leagues:
+            league_info = {
+                'index': league_counter,
+                'league_key': league.get('league_key'),
+                'name': league.get('name', '未知联盟'),
+                'season': league.get('season', '未知赛季'),
+                'num_teams': league.get('num_teams', 0),
+                'game_code': league.get('game_code', '未知运动'),
+                'scoring_type': league.get('scoring_type', '未知'),
+                'is_finished': league.get('is_finished', 0) == 1
+            }
+            all_leagues.append(league_info)
+            
+            # 打印联盟信息
+            status = "已结束" if league_info['is_finished'] else "进行中"
+            print(f"{league_counter:2d}. {league_info['name']}")
+            print(f"    联盟ID: {league_info['league_key']}")
+            print(f"    运动类型: {league_info['game_code'].upper()} | 赛季: {league_info['season']} | 状态: {status}")
+            print(f"    球队数量: {league_info['num_teams']} | 计分方式: {league_info['scoring_type']}")
+            print()
+            
+            league_counter += 1
+    
+    print("="*80)
+    return all_leagues
+
+def select_league_interactively(leagues_data):
+    """交互式选择联盟"""
+    all_leagues = print_league_selection_info(leagues_data)
+    
+    if not all_leagues:
+        print("没有找到任何联盟")
+        return None
+    
+    while True:
+        try:
+            choice = input(f"请选择联盟 (1-{len(all_leagues)}): ").strip()
+            
+            if not choice:
+                continue
+                
+            choice_num = int(choice)
+            
+            if 1 <= choice_num <= len(all_leagues):
+                selected_league = all_leagues[choice_num - 1]
+                print(f"\n✓ 已选择联盟: {selected_league['name']} ({selected_league['league_key']})")
+                return selected_league
+            else:
+                print(f"请输入1到{len(all_leagues)}之间的数字")
+                
+        except ValueError:
+            print("请输入有效的数字")
+        except KeyboardInterrupt:
+            print("\n用户取消选择")
+            return None
+
+def get_league_data_overview(league_key):
+    """获取联盟数据概览"""
+    league_dirs = get_league_directory(league_key)
+    overview = {
+        'league_key': league_key,
+        'data_exists': league_dirs['base'].exists(),
+        'files': {},
+        'total_size': 0
+    }
+    
+    if not overview['data_exists']:
+        return overview
+    
+    # 检查各个数据文件
+    file_checks = {
+        'league_info': league_dirs['base'] / "league_info.json",
+        'teams': league_dirs['base'] / "teams.json",
+        'static_players': league_dirs['players'] / "static_players.json",
+        'dynamic_players': league_dirs['players'] / "dynamic_players.json",
+        'player_stats': league_dirs['players'] / "player_stats.json"
+    }
+    
+    # 检查rosters目录
+    roster_files = list(league_dirs['rosters'].glob("*.json")) if league_dirs['rosters'].exists() else []
+    
+    for file_type, file_path in file_checks.items():
+        if file_path.exists():
+            size = file_path.stat().st_size
+            overview['files'][file_type] = {
+                'exists': True,
+                'size_mb': size / 1024 / 1024,
+                'path': str(file_path)
+            }
+            overview['total_size'] += size
+        else:
+            overview['files'][file_type] = {'exists': False}
+    
+    # 添加rosters信息
+    overview['files']['rosters'] = {
+        'exists': len(roster_files) > 0,
+        'count': len(roster_files),
+        'total_size_mb': sum(f.stat().st_size for f in roster_files) / 1024 / 1024 if roster_files else 0
+    }
+    
+    overview['total_size'] += sum(f.stat().st_size for f in roster_files)
+    overview['total_size_mb'] = overview['total_size'] / 1024 / 1024
+    
+    return overview
+
+def print_data_overview(league_key=None):
+    """打印数据概览"""
+    print("\n" + "="*50)
+    print("Yahoo Fantasy 数据概览 - 单联盟模式")
+    print("="*50)
+    
+    # 检查基础数据
+    games_file = GAMES_DIR / "games_data.json"
+    leagues_file = LEAGUES_DIR / "all_leagues_data.json"
+    
+    print("=== 基础数据 ===")
+    print(f"Games数据: {'✓' if games_file.exists() else '✗'}")
+    print(f"Leagues数据: {'✓' if leagues_file.exists() else '✗'}")
+    
+    # 如果指定了联盟，显示联盟数据概览
+    if league_key:
+        print(f"\n=== 联盟数据: {league_key} ===")
+        overview = get_league_data_overview(league_key)
+        
+        if overview['data_exists']:
+            for file_type, file_info in overview['files'].items():
+                if file_type == 'rosters':
+                    status = "✓" if file_info['exists'] else "✗"
+                    print(f"{status} {file_type}: {file_info['count']} 个文件, {file_info['total_size_mb']:.1f} MB")
+                else:
+                    status = "✓" if file_info['exists'] else "✗"
+                    size_info = f", {file_info['size_mb']:.1f} MB" if file_info['exists'] else ""
+                    print(f"{status} {file_type}{size_info}")
+            
+            print(f"\n总大小: {overview['total_size_mb']:.1f} MB")
+        else:
+            print("✗ 联盟数据目录不存在")
+    else:
+        # 查找现有的联盟数据
+        league_dirs = list(DATA_DIR.glob("selected_league_*"))
+        if league_dirs:
+            print(f"\n=== 现有联盟数据 ===")
+            for league_dir in league_dirs:
+                league_key = league_dir.name.replace("selected_league_", "")
+                overview = get_league_data_overview(league_key)
+                print(f"联盟 {league_key}: {overview['total_size_mb']:.1f} MB")
+    
+    print("="*50) 
