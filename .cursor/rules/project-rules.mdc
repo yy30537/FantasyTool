@@ -1,0 +1,7 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+
+- 所有关于yahoo fantasy API的信息在 [Yahoo-OAuth-Guide.md](mdc:yahoo-fantasy-sports-API-docs/OAuth/Yahoo-OAuth-Guide.md) 中，在进行任务的过程中如有需要请参考这个文件。

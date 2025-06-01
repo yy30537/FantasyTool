@@ -83,7 +83,7 @@
       {
         "roster": {
           "coverage_type": "date",
-          "date": "2025-05-30",
+          "date": "2025-06-01",
           "is_prescoring": 0,
           "is_editable": 0,
           "0": {
@@ -198,7 +198,7 @@
                     "selected_position": [
                       {
                         "coverage_type": "date",
-                        "date": "2025-05-30"
+                        "date": "2025-06-01"
                       },
                       {
                         "position": "PG"
@@ -320,7 +320,7 @@
                     "selected_position": [
                       {
                         "coverage_type": "date",
-                        "date": "2025-05-30"
+                        "date": "2025-06-01"
                       },
                       {
                         "position": "SG"
@@ -445,7 +445,7 @@
                     "selected_position": [
                       {
                         "coverage_type": "date",
-                        "date": "2025-05-30"
+                        "date": "2025-06-01"
                       },
                       {
                         "position": "G"
@@ -570,7 +570,7 @@
                     "selected_position": [
                       {
                         "coverage_type": "date",
-                        "date": "2025-05-30"
+                        "date": "2025-06-01"
                       },
                       {
                         "position": "SF"
@@ -692,7 +692,7 @@
                     "selected_position": [
                       {
                         "coverage_type": "date",
-                        "date": "2025-05-30"
+                        "date": "2025-06-01"
                       },
                       {
                         "position": "PF"
@@ -830,7 +830,7 @@
                     "selected_position": [
                       {
                         "coverage_type": "date",
-                        "date": "2025-05-30"
+                        "date": "2025-06-01"
                       },
                       {
                         "position": "F"
@@ -952,7 +952,7 @@
                     "selected_position": [
                       {
                         "coverage_type": "date",
-                        "date": "2025-05-30"
+                        "date": "2025-06-01"
                       },
                       {
                         "position": "C"
@@ -1071,7 +1071,7 @@
                     "selected_position": [
                       {
                         "coverage_type": "date",
-                        "date": "2025-05-30"
+                        "date": "2025-06-01"
                       },
                       {
                         "position": "C"
@@ -1193,7 +1193,7 @@
                     "selected_position": [
                       {
                         "coverage_type": "date",
-                        "date": "2025-05-30"
+                        "date": "2025-06-01"
                       },
                       {
                         "position": "Util"
@@ -1315,7 +1315,7 @@
                     "selected_position": [
                       {
                         "coverage_type": "date",
-                        "date": "2025-05-30"
+                        "date": "2025-06-01"
                       },
                       {
                         "position": "Util"
@@ -1437,7 +1437,7 @@
                     "selected_position": [
                       {
                         "coverage_type": "date",
-                        "date": "2025-05-30"
+                        "date": "2025-06-01"
                       },
                       {
                         "position": "BN"
@@ -1562,7 +1562,7 @@
                     "selected_position": [
                       {
                         "coverage_type": "date",
-                        "date": "2025-05-30"
+                        "date": "2025-06-01"
                       },
                       {
                         "position": "BN"
@@ -1684,7 +1684,7 @@
                     "selected_position": [
                       {
                         "coverage_type": "date",
-                        "date": "2025-05-30"
+                        "date": "2025-06-01"
                       },
                       {
                         "position": "BN"
@@ -1702,7 +1702,7 @@
         }
       }
     ],
-    "time": "45.217037200928ms",
+    "time": "48.220157623291ms",
     "copyright": "Certain Data by Sportradar, Stats Perform and Rotowire",
     "refresh_rate": "60"
   }

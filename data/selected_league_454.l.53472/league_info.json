@@ -431,7 +431,7 @@
           ]
         }
       ],
-      "time": "35.226821899414ms",
+      "time": "35.394906997681ms",
       "copyright": "Certain Data by Sportradar, Stats Perform and Rotowire",
       "refresh_rate": "60"
     }
@@ -2959,7 +2959,7 @@
           ]
         }
       ],
-      "time": "90.651988983154ms",
+      "time": "79.158067703247ms",
       "copyright": "Certain Data by Sportradar, Stats Perform and Rotowire",
       "refresh_rate": "60"
     }
@@ -4658,13 +4658,13 @@
           }
         }
       ],
-      "time": "85.865020751953ms",
+      "time": "64.831972122192ms",
       "copyright": "Certain Data by Sportradar, Stats Perform and Rotowire",
       "refresh_rate": "60"
     }
   },
   "metadata": {
-    "fetched_at": "2025-05-30T22:52:00.295127",
+    "fetched_at": "2025-06-01T18:07:12.641665",
     "league_key": "454.l.53472"
   }
 }

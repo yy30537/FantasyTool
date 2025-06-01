@@ -1,6 +1,6 @@
-# Yahoo Fantasy Sports 数据获取和管理工具
+# Yahoo Fantasy Sports 数据获取工具
 
-一个完整的Yahoo Fantasy Sports数据获取、处理和数据库管理系统，支持获取游戏、联盟、团队、球员等各类数据，并提供优化的存储和查询功能。
+一个完整的Yahoo Fantasy Sports数据获取系统，支持获取联盟、团队、球员和交易等数据，并将数据存储到结构化的数据库中。
 
 ## 🚀 快速开始
 
@@ -13,323 +13,211 @@ python3 -m venv venv
 # 激活虚拟环境 (Linux/macOS)
 source venv/bin/activate
 
-# 安装Python依赖
-pip install -r requirements.txt
-
-# 确保安装cryptography库（用于HTTPS支持）
-pip install cryptography
-```
-
-### 2. Node.js和Prisma设置（可选，用于数据库查询）
-
-```bash
-# 初始化Node.js项目
-npm init -y
-npm install prisma typescript ts-node @prisma/client
-npm install -D @types/node
-
-# 初始化Prisma
-npx prisma init
-
 # 安装依赖
-npm install
-
-# 生成Prisma客户端
-npx prisma generate
-
-# 运行查询脚本查看数据
-npm run query
+pip install -r requirements.txt
 ```
 
-### 3. 配置文件
+### 2. 数据库配置
 
-- 创建 `.env` 文件存储数据库连接信息
-- 配置Yahoo API认证信息（通过 `app.py` 完成OAuth授权）
+创建 `.env` 文件：
+```env
+DB_USER=fantasy_user
+DB_PASSWORD=fantasyPassword
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=fantasy_db
+```
 
-## 📊 数据获取流程
-
-### 基础数据获取
+### 3. Yahoo API授权
 
 ```bash
-# 🎯 推荐：获取完整的数据库就绪数据（样本）
-python3 fetch_fantasy_data.py --sample-database-ready
-
-# 获取完整的数据库就绪数据（所有联盟）
-python3 fetch_fantasy_data.py --database-ready
-
-# 获取优化存储的完整数据（推荐用于生产）
-python3 fetch_fantasy_data.py --sample-optimized-data
-```
-
-### 分步骤数据获取
-
-```bash
-# 1. 获取游戏数据
-python3 fetch_fantasy_data.py --games
-
-# 2. 获取联盟基本数据
-python3 fetch_fantasy_data.py --leagues
-
-# 3. 获取联盟详细数据（设置、排名、记分板）
-python3 fetch_fantasy_data.py --league-details
-
-# 4. 获取团队数据
-python3 fetch_fantasy_data.py --teams
-
-# 5. 获取团队球员名单数据
-python3 fetch_fantasy_data.py --team-rosters          # 所有团队
-python3 fetch_fantasy_data.py --sample-rosters        # 样本数据
-
-# 6. 获取球员数据（基本信息 + 统计数据）
-python3 fetch_fantasy_data.py --players-data          # 完整数据
-python3 fetch_fantasy_data.py --sample-players-data   # 样本数据
-```
-
-### 高级数据管理
-
-```bash
-# 创建统一球员数据库（去重复）
-python3 fetch_fantasy_data.py --create-unified-db
-python3 fetch_fantasy_data.py --sample-unified-db
-
-# 为每个联盟创建独立数据库
-python3 fetch_fantasy_data.py --league-unified-dbs
-python3 fetch_fantasy_data.py --sample-league-unified-dbs
-
-# 数据分析和概览
-python3 fetch_fantasy_data.py --overview
-python3 fetch_fantasy_data.py --extract-keys
-```
-
-### 单独获取特定数据
-
-```bash
-# 获取特定游戏的联盟数据
-python3 fetch_fantasy_data.py --game-key 364
-
-# 获取特定联盟的详细数据
-python3 fetch_fantasy_data.py --league-key 364.l.15712
-
-# 获取特定联盟的团队数据
-python3 fetch_fantasy_data.py --league-teams 364.l.15712
-
-# 获取特定团队的球员名单
-python3 fetch_fantasy_data.py --team-key 364.l.15712.t.1
-
-# 获取特定联盟的球员数据
-python3 fetch_fantasy_data.py --league-players-key 364.l.15712 --status A
-
-# 获取特定联盟的球员统计数据
-python3 fetch_fantasy_data.py --league-stats 364.l.15712
-```
-
-### 球员数据参数
-
-```bash
-# 按位置过滤球员
-python3 fetch_fantasy_data.py --league-players-key 364.l.15712 --position QB
-
-# 按状态过滤球员
-python3 fetch_fantasy_data.py --league-players-key 364.l.15712 --status FA  # 自由球员
-
-# NFL游戏按周次获取数据
-python3 fetch_fantasy_data.py --team-key 364.l.15712.t.1 --week 1
-
-# MLB/NBA/NHL按日期获取数据
-python3 fetch_fantasy_data.py --team-key 364.l.15712.t.1 --date 2023-10-15
-```
-
-## 🗂️ 数据存储结构
-
-### 优化存储结构（推荐）
-
-```
-data/
-├── games/                      # 游戏数据
-│   └── games_data.json
-├── leagues/                    # 联盟基本数据
-│   ├── league_data_*.json
-│   └── all_leagues_data.json
-├── league_settings/            # 联盟设置
-├── league_standings/           # 联盟排名
-├── league_scoreboards/         # 联盟记分板
-├── teams/                      # 团队数据
-├── team_rosters/              # 团队球员名单（按联盟分类）
-│   └── {league_key}/
-│       └── team_roster_*.json
-├── players/                   # 球员基本信息（按联盟分类）
-│   └── {league_key}/
-│       ├── players_basic_info.json
-│       └── unified_database.json
-└── player_stats/             # 球员统计数据（按联盟分类）
-    └── {league_key}/
-        ├── batch_001_season.json
-        ├── batch_002_season.json
-        └── batches_index.json
-```
-
-### 数据优化特性
-
-✨ **优化功能**：
-- **数据分离**：球员基本信息和统计数据分别存储，避免重复
-- **按联盟分类**：自动为每个联盟创建子目录管理
-- **批次管理**：统计数据按批次存储，便于处理大量数据
-- **数据压缩**：去除冗余信息，实现约70-80%的数据压缩
-- **索引文件**：提供批次索引和元数据信息
-
-## 🗄️ 数据库管理
-
-### 初始化和重建数据库
-
-```bash
-# 初始化数据库
-python3 load_db.py --init-db
-
-# 重新创建数据库表并加载数据
-python3 load_db.py --recreate-db
-```
-
-### 加载数据到数据库
-
-```bash
-# 加载所有数据
-python3 load_db.py
-
-# 分类加载数据
-python3 load_db.py --games                # 只加载游戏数据
-python3 load_db.py --leagues              # 只加载联盟数据
-python3 load_db.py --teams                # 只加载团队数据
-python3 load_db.py --league-settings      # 只加载联盟设置数据
-python3 load_db.py --league-standings     # 只加载联盟排名数据
-python3 load_db.py --league-scoreboards   # 只加载联盟记分板数据
-python3 load_db.py --update-user-games    # 更新用户游戏关联
-```
-
-### 数据验证
-
-```bash
-# 验证数据库数据完整性
-python3 verify_db.py
-```
-
-## 🌐 Web界面
-
-启动Web服务器查看数据：
-
-```bash
-# 启动Web服务器
+# 启动OAuth授权流程
 python3 app.py
 ```
 
-访问 http://localhost:3000 查看：
-- 主页：显示游戏和用户信息
-- 游戏详情页：展示游戏和关联联盟
-- API端点：
-  - `/api/games` - 游戏数据
-  - `/api/leagues` - 联盟数据  
-  - `/api/teams` - 团队数据
+访问 `http://localhost:5000`，完成Yahoo账号授权，获取API访问令牌。
 
-## 🔧 工具功能
+## 📊 数据获取
 
-### 交互式模式
+### 单联盟完整数据获取
 
 ```bash
-# 启动交互式菜单
-python3 fetch_fantasy_data.py
+# 获取完整的联盟数据（推荐方式）
+python3 single_league_fetcher.py --complete
+
+# 自定义请求间隔
+python3 single_league_fetcher.py --complete --delay 3
 ```
 
-提供20个选项的交互式菜单，包括：
-1. 获取完整数据
-2. 获取游戏数据
-3. 获取联盟基本数据
-4. 获取联盟详细数据
-5. 获取团队数据
-6. 获取所有团队球员名单数据
-7. 获取团队球员名单数据（样本）
-8. 获取联盟球员数据（样本）
-9. 获取完整的球员数据
-10. 获取球员数据样本
-11. 从roster数据中提取球员键
-12. 为球员统计数据添加元数据信息
-13. 创建统一的球员数据库（去重复）
-14. 创建统一的球员数据库样本
-15. 获取完整的数据库就绪数据
-16. 获取数据库就绪数据样本
-17. 显示数据概览和统计信息
-18. 为每个联盟创建独立的统一数据库
-19. 为样本联盟创建独立的统一数据库
-20. 获取优化存储的完整数据
+## 🗄️ 数据库模型
 
-### 数据分析工具
+本系统使用PostgreSQL数据库存储Yahoo Fantasy数据。数据库架构包含以下核心表：
+
+### 核心表结构
+- **Games** - 游戏基本信息（NBA、NHL等）
+- **Leagues** - 联盟信息
+- **League_Settings** - 联盟详细设置
+- **Teams** - 团队信息
+- **Managers** - 团队管理员
+- **Players** - 球员信息（静态+动态）
+- **Player_Stats** - 球员统计数据
+- **Rosters** - 团队名单
+- **Transactions** - 交易记录
+- **Transaction_Players** - 交易球员详情
+
+详细的数据库架构说明请参考 [DATABASE_SCHEMA.md](DATABASE_SCHEMA.md)
+
+### 创建数据库表
 
 ```bash
-# 显示数据概览和统计信息
-python3 fetch_fantasy_data.py --overview
-
-# 提取并显示所有游戏键
-python3 fetch_fantasy_data.py --extract-keys
-
-# 整合联盟数据到汇总文件
-python3 fetch_fantasy_data.py --consolidate
-
-# 从roster数据中提取球员键
-python3 fetch_fantasy_data.py --extract-player-keys
-
-# 为球员统计数据添加元数据信息
-python3 fetch_fantasy_data.py --enrich-player-stats
+# 使用model.py创建所有数据库表
+python3 model.py
 ```
 
-### 请求控制
+### 数据导入
 
 ```bash
-# 设置请求间隔时间（避免API限制）
-python3 fetch_fantasy_data.py --delay 3 --complete
+# 将JSON数据导入到数据库
+python3 data_importer.py
 ```
 
-## 📋 球员状态和位置代码
+该脚本会自动：
+1. 创建数据库表（如果不存在）
+2. 导入游戏和联盟基本信息
+3. 导入选定联盟的详细数据（团队、球员、统计、名单、交易等）
+4. 处理数据重复和错误情况
 
-### 球员状态代码
-- `A` - 所有球员
-- `FA` - 自由球员 (Free Agents)
-- `W` - 豁免球员 (Waivers)
-- `T` - 已被选中 (Taken)
-- `K` - 保留球员 (Keepers)
+## 🗂️ 数据文件结构
 
-### 常见位置代码
-- **NFL**: QB, RB, WR, TE, K, DEF
-- **NBA**: PG, SG, SF, PF, C
-- **MLB**: C, 1B, 2B, 3B, SS, OF, SP, RP
-- **NHL**: C, LW, RW, D, G
+成功获取数据后，文件将按以下结构存储：
 
-## 🔍 数据类型说明
+```
+data/
+├── games_data.json                    # 游戏基本信息
+├── all_leagues_data.json             # 所有联盟数据
+└── selected_league_{league_key}/     # 选定联盟的完整数据
+    ├── league_info.json              # 联盟详细信息（包含设置、排名、记分板）
+    ├── teams.json                    # 团队基本信息
+    ├── rosters/                      # 团队球员名单
+    │   ├── team_roster_454.l.53472.t.1.json
+    │   ├── team_roster_454.l.53472.t.2.json
+    │   └── ...                       # 每个团队一个文件
+    ├── players/                      # 球员数据
+    │   ├── static_players.json      # 球员静态信息（ID、姓名）
+    │   ├── dynamic_players.json     # 球员动态信息（团队、位置、状态）
+    │   └── player_stats.json        # 球员统计数据
+    └── transactions/                 # 交易数据
+        └── all_transactions.json    # 所有交易记录
+```
 
-### 游戏类型过滤
-系统自动过滤只获取 `type` 为 `"full"` 的游戏数据，跳过其他类型的游戏。
+## 📈 数据查询示例
 
-### 统计数据类型
-- `season` - 赛季统计
-- `week` - 周统计（NFL）
-- `date` - 日期统计（MLB/NBA/NHL）
+### 查询联盟团队及管理员
+
+```sql
+SELECT t.name as team_name, m.nickname as manager_nickname, m.felo_tier
+FROM teams t
+JOIN managers m ON t.team_key = m.team_key
+WHERE t.league_key = '454.l.53472'
+ORDER BY t.team_id;
+```
+
+### 查询球员统计数据
+
+```sql
+SELECT p.full_name, p.current_team_abbr, ps.stat_id, ps.value
+FROM players p
+JOIN player_stats ps ON p.player_key = ps.player_key
+WHERE p.league_key = '454.l.53472'
+AND ps.stat_id IN ('5', '8', '12')  -- FG%, FT%, Points
+ORDER BY p.full_name;
+```
+
+### 查询团队当前名单
+
+```sql
+SELECT t.name as team_name, p.full_name, p.display_position, r.selected_position
+FROM teams t
+JOIN rosters r ON t.team_key = r.team_key
+JOIN players p ON r.player_key = p.player_key
+WHERE t.league_key = '454.l.53472'
+AND r.coverage_date = '2025-06-01'
+ORDER BY t.team_id, r.selected_position;
+```
+
+### 查询最近交易记录
+
+```sql
+SELECT tr.timestamp, tr.type, tp.player_name, tp.transaction_type, 
+       tp.source_team_name, tp.destination_team_name
+FROM transactions tr
+JOIN transaction_players tp ON tr.transaction_key = tp.transaction_key
+WHERE tr.league_key = '454.l.53472'
+ORDER BY tr.timestamp DESC
+LIMIT 20;
+```
+
+## 🔧 主要功能
+
+### 数据获取功能
+- ✅ Yahoo API OAuth 2.0 授权
+- ✅ 游戏信息获取
+- ✅ 联盟信息获取
+- ✅ 团队详细信息获取
+- ✅ 球员静态信息获取（姓名、ID）
+- ✅ 球员动态信息获取（当前队伍、位置、状态）
+- ✅ 球员统计数据获取
+- ✅ 团队名单获取
+- ✅ 交易记录获取（完整历史）
+- ✅ 联盟设置和规则获取
+
+### 数据管理功能
+- ✅ 结构化数据库存储
+- ✅ 数据去重和错误处理
+- ✅ 增量数据更新支持
+- ✅ 完整的数据关系映射
+- ✅ 查询优化和索引
+
+## 📁 项目结构
+
+```
+FantasyTool/
+├── app.py                    # OAuth授权服务器
+├── single_league_fetcher.py  # 主要数据获取脚本
+├── model.py                  # 数据库模型定义
+├── data_importer.py          # JSON数据导入脚本
+├── requirements.txt          # Python依赖
+├── README.md                 # 项目说明
+├── DATABASE_SCHEMA.md        # 数据库架构文档
+├── data/                     # 数据存储目录
+├── tokens/                   # OAuth令牌存储
+└── yahoo-fantasy-sports-API-docs/  # API文档
+```
 
 ## 🛠️ 技术栈
 
-- **后端**: Python, SQLAlchemy
-- **数据库**: PostgreSQL
-- **ORM**: Prisma (TypeScript)
-- **Web框架**: Express.js
-- **前端**: EJS模板
-- **API**: Yahoo Fantasy Sports API
+- **Python 3.12+** - 主要编程语言
+- **Flask** - OAuth授权服务器
+- **SQLAlchemy** - ORM和数据库操作
+- **PostgreSQL** - 主数据库
+- **Requests** - HTTP客户端
+- **Yahoo Fantasy Sports API** - 数据源
+
+## 🔗 相关文档
+
+- [Yahoo OAuth Guide](yahoo-fantasy-sports-API-docs/OAuth/Yahoo-OAuth-Guide.md) - Yahoo API授权详细说明
+- [DATABASE_SCHEMA.md](DATABASE_SCHEMA.md) - 完整数据库架构文档
 
 ## 📝 注意事项
 
-1. **API限制**: 建议设置适当的请求间隔（默认2秒）避免触发API限制
-2. **数据量**: 完整数据获取可能需要较长时间，建议先使用样本模式测试
-3. **存储空间**: 完整数据可能占用较大存储空间，优化模式可减少70-80%
-4. **认证**: 首次使用需要通过 `app.py` 完成Yahoo OAuth授权
+1. **API限制**: Yahoo Fantasy API有请求频率限制，建议在请求间添加适当延迟
+2. **数据量**: 完整数据获取可能需要较长时间，特别是大联盟的交易数据
+3. **数据库**: 确保PostgreSQL服务正在运行并正确配置
+4. **令牌管理**: OAuth令牌有有效期，需要定期刷新
 
 ## 🤝 贡献
 
-欢迎提交Issue和Pull Request来改进这个项目。
+欢迎提交Issue和Pull Request来改进这个项目！
 
 ## �� 许可证
 

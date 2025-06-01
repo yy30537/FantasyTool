@@ -81,7 +81,7 @@
       {
         "roster": {
           "coverage_type": "date",
-          "date": "2025-05-30",
+          "date": "2025-06-01",
           "is_prescoring": 0,
           "is_editable": 0,
           "0": {
@@ -199,7 +199,7 @@
                     "selected_position": [
                       {
                         "coverage_type": "date",
-                        "date": "2025-05-30"
+                        "date": "2025-06-01"
                       },
                       {
                         "position": "PG"
@@ -334,7 +334,7 @@
                     "selected_position": [
                       {
                         "coverage_type": "date",
-                        "date": "2025-05-30"
+                        "date": "2025-06-01"
                       },
                       {
                         "position": "SG"
@@ -454,16 +454,18 @@
                     {
                       "has_player_notes": 1
                     },
-                    [],
                     {
-                      "player_notes_last_timestamp": 1748411628
+                      "has_recent_player_notes": 1
+                    },
+                    {
+                      "player_notes_last_timestamp": 1748790768
                     }
                   ],
                   {
                     "selected_position": [
                       {
                         "coverage_type": "date",
-                        "date": "2025-05-30"
+                        "date": "2025-06-01"
                       },
                       {
                         "position": "G"
@@ -601,7 +603,7 @@
                     "selected_position": [
                       {
                         "coverage_type": "date",
-                        "date": "2025-05-30"
+                        "date": "2025-06-01"
                       },
                       {
                         "position": "SF"
@@ -723,7 +725,7 @@
                     "selected_position": [
                       {
                         "coverage_type": "date",
-                        "date": "2025-05-30"
+                        "date": "2025-06-01"
                       },
                       {
                         "position": "PF"
@@ -840,9 +842,7 @@
                     {
                       "has_player_notes": 1
                     },
-                    {
-                      "has_recent_player_notes": 1
-                    },
+                    [],
                     {
                       "player_notes_last_timestamp": 1748531262
                     }
@@ -851,7 +851,7 @@
                     "selected_position": [
                       {
                         "coverage_type": "date",
-                        "date": "2025-05-30"
+                        "date": "2025-06-01"
                       },
                       {
                         "position": "F"
@@ -973,7 +973,7 @@
                     "selected_position": [
                       {
                         "coverage_type": "date",
-                        "date": "2025-05-30"
+                        "date": "2025-06-01"
                       },
                       {
                         "position": "C"
@@ -1092,7 +1092,7 @@
                     "selected_position": [
                       {
                         "coverage_type": "date",
-                        "date": "2025-05-30"
+                        "date": "2025-06-01"
                       },
                       {
                         "position": "C"
@@ -1214,7 +1214,7 @@
                     "selected_position": [
                       {
                         "coverage_type": "date",
-                        "date": "2025-05-30"
+                        "date": "2025-06-01"
                       },
                       {
                         "position": "Util"
@@ -1339,7 +1339,7 @@
                     "selected_position": [
                       {
                         "coverage_type": "date",
-                        "date": "2025-05-30"
+                        "date": "2025-06-01"
                       },
                       {
                         "position": "Util"
@@ -1461,7 +1461,7 @@
                     "selected_position": [
                       {
                         "coverage_type": "date",
-                        "date": "2025-05-30"
+                        "date": "2025-06-01"
                       },
                       {
                         "position": "BN"
@@ -1586,7 +1586,7 @@
                     "selected_position": [
                       {
                         "coverage_type": "date",
-                        "date": "2025-05-30"
+                        "date": "2025-06-01"
                       },
                       {
                         "position": "BN"
@@ -1709,7 +1709,7 @@
                     "selected_position": [
                       {
                         "coverage_type": "date",
-                        "date": "2025-05-30"
+                        "date": "2025-06-01"
                       },
                       {
                         "position": "BN"
@@ -1847,7 +1847,7 @@
                     "selected_position": [
                       {
                         "coverage_type": "date",
-                        "date": "2025-05-30"
+                        "date": "2025-06-01"
                       },
                       {
                         "position": "IL"
@@ -1982,7 +1982,7 @@
                     "selected_position": [
                       {
                         "coverage_type": "date",
-                        "date": "2025-05-30"
+                        "date": "2025-06-01"
                       },
                       {
                         "position": "IL+"
@@ -2000,7 +2000,7 @@
         }
       }
     ],
-    "time": "74.300050735474ms",
+    "time": "48.197031021118ms",
     "copyright": "Certain Data by Sportradar, Stats Perform and Rotowire",
     "refresh_rate": "60"
   }

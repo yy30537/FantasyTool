@@ -81,7 +81,7 @@
       {
         "roster": {
           "coverage_type": "date",
-          "date": "2025-05-30",
+          "date": "2025-06-01",
           "is_prescoring": 0,
           "is_editable": 0,
           "0": {
@@ -199,7 +199,7 @@
                     "selected_position": [
                       {
                         "coverage_type": "date",
-                        "date": "2025-05-30"
+                        "date": "2025-06-01"
                       },
                       {
                         "position": "PG"
@@ -324,7 +324,7 @@
                     "selected_position": [
                       {
                         "coverage_type": "date",
-                        "date": "2025-05-30"
+                        "date": "2025-06-01"
                       },
                       {
                         "position": "SG"
@@ -358,8 +358,8 @@
                       "url": "https://sports.yahoo.com/nba/players/4390"
                     },
                     {
-                      "status": "O",
-                      "status_full": "Out (short-term injury)"
+                      "status": "INJ",
+                      "status_full": "Injured (IL-eligible)"
                     },
                     {
                       "injury_note": "Hand"
@@ -423,6 +423,9 @@
                           "position": "Util"
                         },
                         {
+                          "position": "IL"
+                        },
+                        {
                           "position": "IL+"
                         }
                       ]
@@ -460,7 +463,7 @@
                     "selected_position": [
                       {
                         "coverage_type": "date",
-                        "date": "2025-05-30"
+                        "date": "2025-06-01"
                       },
                       {
                         "position": "G"
@@ -595,7 +598,7 @@
                     "selected_position": [
                       {
                         "coverage_type": "date",
-                        "date": "2025-05-30"
+                        "date": "2025-06-01"
                       },
                       {
                         "position": "SF"
@@ -721,7 +724,7 @@
                     "selected_position": [
                       {
                         "coverage_type": "date",
-                        "date": "2025-05-30"
+                        "date": "2025-06-01"
                       },
                       {
                         "position": "PF"
@@ -843,7 +846,7 @@
                     "selected_position": [
                       {
                         "coverage_type": "date",
-                        "date": "2025-05-30"
+                        "date": "2025-06-01"
                       },
                       {
                         "position": "F"
@@ -969,7 +972,7 @@
                     "selected_position": [
                       {
                         "coverage_type": "date",
-                        "date": "2025-05-30"
+                        "date": "2025-06-01"
                       },
                       {
                         "position": "C"
@@ -1091,7 +1094,7 @@
                     "selected_position": [
                       {
                         "coverage_type": "date",
-                        "date": "2025-05-30"
+                        "date": "2025-06-01"
                       },
                       {
                         "position": "C"
@@ -1233,7 +1236,7 @@
                     "selected_position": [
                       {
                         "coverage_type": "date",
-                        "date": "2025-05-30"
+                        "date": "2025-06-01"
                       },
                       {
                         "position": "Util"
@@ -1358,7 +1361,7 @@
                     "selected_position": [
                       {
                         "coverage_type": "date",
-                        "date": "2025-05-30"
+                        "date": "2025-06-01"
                       },
                       {
                         "position": "Util"
@@ -1478,9 +1481,7 @@
                     {
                       "has_player_notes": 1
                     },
-                    {
-                      "has_recent_player_notes": 1
-                    },
+                    [],
                     {
                       "player_notes_last_timestamp": 1748532340
                     }
@@ -1489,7 +1490,7 @@
                     "selected_position": [
                       {
                         "coverage_type": "date",
-                        "date": "2025-05-30"
+                        "date": "2025-06-01"
                       },
                       {
                         "position": "BN"
@@ -1611,7 +1612,7 @@
                     "selected_position": [
                       {
                         "coverage_type": "date",
-                        "date": "2025-05-30"
+                        "date": "2025-06-01"
                       },
                       {
                         "position": "BN"
@@ -1746,7 +1747,7 @@
                     "selected_position": [
                       {
                         "coverage_type": "date",
-                        "date": "2025-05-30"
+                        "date": "2025-06-01"
                       },
                       {
                         "position": "BN"
@@ -1878,7 +1879,7 @@
                     "selected_position": [
                       {
                         "coverage_type": "date",
-                        "date": "2025-05-30"
+                        "date": "2025-06-01"
                       },
                       {
                         "position": "IL+"
@@ -1896,7 +1897,7 @@
         }
       }
     ],
-    "time": "64.888954162598ms",
+    "time": "58.367013931274ms",
     "copyright": "Certain Data by Sportradar, Stats Perform and Rotowire",
     "refresh_rate": "60"
   }

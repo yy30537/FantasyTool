@@ -53,7 +53,8 @@ def create_league_directory(league_key):
     directories = {
         'base': league_dir,
         'rosters': league_dir / "rosters",
-        'players': league_dir / "players"
+        'players': league_dir / "players",
+        'transactions': league_dir / "transactions"
     }
     
     for dir_path in directories.values():
@@ -77,7 +78,8 @@ def get_league_directory(league_key):
     return {
         'base': league_dir,
         'rosters': league_dir / "rosters",
-        'players': league_dir / "players"
+        'players': league_dir / "players",
+        'transactions': league_dir / "transactions"
     }
 
 # 在模块加载时创建基础目录
@@ -85,6 +87,134 @@ ensure_data_directories()
 
 # 令牌文件路径
 DEFAULT_TOKEN_FILE = TOKENS_DIR / "yahoo_token.token"
+
+def create_transaction_team_directories(league_dirs, teams_data):
+    """为联盟中的每个团队创建transaction子目录
+    
+    Args:
+        league_dirs: 联盟目录字典
+        teams_data: 团队数据
+    
+    Returns:
+        dict: team_key -> 目录路径的映射
+    """
+    transaction_base_dir = league_dirs['transactions']
+    team_directories = {}
+    
+    # 提取团队信息
+    team_keys = extract_team_keys_from_data(teams_data)
+    team_names = extract_team_names_from_data(teams_data)
+    
+    for team_key in team_keys:
+        # 获取团队名称，用于创建更友好的目录名
+        team_name = team_names.get(team_key, f"team_{team_key.split('.')[-1]}")
+        safe_team_name = "".join(c for c in team_name if c.isalnum() or c in (' ', '-', '_')).strip()
+        safe_team_name = safe_team_name.replace(' ', '_')
+        
+        team_dir = transaction_base_dir / f"{safe_team_name}_{team_key.split('.')[-1]}"
+        
+        if not team_dir.exists():
+            team_dir.mkdir(parents=True, exist_ok=True)
+            print(f"创建团队transaction目录: {team_dir}")
+        
+        team_directories[team_key] = team_dir
+    
+    return team_directories
+
+def extract_team_keys_from_data(teams_data):
+    """从团队数据中提取团队键列表
+    
+    Args:
+        teams_data: Yahoo API返回的团队数据
+    
+    Returns:
+        list: 团队键列表
+    """
+    team_keys = []
+    
+    try:
+        fantasy_content = teams_data["fantasy_content"]
+        league_data = fantasy_content["league"]
+        
+        teams_container = None
+        if isinstance(league_data, list) and len(league_data) > 1:
+            for item in league_data:
+                if isinstance(item, dict) and "teams" in item:
+                    teams_container = item["teams"]
+                    break
+        
+        if teams_container:
+            teams_count = int(teams_container.get("count", 0))
+            for i in range(teams_count):
+                str_index = str(i)
+                if str_index in teams_container:
+                    team_container = teams_container[str_index]
+                    if "team" in team_container:
+                        team_data = team_container["team"]
+                        if (isinstance(team_data, list) and 
+                            len(team_data) > 0 and 
+                            isinstance(team_data[0], list) and 
+                            len(team_data[0]) > 0):
+                            
+                            team_key = team_data[0][0].get("team_key")
+                            if team_key:
+                                team_keys.append(team_key)
+    
+    except Exception as e:
+        print(f"提取团队键时出错: {e}")
+    
+    return team_keys
+
+def extract_team_names_from_data(teams_data):
+    """从团队数据中提取团队名称映射
+    
+    Args:
+        teams_data: Yahoo API返回的团队数据
+    
+    Returns:
+        dict: team_key -> team_name的映射
+    """
+    team_names = {}
+    
+    try:
+        fantasy_content = teams_data["fantasy_content"]
+        league_data = fantasy_content["league"]
+        
+        teams_container = None
+        if isinstance(league_data, list) and len(league_data) > 1:
+            for item in league_data:
+                if isinstance(item, dict) and "teams" in item:
+                    teams_container = item["teams"]
+                    break
+        
+        if teams_container:
+            teams_count = int(teams_container.get("count", 0))
+            for i in range(teams_count):
+                str_index = str(i)
+                if str_index in teams_container:
+                    team_container = teams_container[str_index]
+                    if "team" in team_container:
+                        team_data = team_container["team"]
+                        if (isinstance(team_data, list) and 
+                            len(team_data) > 0 and 
+                            isinstance(team_data[0], list)):
+                            
+                            # 合并团队基本信息
+                            team_info = {}
+                            for info_item in team_data[0]:
+                                if isinstance(info_item, dict):
+                                    team_info.update(info_item)
+                            
+                            team_key = team_info.get("team_key")
+                            team_name = team_info.get("name", "Unknown Team")
+                            
+                            if team_key:
+                                team_names[team_key] = team_name
+    
+    except Exception as e:
+        print(f"提取团队名称时出错: {e}")
+    
+    return team_names
 
 def load_token():
     """从文件加载令牌"""
@@ -362,6 +492,9 @@ def get_league_data_overview(league_key):
     # 检查rosters目录
     roster_files = list(league_dirs['rosters'].glob("*.json")) if league_dirs['rosters'].exists() else []
     
+    # 检查transactions目录
+    transaction_files = list(league_dirs['transactions'].glob("**/*.json")) if league_dirs['transactions'].exists() else []
+    
     for file_type, file_path in file_checks.items():
         if file_path.exists():
             size = file_path.stat().st_size
@@ -381,7 +514,15 @@ def get_league_data_overview(league_key):
         'total_size_mb': sum(f.stat().st_size for f in roster_files) / 1024 / 1024 if roster_files else 0
     }
     
+    # 添加transactions信息
+    overview['files']['transactions'] = {
+        'exists': len(transaction_files) > 0,
+        'count': len(transaction_files),
+        'total_size_mb': sum(f.stat().st_size for f in transaction_files) / 1024 / 1024 if transaction_files else 0
+    }
+    
     overview['total_size'] += sum(f.stat().st_size for f in roster_files)
+    overview['total_size'] += sum(f.stat().st_size for f in transaction_files)
     overview['total_size_mb'] = overview['total_size'] / 1024 / 1024
     
     return overview
@@ -408,6 +549,9 @@ def print_data_overview(league_key=None):
         if overview['data_exists']:
             for file_type, file_info in overview['files'].items():
                 if file_type == 'rosters':
+                    status = "✓" if file_info['exists'] else "✗"
+                    print(f"{status} {file_type}: {file_info['count']} 个文件, {file_info['total_size_mb']:.1f} MB")
+                elif file_type == 'transactions':
                     status = "✓" if file_info['exists'] else "✗"
                     print(f"{status} {file_type}: {file_info['count']} 个文件, {file_info['total_size_mb']:.1f} MB")
                 else:
