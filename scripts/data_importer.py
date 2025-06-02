@@ -30,15 +30,13 @@ class FantasyDataImporter:
             with open(file_path, 'r', encoding='utf-8') as f:
                 return json.load(f)
         except Exception as e:
-            print(f"加载文件 {file_path} 时出错: {e}")
+            print(f"加载文件失败 {file_path}: {e}")
             return None
     
     def import_games_data(self):
         """导入游戏数据"""
-        print("导入游戏数据...")
         games_file = os.path.join(self.data_dir, "games_data.json")
         data = self.load_json_file(games_file)
-        
         if not data:
             return
         
@@ -48,13 +46,11 @@ class FantasyDataImporter:
             if key == "count":
                 continue
                 
-            # 处理不同的数据结构
             if isinstance(game_data["game"], list):
                 game_info = game_data["game"][0]
             else:
                 game_info = game_data["game"]
             
-            # 检查游戏是否已存在
             existing_game = self.session.query(Game).filter_by(game_key=game_info["game_key"]).first()
             if existing_game:
                 continue
@@ -78,20 +74,16 @@ class FantasyDataImporter:
             self.session.add(game)
         
         self.session.commit()
-        print("游戏数据导入完成")
     
     def import_leagues_data(self):
         """导入联盟数据"""
-        print("导入联盟数据...")
         leagues_file = os.path.join(self.data_dir, "all_leagues_data.json")
         data = self.load_json_file(leagues_file)
-        
         if not data:
             return
         
         for game_key, leagues in data.items():
             for league_info in leagues:
-                # 检查联盟是否已存在
                 existing_league = self.session.query(League).filter_by(league_key=league_info["league_key"]).first()
                 if existing_league:
                     continue
@@ -132,38 +124,23 @@ class FantasyDataImporter:
                 self.session.add(league)
         
         self.session.commit()
-        print("联盟数据导入完成")
     
     def import_league_details(self, league_key):
         """导入指定联盟的详细数据"""
-        print(f"导入联盟 {league_key} 的详细数据...")
         league_dir = os.path.join(self.data_dir, f"selected_league_{league_key}")
-        
         if not os.path.exists(league_dir):
             print(f"联盟目录不存在: {league_dir}")
             return
         
-        # 导入联盟设置
         self.import_league_settings(league_key, league_dir)
-        
-        # 导入团队数据
         self.import_teams_data(league_key, league_dir)
-        
-        # 导入球员数据
         self.import_players_data(league_key, league_dir)
-        
-        # 导入球员统计数据
         self.import_player_stats(league_key, league_dir)
-        
-        # 导入名单数据
         self.import_rosters_data(league_key, league_dir)
-        
-        # 导入交易数据
         self.import_transactions_data(league_key, league_dir)
     
     def import_league_settings(self, league_key, league_dir):
         """导入联盟设置"""
-        print("  导入联盟设置...")
         league_info_file = os.path.join(league_dir, "league_info.json")
         data = self.load_json_file(league_info_file)
         
@@ -172,7 +149,6 @@ class FantasyDataImporter:
         
         settings_data = data["settings"]["fantasy_content"]["league"][1]["settings"][0]
         
-        # 检查是否已存在
         existing = self.session.query(LeagueSettings).filter_by(league_key=league_key).first()
         if existing:
             return
@@ -215,7 +191,6 @@ class FantasyDataImporter:
     
     def import_teams_data(self, league_key, league_dir):
         """导入团队数据"""
-        print("  导入团队数据...")
         teams_file = os.path.join(league_dir, "teams.json")
         data = self.load_json_file(teams_file)
         
@@ -230,7 +205,6 @@ class FantasyDataImporter:
             
             team_info = team_data["team"][0]
             
-            # 提取团队基本信息
             team_key = None
             team_id = None
             name = None
@@ -283,7 +257,6 @@ class FantasyDataImporter:
             if not team_key:
                 continue
             
-            # 检查团队是否已存在
             existing_team = self.session.query(Team).filter_by(team_key=team_key).first()
             if existing_team:
                 continue
@@ -307,7 +280,6 @@ class FantasyDataImporter:
             )
             self.session.add(team)
             
-            # 添加管理员
             for manager_data in managers_data:
                 manager_info = manager_data["manager"]
                 manager = Manager(
@@ -327,10 +299,8 @@ class FantasyDataImporter:
     
     def import_players_data(self, league_key, league_dir):
         """导入球员数据"""
-        print("  导入球员数据...")
         players_dir = os.path.join(league_dir, "players")
         
-        # 加载静态和动态球员数据
         static_file = os.path.join(players_dir, "static_players.json")
         dynamic_file = os.path.join(players_dir, "dynamic_players.json")
         
@@ -349,12 +319,10 @@ class FantasyDataImporter:
                 
                 player_key = dynamic_info["player_key"]
                 
-                # 检查球员是否已存在
                 existing_player = self.session.query(Player).filter_by(player_key=player_key).first()
                 if existing_player:
                     continue
                 
-                # 解析last_updated
                 last_updated = None
                 if "last_updated" in dynamic_info:
                     try:
@@ -391,7 +359,6 @@ class FantasyDataImporter:
     
     def import_player_stats(self, league_key, league_dir):
         """导入球员统计数据"""
-        print("  导入球员统计数据...")
         players_dir = os.path.join(league_dir, "players")
         stats_file = os.path.join(players_dir, "player_stats.json")
         
@@ -403,7 +370,6 @@ class FantasyDataImporter:
         
         for player_key, stats in player_stats.items():
             for stat_id, stat_data in stats.items():
-                # 检查统计数据是否已存在
                 existing_stat = self.session.query(PlayerStats).filter_by(
                     player_key=player_key, stat_id=stat_id
                 ).first()
@@ -421,7 +387,6 @@ class FantasyDataImporter:
     
     def import_rosters_data(self, league_key, league_dir):
         """导入名单数据"""
-        print("  导入名单数据...")
         rosters_dir = os.path.join(league_dir, "rosters")
         
         if not os.path.exists(rosters_dir):
@@ -440,7 +405,6 @@ class FantasyDataImporter:
             team_info = data["fantasy_content"]["team"][0]
             team_key = None
             
-            # 提取team_key
             for item in team_info:
                 if isinstance(item, dict) and "team_key" in item:
                     team_key = item["team_key"]
@@ -449,13 +413,11 @@ class FantasyDataImporter:
             if not team_key:
                 continue
             
-            # 修正roster数据访问路径
             roster_info = data["fantasy_content"]["team"][1]["roster"]
             coverage_date = roster_info["date"]
             is_prescoring = bool(roster_info["is_prescoring"])
             is_editable = bool(roster_info["is_editable"])
             
-            # 修正players数据访问路径，去掉不存在的"0"层级
             players_data = roster_info["0"]["players"]
             
             for key, player_data in players_data.items():
@@ -463,9 +425,8 @@ class FantasyDataImporter:
                     continue
                 
                 player_info = player_data["player"][0]
-                transaction_data = player_data["player"][1] if len(player_data["player"]) > 1 else {}
+                position_data = player_data["player"][1] if len(player_data["player"]) > 1 else {}
                 
-                # 提取球员信息
                 player_key = None
                 status = None
                 status_full = None
@@ -494,11 +455,9 @@ class FantasyDataImporter:
                         elif "eligible_positions_to_add" in item:
                             eligible_positions_to_add = item["eligible_positions_to_add"]
                 
-                # 修正从transaction_data中获取选择的位置的逻辑
-                if "selected_position" in transaction_data:
-                    selected_position_data = transaction_data["selected_position"]
+                if "selected_position" in position_data:
+                    selected_position_data = position_data["selected_position"]
                     if isinstance(selected_position_data, list):
-                        # 查找包含position字段的元素
                         for item in selected_position_data:
                             if isinstance(item, dict) and "position" in item:
                                 selected_position = item["position"]
@@ -509,7 +468,6 @@ class FantasyDataImporter:
                 if not player_key:
                     continue
                 
-                # 检查名单记录是否已存在
                 existing_roster = self.session.query(Roster).filter_by(
                     team_key=team_key, player_key=player_key, coverage_date=coverage_date
                 ).first()
@@ -537,7 +495,6 @@ class FantasyDataImporter:
     
     def import_transactions_data(self, league_key, league_dir):
         """导入交易数据"""
-        print("  导入交易数据...")
         transactions_dir = os.path.join(league_dir, "transactions")
         transactions_file = os.path.join(transactions_dir, "all_transactions.json")
         
@@ -550,37 +507,51 @@ class FantasyDataImporter:
         for transaction_data in transactions:
             transaction_key = transaction_data["transaction_key"]
             
-            # 检查交易是否已存在
             existing_transaction = self.session.query(Transaction).filter_by(transaction_key=transaction_key).first()
             if existing_transaction:
                 continue
             
-            # 检查是否包含players数据
             if "players" not in transaction_data:
-                print(f"    跳过缺少players数据的交易: {transaction_key}")
                 continue
+            
+            transaction_type = transaction_data["type"]
+            trader_team_key = trader_team_name = tradee_team_key = tradee_team_name = picks_data = None
+            
+            if transaction_type == "trade":
+                trader_team_key = transaction_data.get("trader_team_key")
+                trader_team_name = transaction_data.get("trader_team_name")
+                tradee_team_key = transaction_data.get("tradee_team_key")
+                tradee_team_name = transaction_data.get("tradee_team_name")
+                picks_data = transaction_data.get("picks")
             
             transaction = Transaction(
                 transaction_key=transaction_key,
                 transaction_id=transaction_data["transaction_id"],
                 league_key=league_key,
-                type=transaction_data["type"],
+                type=transaction_type,
                 status=transaction_data["status"],
                 timestamp=transaction_data["timestamp"],
+                trader_team_key=trader_team_key,
+                trader_team_name=trader_team_name,
+                tradee_team_key=tradee_team_key,
+                tradee_team_name=tradee_team_name,
+                picks_data=picks_data,
                 players_data=transaction_data["players"]
             )
             self.session.add(transaction)
             
-            # 导入交易球员详情
             players_data = transaction_data["players"]
             for key, player_data in players_data.items():
                 if key == "count":
                     continue
                 
                 player_info = player_data["player"][0]
+                
+                if len(player_data["player"]) < 2 or "transaction_data" not in player_data["player"][1]:
+                    continue
+                
                 transaction_info_container = player_data["player"][1]["transaction_data"]
                 
-                # 修正处理transaction_data可能是列表或字典的情况
                 transaction_info = None
                 if isinstance(transaction_info_container, list):
                     if len(transaction_info_container) > 0:
@@ -591,13 +562,7 @@ class FantasyDataImporter:
                 if not transaction_info:
                     continue
                 
-                # 提取球员基本信息
-                player_key = None
-                player_id = None
-                player_name = None
-                editorial_team_abbr = None
-                display_position = None
-                position_type = None
+                player_key = player_id = player_name = editorial_team_abbr = display_position = position_type = None
                 
                 for item in player_info:
                     if isinstance(item, dict):
@@ -615,6 +580,12 @@ class FantasyDataImporter:
                             position_type = item["position_type"]
                 
                 if not player_key:
+                    continue
+                
+                existing_tp = self.session.query(TransactionPlayer).filter_by(
+                    transaction_key=transaction_key, player_key=player_key
+                ).first()
+                if existing_tp:
                     continue
                 
                 transaction_player = TransactionPlayer(
@@ -638,26 +609,68 @@ class FantasyDataImporter:
         self.session.commit()
     
     def run_full_import(self):
-        """运行完整的数据导入"""
-        print("开始完整数据导入...")
+        print("开始数据导入...")
+        start_time = datetime.now()
+        
+        # 检查data文件夹是否存在
+        if not os.path.exists(self.data_dir):
+            print(f"❌ 数据文件夹不存在: {self.data_dir}")
+            print(f"")
+            print(f"💡 提示: 现在推荐使用 single_league_fetcher.py 直接写入数据库")
+            print(f"   运行命令: python3 single_league_fetcher.py --complete")
+            print(f"")
+            print(f"   如果您确实需要使用data_importer，请先:")
+            print(f"   1. 创建data文件夹: mkdir {self.data_dir}")
+            print(f"   2. 使用旧版本脚本生成JSON文件")
+            return
         
         try:
-            # 导入游戏数据
+            print("导入游戏数据...")
             self.import_games_data()
             
-            # 导入联盟数据
+            print("导入联盟数据...")
             self.import_leagues_data()
             
-            # 查找并导入所有联盟的详细数据
-            for item in os.listdir(self.data_dir):
-                if item.startswith("selected_league_"):
-                    league_key = item.replace("selected_league_", "")
-                    self.import_league_details(league_key)
+            league_dirs = [item for item in os.listdir(self.data_dir) if item.startswith("selected_league_")]
+            total_leagues = len(league_dirs)
             
-            print("数据导入完成！")
+            if total_leagues == 0:
+                print(f"⚠️ 在 {self.data_dir} 中未找到任何联盟数据文件夹")
+                print(f"   期望的文件夹格式: selected_league_*")
+                print(f"")
+                print(f"💡 推荐使用 single_league_fetcher.py 直接写入数据库:")
+                print(f"   python3 single_league_fetcher.py --complete")
+                return
+            
+            print(f"导入 {total_leagues} 个联盟的详细数据...")
+            
+            for i, item in enumerate(league_dirs, 1):
+                league_key = item.replace("selected_league_", "")
+                print(f"[{i}/{total_leagues}] 处理联盟: {league_key}")
+                
+                try:
+                    self.import_league_details(league_key)
+                except Exception as e:
+                    print(f"联盟 {league_key} 导入失败: {e}")
+                    continue
+            
+            total_time = datetime.now() - start_time
+            print(f"\n数据导入完成！用时: {total_time}")
+            
+            games_count = self.session.query(Game).count()
+            leagues_count = self.session.query(League).count()
+            teams_count = self.session.query(Team).count()
+            players_count = self.session.query(Player).count()
+            transactions_count = self.session.query(Transaction).count()
+            transaction_players_count = self.session.query(TransactionPlayer).count()
+            rosters_count = self.session.query(Roster).count()
+            stats_count = self.session.query(PlayerStats).count()
+            
+            print(f"\n统计: 游戏({games_count}) 联盟({leagues_count}) 团队({teams_count}) 球员({players_count})")
+            print(f"      交易({transactions_count}) 交易球员({transaction_players_count}) 名单({rosters_count}) 统计({stats_count})")
             
         except Exception as e:
-            print(f"导入过程中发生错误: {e}")
+            print(f"导入失败: {e}")
             self.session.rollback()
             raise
         finally:

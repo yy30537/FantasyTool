@@ -23804,7 +23804,7 @@
   "metadata": {
     "league_key": "454.l.53472",
     "total_players": 680,
-    "created_at": "2025-06-01T18:08:29.679593",
+    "created_at": "2025-06-03T00:12:31.018987",
     "description": "球员统计数据（仅包含stat_id和value，stat_categories信息请参考league_info.json）"
   }
 }

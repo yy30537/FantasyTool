@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, Column, Integer, String, Boolean, DateTime, Text, JSON, Float, ForeignKey, BigInteger
+from sqlalchemy import create_engine, Column, Integer, String, Boolean, DateTime, JSON, ForeignKey, Index, Date
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 from datetime import datetime
@@ -33,6 +33,9 @@ class Game(Base):
     
     # 关系
     leagues = relationship("League", back_populates="game")
+    
+    # 索引
+    __table_args__ = (Index('idx_game_code_season', 'code', 'season'),)
 
 class League(Base):
     """联盟信息表"""
@@ -78,6 +81,12 @@ class League(Base):
     league_settings = relationship("LeagueSettings", back_populates="league", uselist=False)
     players = relationship("Player", back_populates="league")
     transactions = relationship("Transaction", back_populates="league")
+    
+    # 索引
+    __table_args__ = (
+        Index('idx_league_game_season', 'game_key', 'season'),
+        Index('idx_league_status', 'draft_status', 'is_finished'),
+    )
 
 class LeagueSettings(Base):
     """联盟设置表"""
@@ -147,6 +156,9 @@ class Team(Base):
     league = relationship("League", back_populates="teams")
     managers = relationship("Manager", back_populates="team")
     rosters = relationship("Roster", back_populates="team")
+    
+    # 索引
+    __table_args__ = (Index('idx_team_league', 'league_key'),)
 
 class Manager(Base):
     """团队管理员表"""
@@ -204,20 +216,109 @@ class Player(Base):
     league = relationship("League", back_populates="players")
     player_stats = relationship("PlayerStats", back_populates="player")
     rosters = relationship("Roster", back_populates="player")
+    
+    # 索引
+    __table_args__ = (
+        Index('idx_player_league', 'league_key'),
+        Index('idx_player_editorial_key', 'editorial_player_key'),
+        Index('idx_player_name', 'full_name'),
+        Index('idx_player_position', 'display_position'),
+    )
 
 class PlayerStats(Base):
-    """球员统计数据表"""
+    """球员统计数据表（增强时间序列支持）"""
     __tablename__ = 'player_stats'
     
     id = Column(Integer, primary_key=True, autoincrement=True)
     player_key = Column(String(50), ForeignKey('players.player_key'), nullable=False)
     stat_id = Column(String(20), nullable=False)  # 统计项ID（如 9004003, 5, 8等）
     value = Column(String(100), nullable=False)  # 统计值
+    
+    # 时间序列支持字段
+    coverage_type = Column(String(20), nullable=False, default='season')  # season, week, date, lastweek, lastmonth
+    season = Column(String(10))  # 赛季，如 '2024'
+    week = Column(Integer)  # 周数（NFL）
+    coverage_date = Column(Date)  # 具体日期（MLB/NBA/NHL）
+    game_date = Column(Date)  # 比赛日期
+    
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     # 关系
     player = relationship("Player", back_populates="player_stats")
+    
+    # 索引
+    __table_args__ = (
+        Index('idx_player_stats_unique', 'player_key', 'stat_id', 'coverage_type', 'season', 'week', 'coverage_date', unique=True),
+        Index('idx_player_stats_time', 'coverage_type', 'season', 'week', 'coverage_date'),
+        Index('idx_player_stats_player_time', 'player_key', 'coverage_type', 'season'),
+    )
+
+class PlayerStatsHistory(Base):
+    """球员历史统计数据表（专门用于时间序列分析）"""
+    __tablename__ = 'player_stats_history'
+    
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    player_key = Column(String(50), nullable=False)  # 移除外键约束
+    editorial_player_key = Column(String(50), nullable=False)  # 便于跨联盟分析
+    league_key = Column(String(50), nullable=False)  # 移除外键约束
+    
+    # 时间维度
+    coverage_type = Column(String(20), nullable=False)  # season, week, date
+    season = Column(String(10), nullable=False)
+    week = Column(Integer)  # 周数（NFL）
+    coverage_date = Column(Date)  # 具体日期（MLB/NBA/NHL）
+    
+    # 统计数据（JSON格式存储所有统计）
+    stats_data = Column(JSON, nullable=False)  # 完整统计数据
+    fantasy_points = Column(String(20))  # 幻想分数
+    
+    # 元数据
+    fetched_at = Column(DateTime, default=datetime.utcnow)
+    data_source = Column(String(50), default='yahoo_api')  # 数据来源
+    
+    # 索引
+    __table_args__ = (
+        Index('idx_player_history_unique', 'player_key', 'league_key', 'coverage_type', 'season', 'week', 'coverage_date', unique=True),
+        Index('idx_player_history_time', 'coverage_type', 'season', 'week', 'coverage_date'),
+        Index('idx_player_history_editorial', 'editorial_player_key', 'season'),
+        Index('idx_player_history_league_time', 'league_key', 'coverage_type', 'season'),
+    )
+
+class TeamStats(Base):
+    """团队统计数据表"""
+    __tablename__ = 'team_stats'
+    
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    team_key = Column(String(50), nullable=False)  # 移除外键约束
+    league_key = Column(String(50), nullable=False)  # 移除外键约束
+    
+    # 时间维度
+    coverage_type = Column(String(20), nullable=False)  # season, week, date
+    season = Column(String(10), nullable=False)
+    week = Column(Integer)  # 周数（NFL）
+    coverage_date = Column(Date)  # 具体日期（MLB/NBA/NHL）
+    
+    # 统计数据
+    stats_data = Column(JSON)  # 完整统计数据
+    total_points = Column(String(20))  # 总分
+    
+    # Matchup相关数据
+    opponent_team_key = Column(String(50))  # 对手团队
+    is_playoff = Column(Boolean, default=False)  # 是否季后赛
+    win = Column(Boolean)  # 是否获胜
+    loss = Column(Boolean)  # 是否失败
+    tie = Column(Boolean)  # 是否平局
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # 索引
+    __table_args__ = (
+        Index('idx_team_stats_unique', 'team_key', 'coverage_type', 'season', 'week', 'coverage_date', unique=True),
+        Index('idx_team_stats_time', 'coverage_type', 'season', 'week', 'coverage_date'),
+        Index('idx_team_stats_league_time', 'league_key', 'coverage_type', 'season'),
+    )
 
 class Roster(Base):
     """团队名单表"""
@@ -248,6 +349,45 @@ class Roster(Base):
     # 关系
     team = relationship("Team", back_populates="rosters")
     player = relationship("Player", back_populates="rosters")
+    
+    # 索引
+    __table_args__ = (Index('idx_roster_unique', 'team_key', 'player_key', 'coverage_date', unique=True),)
+
+class RosterHistory(Base):
+    """团队名单历史表（专门用于时间序列分析）"""
+    __tablename__ = 'roster_history'
+    
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    team_key = Column(String(50), nullable=False)  # 移除外键约束
+    player_key = Column(String(50), nullable=False)  # 移除外键约束
+    league_key = Column(String(50), nullable=False)  # 移除外键约束
+    
+    # 时间维度
+    coverage_type = Column(String(20), nullable=False)  # week, date
+    season = Column(String(10), nullable=False)
+    week = Column(Integer)  # 周数（NFL）
+    coverage_date = Column(Date)  # 具体日期（MLB/NBA/NHL）
+    
+    # Roster状态
+    selected_position = Column(String(20))  # 当前选择的位置
+    is_starting = Column(Boolean, default=False)  # 是否首发
+    is_bench = Column(Boolean, default=False)  # 是否替补
+    is_injured_reserve = Column(Boolean, default=False)  # 是否伤病名单
+    
+    # 球员状态信息
+    player_status = Column(String(20))  # INJ等
+    injury_note = Column(String(200))
+    
+    # 元数据
+    fetched_at = Column(DateTime, default=datetime.utcnow)
+    
+    # 索引
+    __table_args__ = (
+        Index('idx_roster_history_unique', 'team_key', 'player_key', 'coverage_type', 'season', 'week', 'coverage_date', unique=True),
+        Index('idx_roster_history_time', 'coverage_type', 'season', 'week', 'coverage_date'),
+        Index('idx_roster_history_team_time', 'team_key', 'coverage_type', 'season'),
+        Index('idx_roster_history_player_time', 'player_key', 'coverage_type', 'season'),
+    )
 
 class Transaction(Base):
     """交易记录表"""
@@ -259,12 +399,27 @@ class Transaction(Base):
     type = Column(String(50), nullable=False)  # add/drop, trade等
     status = Column(String(50), nullable=False)  # successful等
     timestamp = Column(String(50), nullable=False)
+    
+    # 两队交易的额外字段
+    trader_team_key = Column(String(50))  # 交易发起方团队key
+    trader_team_name = Column(String(200))  # 交易发起方团队名称
+    tradee_team_key = Column(String(50))  # 交易接受方团队key
+    tradee_team_name = Column(String(200))  # 交易接受方团队名称
+    picks_data = Column(JSON)  # 存储draft picks交易数据
+    
     players_data = Column(JSON)  # 存储完整的球员交易数据
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     # 关系
     league = relationship("League", back_populates="transactions")
+    
+    # 索引
+    __table_args__ = (
+        Index('idx_transaction_league', 'league_key'),
+        Index('idx_transaction_type', 'type'),
+        Index('idx_transaction_timestamp', 'timestamp'),
+    )
 
 class TransactionPlayer(Base):
     """交易球员详情表"""
@@ -290,6 +445,9 @@ class TransactionPlayer(Base):
     
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # 索引
+    __table_args__ = (Index('idx_transaction_player_unique', 'transaction_key', 'player_key', unique=True),)
 
 # 数据库连接配置
 def get_database_url():
@@ -305,7 +463,7 @@ def get_database_url():
 def create_database_engine():
     """创建数据库引擎"""
     database_url = get_database_url()
-    engine = create_engine(database_url, echo=True)
+    engine = create_engine(database_url, echo=False)  # 关闭详细日志
     return engine
 
 def create_tables(engine):

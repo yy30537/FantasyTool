@@ -157,26 +157,7 @@ ORDER BY tr.timestamp DESC
 LIMIT 20;
 ```
 
-## 🔧 主要功能
 
-### 数据获取功能
-- ✅ Yahoo API OAuth 2.0 授权
-- ✅ 游戏信息获取
-- ✅ 联盟信息获取
-- ✅ 团队详细信息获取
-- ✅ 球员静态信息获取（姓名、ID）
-- ✅ 球员动态信息获取（当前队伍、位置、状态）
-- ✅ 球员统计数据获取
-- ✅ 团队名单获取
-- ✅ 交易记录获取（完整历史）
-- ✅ 联盟设置和规则获取
-
-### 数据管理功能
-- ✅ 结构化数据库存储
-- ✅ 数据去重和错误处理
-- ✅ 增量数据更新支持
-- ✅ 完整的数据关系映射
-- ✅ 查询优化和索引
 
 ## 📁 项目结构
 
@@ -194,31 +175,3 @@ FantasyTool/
 └── yahoo-fantasy-sports-API-docs/  # API文档
 ```
 
-## 🛠️ 技术栈
-
-- **Python 3.12+** - 主要编程语言
-- **Flask** - OAuth授权服务器
-- **SQLAlchemy** - ORM和数据库操作
-- **PostgreSQL** - 主数据库
-- **Requests** - HTTP客户端
-- **Yahoo Fantasy Sports API** - 数据源
-
-## 🔗 相关文档
-
-- [Yahoo OAuth Guide](yahoo-fantasy-sports-API-docs/OAuth/Yahoo-OAuth-Guide.md) - Yahoo API授权详细说明
-- [DATABASE_SCHEMA.md](DATABASE_SCHEMA.md) - 完整数据库架构文档
-
-## 📝 注意事项
-
-1. **API限制**: Yahoo Fantasy API有请求频率限制，建议在请求间添加适当延迟
-2. **数据量**: 完整数据获取可能需要较长时间，特别是大联盟的交易数据
-3. **数据库**: 确保PostgreSQL服务正在运行并正确配置
-4. **令牌管理**: OAuth令牌有有效期，需要定期刷新
-
-## 🤝 贡献
-
-欢迎提交Issue和Pull Request来改进这个项目！
-
-## �� 许可证
-
-本项目采用MIT许可证。
