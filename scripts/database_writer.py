@@ -15,7 +15,7 @@ from sqlalchemy import and_, or_
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from model import (
     create_database_engine, create_tables, get_session,
-    Game, League, LeagueSettings, Team, Manager, Player, PlayerStats, 
+    Game, League, LeagueSettings, Team, Manager, Player, 
     Roster, Transaction, TransactionPlayer, PlayerStatsHistory, 
     TeamStats, RosterHistory
 )
@@ -41,7 +41,6 @@ class FantasyDatabaseWriter:
             'teams': 0,
             'managers': 0,
             'players': 0,
-            'player_stats': 0,
             'player_stats_history': 0,
             'team_stats': 0,
             'rosters': 0,
@@ -61,7 +60,7 @@ class FantasyDatabaseWriter:
         return (f"统计: 游戏({self.stats['games']}) 联盟({self.stats['leagues']}) "
                 f"团队({self.stats['teams']}) 球员({self.stats['players']}) "
                 f"交易({self.stats['transactions']}) 交易球员({self.stats['transaction_players']}) "
-                f"名单({self.stats['rosters']}) 统计({self.stats['player_stats']})")
+                f"名单({self.stats['rosters']}) 历史统计({self.stats['player_stats_history']})")
     
     # ===== 基础数据写入方法 =====
     
@@ -745,4 +744,87 @@ class FantasyDatabaseWriter:
         try:
             return int(week_str)
         except:
-            return None 
+            return None
+    
+    def clear_database(self, confirm: bool = False) -> bool:
+        """清空数据库中的所有数据
+        
+        Args:
+            confirm: 确认清空，防止误操作
+        """
+        if not confirm:
+            print("⚠️ 需要确认才能清空数据库，请设置 confirm=True")
+            return False
+        
+        try:
+            print("🗑️ 开始清空数据库...")
+            
+            # 按依赖关系的逆序删除数据
+            tables_to_clear = [
+                ('transaction_players', TransactionPlayer),
+                ('transactions', Transaction),
+                ('roster_history', RosterHistory),
+                ('rosters', Roster),
+                ('player_stats_history', PlayerStatsHistory),
+                ('players', Player),
+                ('managers', Manager),
+                ('teams', Team),
+                ('league_settings', LeagueSettings),
+                ('leagues', League),
+                ('team_stats', TeamStats),
+                ('games', Game),
+            ]
+            
+            for table_name, model_class in tables_to_clear:
+                try:
+                    deleted_count = self.session.query(model_class).delete()
+                    self.session.commit()
+                    print(f"  ✓ 清空 {table_name}: {deleted_count} 条记录")
+                except Exception as e:
+                    print(f"  ✗ 清空 {table_name} 失败: {e}")
+                    self.session.rollback()
+            
+            # 重置统计计数器
+            for key in self.stats:
+                self.stats[key] = 0
+            
+            print("✅ 数据库清空完成")
+            return True
+            
+        except Exception as e:
+            print(f"清空数据库失败: {e}")
+            self.session.rollback()
+            return False
+    
+    def get_database_summary(self) -> Dict[str, int]:
+        """获取数据库中各表的记录数量"""
+        try:
+            summary = {}
+            tables_to_count = [
+                ('games', Game),
+                ('leagues', League),
+                ('league_settings', LeagueSettings),
+                ('teams', Team),
+                ('managers', Manager),
+                ('players', Player),
+                ('player_stats_history', PlayerStatsHistory),
+                ('team_stats', TeamStats),
+                ('rosters', Roster),
+                ('roster_history', RosterHistory),
+                ('transactions', Transaction),
+                ('transaction_players', TransactionPlayer),
+            ]
+            
+            for table_name, model_class in tables_to_count:
+                try:
+                    count = self.session.query(model_class).count()
+                    summary[table_name] = count
+                except Exception as e:
+                    print(f"统计 {table_name} 失败: {e}")
+                    summary[table_name] = -1
+            
+            return summary
+            
+        except Exception as e:
+            print(f"获取数据库摘要失败: {e}")
+            return {} 

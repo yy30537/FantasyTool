@@ -1,27 +1,27 @@
 #!/usr/bin/env python3
 """
-Yahoo Fantasy数据获取工具 - 单联盟深度模式（直接数据库写入版）
-专注于获取单个联盟的完整深度数据，直接写入数据库
+Yahoo Fantasy统一数据获取工具
+整合单联盟深度获取和时间序列数据获取功能
 """
 import os
 import sys
 import time
 import argparse
-import json
-from datetime import datetime
+from datetime import datetime, date, timedelta
 from typing import Dict, List, Optional, Any
 
 # 确保可以正确导入模块
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from yahoo_api_utils import (
-    get_api_data, 
+    get_api_data, load_json_data, save_json_data,
+    GAMES_DIR, LEAGUES_DIR,
     select_league_interactively
 )
 from database_writer import FantasyDatabaseWriter
-from model import Roster
+from model import Roster, Player
 
-class SingleLeagueDataFetcher:
-    """Yahoo Fantasy单联盟数据获取器（直接数据库写入版）"""
+class YahooFantasyDataFetcher:
+    """Yahoo Fantasy统一数据获取器"""
     
     def __init__(self, delay: int = 2, batch_size: int = 100):
         """初始化数据获取器"""
@@ -44,18 +44,25 @@ class SingleLeagueDataFetcher:
     
     # ===== 基础数据获取和联盟选择 =====
     
-    def fetch_and_select_league(self) -> bool:
-        """获取基础数据并选择联盟（直接使用API数据）"""
+    def fetch_and_select_league(self, use_existing_data: bool = True) -> bool:
+        """获取基础数据并选择联盟"""
         print("🚀 开始获取基础数据和联盟选择...")
         
-        # 直接获取并处理联盟数据
-        print("📋 获取联盟数据...")
-        all_leagues_data = self._fetch_all_leagues_data()
-        if not all_leagues_data:
+        # 检查是否使用现有数据或直接从API获取
+        leagues_file = LEAGUES_DIR / "all_leagues_data.json"
+        if use_existing_data and leagues_file.exists():
+            print("📋 使用现有联盟数据...")
+            leagues_data = load_json_data(leagues_file)
+        else:
+            print("📋 获取联盟数据...")
+            leagues_data = self._fetch_all_leagues_data()
+        
+        if not leagues_data:
+            print("✗ 无法获取联盟数据")
             return False
         
-        # 直接从API数据中选择联盟
-        selected_league = select_league_interactively(all_leagues_data)
+        # 选择联盟
+        selected_league = select_league_interactively(leagues_data)
         if not selected_league:
             print("✗ 未选择联盟")
             return False
@@ -97,6 +104,10 @@ class SingleLeagueDataFetcher:
             # 写入联盟数据到数据库
             leagues_count = self.db_writer.write_leagues_data(all_leagues)
             print(f"✓ 写入 {leagues_count} 个联盟数据到数据库")
+            
+            # 同时保存JSON文件以便选择联盟
+            leagues_file = LEAGUES_DIR / "all_leagues_data.json"
+            save_json_data(all_leagues, leagues_file)
             print(f"✓ 联盟数据获取完成")
             return all_leagues
         
@@ -200,8 +211,8 @@ class SingleLeagueDataFetcher:
             print(f"提取联盟数据时出错: {e}")
         
         return leagues
-    
-    # ===== 联盟深度数据获取 =====
+
+    # ===== 单联盟深度数据获取 =====
     
     def fetch_complete_league_data(self) -> bool:
         """获取完整的联盟数据并直接写入数据库"""
@@ -385,15 +396,7 @@ class SingleLeagueDataFetcher:
             if isinstance(team_data, list) and len(team_data) > 0:
                 print(f"调试信息 - team_data[0] 类型: {type(team_data[0])}")
             return None
-    
-    def _process_team_data_to_db(self, team_data: List, league_key: str) -> bool:
-        """处理单个团队数据并写入数据库"""
-        team_dict = self._extract_team_data_from_api(team_data)
-        if team_dict:
-            count = self.db_writer.write_teams_batch([team_dict], league_key)
-            return count > 0
-        return False
-    
+
     def fetch_team_rosters(self, teams_data: Dict) -> bool:
         """获取所有团队的roster数据并写入数据库"""
         team_keys = self._extract_team_keys_from_data(teams_data)
@@ -638,7 +641,7 @@ class SingleLeagueDataFetcher:
         
         print(f"提取到 {len(team_keys)} 个团队键: {team_keys}")
         return team_keys
-    
+
     def fetch_complete_players_data(self) -> bool:
         """获取完整的球员数据并直接写入数据库"""
         league_key = self.selected_league['league_key']
@@ -908,72 +911,6 @@ class SingleLeagueDataFetcher:
             return 0
         
         return self.db_writer.write_transactions_batch(transactions, league_key)
-    
-    # ===== 辅助方法 =====
-    
-    def _extract_position_string(self, selected_position_data) -> Optional[str]:
-        """从selected_position数据中提取position字符串"""
-        if not selected_position_data:
-            return None
-        
-        # 如果是字符串，直接返回
-        if isinstance(selected_position_data, str):
-            return selected_position_data
-        
-        # 如果是字典，尝试提取position
-        if isinstance(selected_position_data, dict):
-            return selected_position_data.get("position")
-        
-        # 如果是列表，查找包含position的字典
-        if isinstance(selected_position_data, list):
-            for item in selected_position_data:
-                if isinstance(item, dict) and "position" in item:
-                    return item["position"]
-        
-        return None
-    
-    def clear_database(self, confirm: bool = False) -> bool:
-        """清空数据库"""
-        return self.db_writer.clear_database(confirm=confirm)
-    
-    def show_database_summary(self) -> None:
-        """显示数据库摘要"""
-        summary = self.db_writer.get_database_summary()
-        print("\n📊 数据库摘要:")
-        for table_name, count in summary.items():
-            if count >= 0:
-                print(f"  {table_name}: {count} 条记录")
-            else:
-                print(f"  {table_name}: 查询失败")
-        
-        print(f"\n{self.db_writer.get_stats_summary()}")
-    
-    # ===== 主要流程 =====
-    
-    def run_complete_data_fetch(self) -> bool:
-        """执行完整的数据获取流程"""
-        print("🚀 开始Yahoo Fantasy单联盟完整数据获取（直接数据库写入版）...")
-        
-        try:
-            # 1. 基础数据获取和联盟选择
-            if not self.fetch_and_select_league():
-                print("✗ 基础数据获取或联盟选择失败")
-                return False
-            
-            # 2. 获取完整联盟数据
-            if not self.fetch_complete_league_data():
-                print("✗ 联盟数据获取失败")
-                return False
-            
-            # 3. 显示数据统计
-            print(f"\n📊 数据获取统计:")
-            print(self.db_writer.get_stats_summary())
-            
-            print("🎉 单联盟数据获取成功！")
-            return True
-            
-        finally:
-            self.close()
 
     def fetch_team_stats_data(self, teams_data: Optional[Dict] = None) -> bool:
         """获取团队统计数据并写入数据库"""
@@ -1182,12 +1119,703 @@ class SingleLeagueDataFetcher:
             print(f"    处理团队matchups失败 {team_key}: {e}")
             return 0
 
+    # ===== 时间序列数据获取功能 =====
+    
+    def fetch_historical_rosters(self, start_week: int = 1, end_week: Optional[int] = None,
+                                start_date: Optional[date] = None, end_date: Optional[date] = None) -> bool:
+        """获取历史名单数据"""
+        if not self.selected_league:
+            print("✗ 未选择联盟")
+            return False
+        
+        league_key = self.selected_league['league_key']
+        season = self.selected_league.get('season', '2024')
+        game_code = self.selected_league.get('game_code', 'nfl')
+        
+        print(f"🔄 开始获取历史名单数据: {league_key}")
+        
+        # 首先获取团队列表
+        teams_data = self._fetch_teams_data_for_history(league_key)
+        if not teams_data:
+            print("✗ 获取团队数据失败")
+            return False
+        
+        team_keys = self._extract_team_keys_from_teams_data(teams_data)
+        if not team_keys:
+            print("✗ 提取团队键失败")
+            return False
+        
+        print(f"找到 {len(team_keys)} 个团队")
+        
+        # 根据游戏类型选择时间范围
+        if game_code.lower() == 'nfl':
+            return self._fetch_rosters_by_weeks(team_keys, league_key, season, start_week, end_week)
+        else:
+            return self._fetch_rosters_by_dates(team_keys, league_key, season, start_date, end_date)
+    
+    def _fetch_teams_data_for_history(self, league_key: str) -> Optional[Dict]:
+        """获取团队数据（为历史数据获取使用）"""
+        url = f"https://fantasysports.yahooapis.com/fantasy/v2/league/{league_key}/teams?format=json"
+        return get_api_data(url)
+    
+    def _extract_team_keys_from_teams_data(self, teams_data: Dict) -> List[str]:
+        """从团队数据中提取团队键（为历史数据功能使用）"""
+        team_keys = []
+        
+        try:
+            fantasy_content = teams_data["fantasy_content"]
+            league_data = fantasy_content["league"]
+            
+            teams_container = None
+            if isinstance(league_data, list) and len(league_data) > 1:
+                for item in league_data:
+                    if isinstance(item, dict) and "teams" in item:
+                        teams_container = item["teams"]
+                        break
+            
+            if teams_container:
+                teams_count = int(teams_container.get("count", 0))
+                for i in range(teams_count):
+                    str_index = str(i)
+                    if str_index in teams_container:
+                        team_container = teams_container[str_index]
+                        if "team" in team_container:
+                            team_data = team_container["team"]
+                            if (isinstance(team_data, list) and 
+                                len(team_data) > 0 and 
+                                isinstance(team_data[0], list) and 
+                                len(team_data[0]) > 0):
+                                
+                                team_key = team_data[0][0].get("team_key")
+                                if team_key:
+                                    team_keys.append(team_key)
+        
+        except Exception as e:
+            print(f"提取团队键时出错: {e}")
+        
+        return team_keys
+    
+    def _fetch_rosters_by_weeks(self, team_keys: List[str], league_key: str, season: str,
+                               start_week: int, end_week: Optional[int]) -> bool:
+        """按周获取名单数据（NFL）"""
+        if end_week is None:
+            end_week = int(self.selected_league.get('current_week', start_week))
+        
+        total_requests = len(team_keys) * (end_week - start_week + 1)
+        current_request = 0
+        
+        for week in range(start_week, end_week + 1):
+            print(f"  获取第 {week} 周名单数据...")
+            
+            for team_key in team_keys:
+                current_request += 1
+                print(f"    [{current_request}/{total_requests}] 团队 {team_key} 第 {week} 周")
+                
+                roster_data = self._fetch_team_roster_by_week(team_key, week)
+                if roster_data:
+                    self._process_roster_data_to_history_db(roster_data, team_key, league_key, 
+                                                          'week', season, week=week)
+                
+                if current_request < total_requests:
+                    self.wait()
+        
+        print(f"✓ 历史名单数据获取完成: 第 {start_week}-{end_week} 周")
+        return True
+    
+    def _fetch_rosters_by_dates(self, team_keys: List[str], league_key: str, season: str,
+                               start_date: Optional[date], end_date: Optional[date]) -> bool:
+        """按日期获取名单数据（MLB/NBA/NHL）"""
+        if start_date is None:
+            start_date = date.today() - timedelta(days=30)  # 默认过去30天
+        if end_date is None:
+            end_date = date.today()
+        
+        # 生成日期列表（每周一次，减少API调用）
+        dates = []
+        current_date = start_date
+        while current_date <= end_date:
+            dates.append(current_date)
+            current_date += timedelta(days=7)  # 每周一次
+        
+        total_requests = len(team_keys) * len(dates)
+        current_request = 0
+        
+        for target_date in dates:
+            date_str = target_date.strftime('%Y-%m-%d')
+            print(f"  获取 {date_str} 名单数据...")
+            
+            for team_key in team_keys:
+                current_request += 1
+                print(f"    [{current_request}/{total_requests}] 团队 {team_key} {date_str}")
+                
+                roster_data = self._fetch_team_roster_by_date(team_key, date_str)
+                if roster_data:
+                    self._process_roster_data_to_history_db(roster_data, team_key, league_key,
+                                                          'date', season, coverage_date=target_date)
+                
+                if current_request < total_requests:
+                    self.wait()
+        
+        print(f"✓ 历史名单数据获取完成: {start_date} 至 {end_date}")
+        return True
+    
+    def _fetch_team_roster_by_week(self, team_key: str, week: int) -> Optional[Dict]:
+        """获取指定周的团队名单"""
+        url = f"https://fantasysports.yahooapis.com/fantasy/v2/team/{team_key}/roster;week={week}?format=json"
+        return get_api_data(url)
+    
+    def _fetch_team_roster_by_date(self, team_key: str, date_str: str) -> Optional[Dict]:
+        """获取指定日期的团队名单"""
+        url = f"https://fantasysports.yahooapis.com/fantasy/v2/team/{team_key}/roster;date={date_str}?format=json"
+        return get_api_data(url)
+    
+    def _process_roster_data_to_history_db(self, roster_data: Dict, team_key: str, league_key: str,
+                                         coverage_type: str, season: str,
+                                         week: Optional[int] = None,
+                                         coverage_date: Optional[date] = None) -> None:
+        """处理名单数据并写入历史数据库"""
+        try:
+            roster_info = roster_data["fantasy_content"]["team"][1]["roster"]
+            players_data = roster_info["0"]["players"]
+            
+            for key, player_data in players_data.items():
+                if key == "count":
+                    continue
+                
+                player_info = player_data["player"][0]
+                position_data = player_data["player"][1] if len(player_data["player"]) > 1 else {}
+                
+                # 提取球员基本信息
+                player_key = None
+                for item in player_info:
+                    if isinstance(item, dict) and "player_key" in item:
+                        player_key = item["player_key"]
+                        break
+                
+                if not player_key:
+                    continue
+                
+                # 提取位置信息
+                selected_position = None
+                if "selected_position" in position_data:
+                    selected_position_data = position_data["selected_position"]
+                    if isinstance(selected_position_data, list):
+                        for item in selected_position_data:
+                            if isinstance(item, dict) and "position" in item:
+                                selected_position = item["position"]
+                                break
+                    elif isinstance(selected_position_data, dict) and "position" in selected_position_data:
+                        selected_position = selected_position_data["position"]
+                
+                # 判断是否首发
+                is_starting = selected_position not in ['BN', 'IL', 'IR'] if selected_position else False
+                
+                # 提取球员状态
+                player_status = None
+                injury_note = None
+                for item in player_info:
+                    if isinstance(item, dict):
+                        if "status" in item:
+                            player_status = item["status"]
+                        elif "injury_note" in item:
+                            injury_note = item["injury_note"]
+                
+                # 写入数据库
+                self.db_writer.write_roster_history(
+                    team_key=team_key,
+                    player_key=player_key,
+                    league_key=league_key,
+                    coverage_type=coverage_type,
+                    season=season,
+                    week=week,
+                    coverage_date=coverage_date,
+                    selected_position=selected_position,
+                    is_starting=is_starting,
+                    player_status=player_status,
+                    injury_note=injury_note
+                )
+                
+        except Exception as e:
+            print(f"处理名单数据失败 {team_key}: {e}")
+
+    def fetch_historical_player_stats(self, start_week: int = 1, end_week: Optional[int] = None,
+                                    start_date: Optional[date] = None, end_date: Optional[date] = None) -> bool:
+        """获取历史球员统计数据"""
+        if not self.selected_league:
+            print("✗ 未选择联盟")
+            return False
+        
+        league_key = self.selected_league['league_key']
+        season = self.selected_league.get('season', '2024')
+        game_code = self.selected_league.get('game_code', 'nfl')
+        
+        print(f"🔄 开始获取历史球员统计数据: {league_key}")
+        
+        # 首先获取所有球员的基础信息并确保存在于数据库中
+        print("📋 获取球员基础数据...")
+        all_players = self._fetch_all_league_players(league_key)
+        if not all_players:
+            print("✗ 获取球员基础信息失败")
+            return False
+        
+        print(f"✓ 获取了 {len(all_players)} 个球员的基础信息")
+        
+        # 确保球员数据存在于数据库中
+        print("📋 确保球员数据存在于数据库中...")
+        self._ensure_players_exist_in_db(all_players, league_key)
+        
+        # 提取球员键
+        player_keys = [player.get('player_key') for player in all_players if player.get('player_key')]
+        if not player_keys:
+            print("✗ 未找到有效的球员键")
+            return False
+        
+        print(f"找到 {len(player_keys)} 个球员键")
+        
+        # 根据游戏类型选择时间范围
+        if game_code.lower() == 'nfl':
+            return self._fetch_player_stats_by_weeks(player_keys, all_players, league_key, season, start_week, end_week)
+        else:
+            return self._fetch_player_stats_by_dates(player_keys, all_players, league_key, season, start_date, end_date)
+    
+    def _ensure_players_exist_in_db(self, players_data: List[Dict], league_key: str) -> None:
+        """确保球员数据存在于数据库中"""
+        try:
+            existing_count = 0
+            created_count = 0
+            
+            for player_data in players_data:
+                player_key = player_data.get('player_key')
+                if not player_key:
+                    continue
+                
+                # 检查球员是否已存在
+                existing_player = self.db_writer.session.query(Player).filter_by(
+                    player_key=player_key
+                ).first()
+                
+                if existing_player:
+                    existing_count += 1
+                    continue
+                
+                # 创建新球员记录
+                try:
+                    player = Player(
+                        player_key=player_key,
+                        player_id=player_data.get('player_id', ''),
+                        editorial_player_key=player_data.get('editorial_player_key', ''),
+                        league_key=league_key,
+                        full_name=player_data.get('full_name', player_data.get('name', {}).get('full', '')),
+                        first_name=player_data.get('first_name', player_data.get('name', {}).get('first', '')),
+                        last_name=player_data.get('last_name', player_data.get('name', {}).get('last', '')),
+                        current_team_key=player_data.get('current_team_key', player_data.get('editorial_team_key', '')),
+                        current_team_name=player_data.get('current_team_name', player_data.get('editorial_team_full_name', '')),
+                        current_team_abbr=player_data.get('current_team_abbr', player_data.get('editorial_team_abbr', '')),
+                        display_position=player_data.get('display_position', ''),
+                        primary_position=player_data.get('primary_position', ''),
+                        position_type=player_data.get('position_type', ''),
+                        uniform_number=player_data.get('uniform_number', ''),
+                        status=player_data.get('status', ''),
+                        headshot_url=player_data.get('headshot_url', ''),
+                        is_undroppable=player_data.get('is_undroppable', False),
+                        season=self.selected_league.get('season', '2024'),
+                        last_updated=datetime.now()
+                    )
+                    
+                    self.db_writer.session.add(player)
+                    created_count += 1
+                    
+                    # 每50个球员提交一次
+                    if created_count % 50 == 0:
+                        self.db_writer.session.commit()
+                        
+                except Exception as e:
+                    print(f"创建球员 {player_key} 失败: {e}")
+                    self.db_writer.session.rollback()
+                    continue
+            
+            # 提交剩余的球员
+            if created_count > 0:
+                try:
+                    self.db_writer.session.commit()
+                except Exception as e:
+                    print(f"提交球员数据失败: {e}")
+                    self.db_writer.session.rollback()
+            
+            print(f"✓ 球员数据检查完成: 已存在 {existing_count} 个，新创建 {created_count} 个")
+            
+        except Exception as e:
+            print(f"确保球员数据存在时出错: {e}")
+            self.db_writer.session.rollback()
+    
+    def _fetch_player_stats_by_weeks(self, player_keys: List[str], players_data: List[Dict],
+                                   league_key: str, season: str, start_week: int, end_week: Optional[int]) -> bool:
+        """按周获取球员统计数据（NFL）"""
+        if end_week is None:
+            end_week = int(self.selected_league.get('current_week', start_week))
+        
+        # 创建player_key到editorial_player_key的映射
+        key_mapping = {}
+        for player in players_data:
+            if player.get("player_key") and player.get("editorial_player_key"):
+                key_mapping[player["player_key"]] = player["editorial_player_key"]
+        
+        for week in range(start_week, end_week + 1):
+            print(f"  获取第 {week} 周球员统计...")
+            
+            # 批量获取统计数据
+            stats_data = self._fetch_player_stats_batch_by_week(player_keys, league_key, week)
+            
+            for player_key, stats in stats_data.items():
+                editorial_key = key_mapping.get(player_key, player_key)
+                
+                self.db_writer.write_player_stats_history(
+                    player_key=player_key,
+                    editorial_player_key=editorial_key,
+                    league_key=league_key,
+                    stats_data=stats,
+                    coverage_type='week',
+                    season=season,
+                    week=week
+                )
+        
+        print(f"✓ 历史球员统计获取完成: 第 {start_week}-{end_week} 周")
+        return True
+    
+    def _fetch_player_stats_by_dates(self, player_keys: List[str], players_data: List[Dict],
+                                   league_key: str, season: str, start_date: Optional[date], end_date: Optional[date]) -> bool:
+        """按日期获取球员统计数据（MLB/NBA/NHL）"""
+        if start_date is None:
+            start_date = date.today() - timedelta(days=30)  # 默认过去30天
+        if end_date is None:
+            end_date = date.today()
+        
+        # 创建player_key到editorial_player_key的映射
+        key_mapping = {}
+        for player in players_data:
+            if player.get("player_key") and player.get("editorial_player_key"):
+                key_mapping[player["player_key"]] = player["editorial_player_key"]
+        
+        # 生成日期列表（每周一次，减少API调用）
+        dates = []
+        current_date = start_date
+        while current_date <= end_date:
+            dates.append(current_date)
+            current_date += timedelta(days=7)  # 每周一次
+        
+        for target_date in dates:
+            date_str = target_date.strftime('%Y-%m-%d')
+            print(f"  获取 {date_str} 球员统计...")
+            
+            # 批量获取统计数据
+            stats_data = self._fetch_player_stats_batch_by_date(player_keys, league_key, date_str)
+            
+            for player_key, stats in stats_data.items():
+                editorial_key = key_mapping.get(player_key, player_key)
+                
+                self.db_writer.write_player_stats_history(
+                    player_key=player_key,
+                    editorial_player_key=editorial_key,
+                    league_key=league_key,
+                    stats_data=stats,
+                    coverage_type='date',
+                    season=season,
+                    coverage_date=target_date
+                )
+        
+        print(f"✓ 历史球员统计获取完成: {start_date} 至 {end_date}")
+        return True
+
+    def _fetch_player_stats_batch_by_week(self, player_keys: List[str], league_key: str, week: int) -> Dict[str, Dict]:
+        """批量获取指定周的球员统计数据"""
+        batch_size = 25
+        all_stats = {}
+        
+        for i in range(0, len(player_keys), batch_size):
+            batch_keys = player_keys[i:i + batch_size]
+            player_keys_param = ",".join(batch_keys)
+            
+            url = f"https://fantasysports.yahooapis.com/fantasy/v2/league/{league_key}/players;player_keys={player_keys_param}/stats;type=week;week={week}?format=json"
+            
+            print(f"    获取统计数据批次 ({i+1}-{min(i+batch_size, len(player_keys))}/{len(player_keys)})")
+            
+            data = get_api_data(url)
+            if data:
+                batch_stats = self._extract_player_stats_from_data(data)
+                all_stats.update(batch_stats)
+            
+            time.sleep(0.5)
+        
+        return all_stats
+    
+    def _fetch_player_stats_batch_by_date(self, player_keys: List[str], league_key: str, date_str: str) -> Dict[str, Dict]:
+        """批量获取指定日期的球员统计数据"""
+        batch_size = 25
+        all_stats = {}
+        
+        for i in range(0, len(player_keys), batch_size):
+            batch_keys = player_keys[i:i + batch_size]
+            player_keys_param = ",".join(batch_keys)
+            
+            # 根据Yahoo API文档，按日期获取统计数据的URL格式
+            url = f"https://fantasysports.yahooapis.com/fantasy/v2/league/{league_key}/players;player_keys={player_keys_param}/stats;type=date;date={date_str}?format=json"
+            
+            print(f"    获取统计数据批次 ({i+1}-{min(i+batch_size, len(player_keys))}/{len(player_keys)})")
+            
+            data = get_api_data(url)
+            if data:
+                batch_stats = self._extract_player_stats_from_data(data)
+                all_stats.update(batch_stats)
+            
+            time.sleep(0.5)
+        
+        return all_stats
+    
+    def _extract_player_stats_from_data(self, stats_data: Dict) -> Dict[str, Dict]:
+        """从统计数据中提取球员统计信息"""
+        player_stats = {}
+        
+        try:
+            fantasy_content = stats_data["fantasy_content"]
+            league_data = fantasy_content["league"]
+            
+            if isinstance(league_data, list) and len(league_data) > 1:
+                players_data = league_data[1].get("players", {})
+                
+                for player_index, player_data in players_data.items():
+                    if not player_index.isdigit():
+                        continue
+                    
+                    if "player" in player_data and len(player_data["player"]) > 1:
+                        player_basic_info = player_data["player"][0]
+                        player_key = None
+                        
+                        if isinstance(player_basic_info, list):
+                            for info_item in player_basic_info:
+                                if isinstance(info_item, dict) and "player_key" in info_item:
+                                    player_key = info_item["player_key"]
+                                    break
+                        
+                        if player_key:
+                            stats = player_data["player"][1].get("player_stats", {}).get("stats", [])
+                            normalized_stats = {}
+                            for stat_item in stats:
+                                if "stat" in stat_item:
+                                    stat_info = stat_item["stat"]
+                                    stat_id = str(stat_info.get("stat_id"))
+                                    if stat_id:
+                                        normalized_stats[stat_id] = stat_info.get("value")
+                            
+                            player_stats[player_key] = normalized_stats
+        
+        except Exception as e:
+            print(f"提取球员统计数据时出错: {e}")
+        
+        return player_stats
+    
+    # ===== 辅助方法 =====
+    
+    def _extract_position_string(self, selected_position_data) -> Optional[str]:
+        """从selected_position数据中提取position字符串"""
+        if not selected_position_data:
+            return None
+        
+        # 如果是字符串，直接返回
+        if isinstance(selected_position_data, str):
+            return selected_position_data
+        
+        # 如果是字典，尝试提取position
+        if isinstance(selected_position_data, dict):
+            return selected_position_data.get("position")
+        
+        # 如果是列表，查找包含position的字典
+        if isinstance(selected_position_data, list):
+            for item in selected_position_data:
+                if isinstance(item, dict) and "position" in item:
+                    return item["position"]
+        
+        return None
+    
+    def clear_database(self, confirm: bool = False) -> bool:
+        """清空数据库"""
+        return self.db_writer.clear_database(confirm=confirm)
+    
+    def show_database_summary(self) -> None:
+        """显示数据库摘要"""
+        summary = self.db_writer.get_database_summary()
+        print("\n📊 数据库摘要:")
+        for table_name, count in summary.items():
+            if count >= 0:
+                print(f"  {table_name}: {count} 条记录")
+            else:
+                print(f"  {table_name}: 查询失败")
+    
+    # ===== 主要流程 =====
+    
+    def run_complete_league_fetch(self) -> bool:
+        """执行完整的单联盟数据获取流程"""
+        print("🚀 开始Yahoo Fantasy单联盟完整数据获取...")
+        
+        try:
+            # 1. 基础数据获取和联盟选择
+            if not self.fetch_and_select_league(use_existing_data=False):
+                print("✗ 基础数据获取或联盟选择失败")
+                return False
+            
+            # 2. 获取完整联盟数据
+            if not self.fetch_complete_league_data():
+                print("✗ 联盟数据获取失败")
+                return False
+            
+            # 3. 显示数据统计
+            print(f"\n📊 数据获取统计:")
+            print(self.db_writer.get_stats_summary())
+            
+            print("🎉 单联盟数据获取成功！")
+            return True
+            
+        finally:
+            self.close()
+    
+    def run_historical_data_fetch(self, weeks_back: int = 5, days_back: int = 30) -> bool:
+        """执行历史数据获取流程"""
+        print("🚀 开始Yahoo Fantasy历史数据获取...")
+        
+        # 1. 基础数据获取和联盟选择
+        if not self.fetch_and_select_league():
+            print("✗ 基础数据获取或联盟选择失败")
+            return False
+        
+        league_key = self.selected_league['league_key']
+        game_code = self.selected_league.get('game_code', 'nfl')
+        current_week = int(self.selected_league.get('current_week', 1))
+        
+        # 2. 获取历史名单数据
+        print(f"\n📋 步骤1: 获取历史名单数据")
+        if game_code.lower() == 'nfl':
+            start_week = max(1, current_week - weeks_back)
+            self.fetch_historical_rosters(start_week=start_week, end_week=current_week)
+        else:
+            start_date = date.today() - timedelta(days=days_back)
+            self.fetch_historical_rosters(start_date=start_date)
+        
+        # 3. 获取历史球员统计数据
+        print(f"\n📋 步骤2: 获取历史球员统计数据")
+        if game_code.lower() == 'nfl':
+            start_week = max(1, current_week - weeks_back)
+            self.fetch_historical_player_stats(start_week=start_week, end_week=current_week)
+        else:
+            start_date = date.today() - timedelta(days=days_back)
+            self.fetch_historical_player_stats(start_date=start_date)
+        
+        # 4. 显示统计摘要
+        print(f"\n📊 数据获取统计:")
+        print(self.db_writer.get_stats_summary())
+        
+        print("🎉 历史数据获取成功！")
+        return True
+    
+    # ===== 交互式菜单系统 =====
+    
+    def show_main_menu(self) -> None:
+        """显示主菜单"""
+        print("\n" + "="*60)
+        print("🏈 Yahoo Fantasy 统一数据获取工具")
+        print("="*60)
+        print("1. 单联盟完整数据获取")
+        print("2. 时间序列历史数据获取")
+        print("3. 显示数据库摘要")
+        print("4. 清空数据库（慎用！）")
+        print("5. 退出")
+        print("="*60)
+    
+    def run_interactive_menu(self) -> None:
+        """运行交互式菜单"""
+        while True:
+            try:
+                self.show_main_menu()
+                choice = input("请选择操作 (1-5): ").strip()
+                
+                if choice == "1":
+                    # 单联盟完整数据获取
+                    print("\n🚀 开始单联盟完整数据获取...")
+                    self.show_database_summary()  # 显示开始前的状态
+                    
+                    if self.run_complete_league_fetch():
+                        self.show_database_summary()  # 显示结束后的状态
+                    else:
+                        print("\n❌ 单联盟数据获取失败")
+                
+                elif choice == "2":
+                    # 时间序列历史数据获取
+                    print("\n配置历史数据获取参数:")
+                    weeks_back = self._get_int_input("回溯周数 (NFL, 默认5): ", 5)
+                    days_back = self._get_int_input("回溯天数 (其他运动, 默认30): ", 30)
+                    
+                    print(f"\n🚀 开始历史数据获取 (回溯 {weeks_back} 周 / {days_back} 天)...")
+                    self.show_database_summary()  # 显示开始前的状态
+                    
+                    if self.run_historical_data_fetch(weeks_back=weeks_back, days_back=days_back):
+                        self.show_database_summary()  # 显示结束后的状态
+                    else:
+                        print("\n❌ 历史数据获取失败")
+                
+                elif choice == "3":
+                    # 显示数据库摘要
+                    self.show_database_summary()
+                
+                elif choice == "4":
+                    # 清空数据库
+                    print("\n⚠️ 即将清空数据库，所有数据将被删除！")
+                    confirm = input("请输入 'YES' 确认清空数据库: ").strip()
+                    if confirm == "YES":
+                        if self.clear_database(confirm=True):
+                            print("✅ 数据库已清空")
+                        else:
+                            print("❌ 数据库清空失败")
+                    else:
+                        print("❌ 操作已取消")
+                
+                elif choice == "5":
+                    # 退出
+                    print("\n👋 感谢使用！再见！")
+                    break
+                
+                else:
+                    print("❌ 无效选择，请输入1-5之间的数字")
+                
+                # 等待用户确认后继续
+                if choice in ["1", "2", "3", "4"]:
+                    input("\n按回车键继续...")
+                    
+            except KeyboardInterrupt:
+                print("\n\n👋 用户取消操作，再见！")
+                break
+            except Exception as e:
+                print(f"\n❌ 发生错误: {e}")
+                input("按回车键继续...")
+    
+    def _get_int_input(self, prompt: str, default: int) -> int:
+        """获取整数输入"""
+        try:
+            value = input(prompt).strip()
+            if not value:
+                return default
+            return int(value)
+        except ValueError:
+            print(f"输入无效，使用默认值: {default}")
+            return default
+
 
 def main():
     """主函数"""
-    parser = argparse.ArgumentParser(description="Yahoo Fantasy单联盟数据获取工具（直接数据库写入版）")
+    parser = argparse.ArgumentParser(description="Yahoo Fantasy统一数据获取工具")
     
-    parser.add_argument("--complete", action="store_true", help="执行完整的数据获取流程")
+    parser.add_argument("--single-league", action="store_true", help="执行单联盟完整数据获取")
+    parser.add_argument("--time-series", action="store_true", help="执行时间序列历史数据获取")
+    parser.add_argument("--historical", action="store_true", help="执行历史数据获取流程（与--time-series相同）")
+    parser.add_argument("--weeks-back", type=int, default=5, help="回溯周数（NFL），默认5周")
+    parser.add_argument("--days-back", type=int, default=30, help="回溯天数（其他运动），默认30天")
     parser.add_argument("--clear-db", action="store_true", help="清空数据库（慎用！）")
     parser.add_argument("--show-summary", action="store_true", help="显示数据库摘要")
     parser.add_argument("--delay", type=int, default=2, help="请求间隔时间（秒），默认2秒")
@@ -1196,46 +1824,53 @@ def main():
     args = parser.parse_args()
     
     # 创建数据获取器
-    fetcher = SingleLeagueDataFetcher(delay=args.delay, batch_size=args.batch_size)
+    fetcher = YahooFantasyDataFetcher(delay=args.delay, batch_size=args.batch_size)
     
     try:
-        if args.clear_db:
-            # 清空数据库
-            print("⚠️ 即将清空数据库，所有数据将被删除！")
-            confirm = input("请输入 'YES' 确认清空数据库: ").strip()
-            if confirm == "YES":
-                if fetcher.clear_database(confirm=True):
-                    print("✅ 数据库已清空")
-                else:
-                    print("❌ 数据库清空失败")
-            else:
-                print("❌ 操作已取消")
+        # 检查是否有命令行参数
+        has_args = any([args.single_league, args.time_series, args.historical, 
+                       args.clear_db, args.show_summary])
         
-        elif args.show_summary:
-            # 显示数据库摘要
-            fetcher.show_database_summary()
-        
-        elif args.complete:
-            # 执行完整流程
-            print("🚀 开始完整数据获取流程")
-            fetcher.show_database_summary()  # 显示开始前的状态
-            
-            if fetcher.run_complete_data_fetch():
-                print("\n🎉 完整数据获取成功！")
-                fetcher.show_database_summary()  # 显示结束后的状态
-            else:
-                print("\n❌ 完整数据获取失败")
-        
+        if not has_args:
+            # 没有参数，运行交互式菜单
+            fetcher.run_interactive_menu()
         else:
-            # 默认执行完整流程
-            print("🚀 开始完整数据获取流程（默认）")
-            fetcher.show_database_summary()  # 显示开始前的状态
+            # 有参数，执行对应的功能
+            if args.clear_db:
+                # 清空数据库
+                print("⚠️ 即将清空数据库，所有数据将被删除！")
+                confirm = input("请输入 'YES' 确认清空数据库: ").strip()
+                if confirm == "YES":
+                    if fetcher.clear_database(confirm=True):
+                        print("✅ 数据库已清空")
+                    else:
+                        print("❌ 数据库清空失败")
+                else:
+                    print("❌ 操作已取消")
             
-            if fetcher.run_complete_data_fetch():
-                print("\n🎉 完整数据获取成功！")
-                fetcher.show_database_summary()  # 显示结束后的状态
-            else:
-                print("\n❌ 完整数据获取失败")
+            elif args.show_summary:
+                # 显示数据库摘要
+                fetcher.show_database_summary()
+            
+            elif args.single_league:
+                # 执行单联盟完整流程
+                print("🚀 开始单联盟完整数据获取流程")
+                fetcher.show_database_summary()  # 显示开始前的状态
+                
+                if fetcher.run_complete_league_fetch():
+                    fetcher.show_database_summary()  # 显示结束后的状态
+                else:
+                    print("\n❌ 单联盟完整数据获取失败")
+            
+            elif args.time_series or args.historical:
+                # 执行时间序列流程
+                print("🚀 开始时间序列历史数据获取流程")
+                fetcher.show_database_summary()  # 显示开始前的状态
+                
+                if fetcher.run_historical_data_fetch(weeks_back=args.weeks_back, days_back=args.days_back):
+                    fetcher.show_database_summary()  # 显示结束后的状态
+                else:
+                    print("\n❌ 时间序列历史数据获取失败")
     
     finally:
         # 确保清理资源
@@ -1244,3 +1879,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+

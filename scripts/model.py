@@ -214,7 +214,6 @@ class Player(Base):
     
     # 关系
     league = relationship("League", back_populates="players")
-    player_stats = relationship("PlayerStats", back_populates="player")
     rosters = relationship("Roster", back_populates="player")
     
     # 索引
@@ -223,35 +222,6 @@ class Player(Base):
         Index('idx_player_editorial_key', 'editorial_player_key'),
         Index('idx_player_name', 'full_name'),
         Index('idx_player_position', 'display_position'),
-    )
-
-class PlayerStats(Base):
-    """球员统计数据表（增强时间序列支持）"""
-    __tablename__ = 'player_stats'
-    
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    player_key = Column(String(50), ForeignKey('players.player_key'), nullable=False)
-    stat_id = Column(String(20), nullable=False)  # 统计项ID（如 9004003, 5, 8等）
-    value = Column(String(100), nullable=False)  # 统计值
-    
-    # 时间序列支持字段
-    coverage_type = Column(String(20), nullable=False, default='season')  # season, week, date, lastweek, lastmonth
-    season = Column(String(10))  # 赛季，如 '2024'
-    week = Column(Integer)  # 周数（NFL）
-    coverage_date = Column(Date)  # 具体日期（MLB/NBA/NHL）
-    game_date = Column(Date)  # 比赛日期
-    
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
-    # 关系
-    player = relationship("Player", back_populates="player_stats")
-    
-    # 索引
-    __table_args__ = (
-        Index('idx_player_stats_unique', 'player_key', 'stat_id', 'coverage_type', 'season', 'week', 'coverage_date', unique=True),
-        Index('idx_player_stats_time', 'coverage_type', 'season', 'week', 'coverage_date'),
-        Index('idx_player_stats_player_time', 'player_key', 'coverage_type', 'season'),
     )
 
 class PlayerStatsHistory(Base):

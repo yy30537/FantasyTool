@@ -399,7 +399,14 @@ class TimeSeriesFantasyFetcher:
     
     def fetch_historical_player_stats(self, start_week: int = 1, end_week: Optional[int] = None,
                                     start_date: Optional[date] = None, end_date: Optional[date] = None) -> bool:
-        """获取历史球员统计数据"""
+        """获取历史球员统计数据
+        
+        Args:
+            start_week: 开始周（NFL）
+            end_week: 结束周（NFL），None表示当前周
+            start_date: 开始日期（MLB/NBA/NHL）
+            end_date: 结束日期（MLB/NBA/NHL），None表示今天
+        """
         if not self.selected_league:
             print("✗ 未选择联盟")
             return False
@@ -410,24 +417,104 @@ class TimeSeriesFantasyFetcher:
         
         print(f"🔄 开始获取历史球员统计数据: {league_key}")
         
-        # 获取球员列表
-        players_data = self._fetch_all_league_players(league_key)
-        if not players_data:
-            print("✗ 获取球员数据失败")
+        # 首先获取所有球员的基础信息并确保存在于数据库中
+        print("📋 获取球员基础数据...")
+        all_players = self._fetch_all_league_players(league_key)
+        if not all_players:
+            print("✗ 获取球员基础信息失败")
             return False
         
-        player_keys = [p.get("player_key") for p in players_data if p.get("player_key")]
+        print(f"✓ 获取了 {len(all_players)} 个球员的基础信息")
+        
+        # 确保球员数据存在于数据库中
+        print("📋 确保球员数据存在于数据库中...")
+        self._ensure_players_exist_in_db(all_players, league_key)
+        
+        # 提取球员键
+        player_keys = [player.get('player_key') for player in all_players if player.get('player_key')]
         if not player_keys:
-            print("✗ 提取球员键失败")
+            print("✗ 未找到有效的球员键")
             return False
         
-        print(f"找到 {len(player_keys)} 个球员")
+        print(f"找到 {len(player_keys)} 个球员键")
         
         # 根据游戏类型选择时间范围
         if game_code.lower() == 'nfl':
-            return self._fetch_player_stats_by_weeks(player_keys, players_data, league_key, season, start_week, end_week)
+            return self._fetch_player_stats_by_weeks(player_keys, all_players, league_key, season, start_week, end_week)
         else:
-            return self._fetch_player_stats_by_dates(player_keys, players_data, league_key, season, start_date, end_date)
+            return self._fetch_player_stats_by_dates(player_keys, all_players, league_key, season, start_date, end_date)
+    
+    def _ensure_players_exist_in_db(self, players_data: List[Dict], league_key: str) -> None:
+        """确保球员数据存在于数据库中"""
+        try:
+            from model import Player
+            
+            existing_count = 0
+            created_count = 0
+            
+            for player_data in players_data:
+                player_key = player_data.get('player_key')
+                if not player_key:
+                    continue
+                
+                # 检查球员是否已存在
+                existing_player = self.db_writer.session.query(Player).filter_by(
+                    player_key=player_key
+                ).first()
+                
+                if existing_player:
+                    existing_count += 1
+                    continue
+                
+                # 创建新球员记录
+                try:
+                    player = Player(
+                        player_key=player_key,
+                        player_id=player_data.get('player_id', ''),
+                        editorial_player_key=player_data.get('editorial_player_key', ''),
+                        league_key=league_key,
+                        full_name=player_data.get('full_name', player_data.get('name', {}).get('full', '')),
+                        first_name=player_data.get('first_name', player_data.get('name', {}).get('first', '')),
+                        last_name=player_data.get('last_name', player_data.get('name', {}).get('last', '')),
+                        current_team_key=player_data.get('current_team_key', player_data.get('editorial_team_key', '')),
+                        current_team_name=player_data.get('current_team_name', player_data.get('editorial_team_full_name', '')),
+                        current_team_abbr=player_data.get('current_team_abbr', player_data.get('editorial_team_abbr', '')),
+                        display_position=player_data.get('display_position', ''),
+                        primary_position=player_data.get('primary_position', ''),
+                        position_type=player_data.get('position_type', ''),
+                        uniform_number=player_data.get('uniform_number', ''),
+                        status=player_data.get('status', ''),
+                        headshot_url=player_data.get('headshot_url', ''),
+                        is_undroppable=player_data.get('is_undroppable', False),
+                        season=self.selected_league.get('season', '2024'),
+                        last_updated=datetime.now()
+                    )
+                    
+                    self.db_writer.session.add(player)
+                    created_count += 1
+                    
+                    # 每50个球员提交一次
+                    if created_count % 50 == 0:
+                        self.db_writer.session.commit()
+                        
+                except Exception as e:
+                    print(f"创建球员 {player_key} 失败: {e}")
+                    self.db_writer.session.rollback()
+                    continue
+            
+            # 提交剩余的球员
+            if created_count > 0:
+                try:
+                    self.db_writer.session.commit()
+                except Exception as e:
+                    print(f"提交球员数据失败: {e}")
+                    self.db_writer.session.rollback()
+            
+            print(f"✓ 球员数据检查完成: 已存在 {existing_count} 个，新创建 {created_count} 个")
+            
+        except Exception as e:
+            print(f"确保球员数据存在时出错: {e}")
+            self.db_writer.session.rollback()
     
     def _fetch_player_stats_by_weeks(self, player_keys: List[str], players_data: List[Dict],
                                    league_key: str, season: str, start_week: int, end_week: Optional[int]) -> bool:

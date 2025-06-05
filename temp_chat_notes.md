@@ -32,9 +32,6 @@
 - `sort_week`: 周数 (橄榄球)
 
 
-1. **我们已经有了完整的数据结构理解**，通过现有的JSON数据和数据库模型
-2. **不需要把每天的数据都存储为JSON**，可以直接存入数据库
-3. **时间序列数据应该直接入库**，这样更高效且便于查询分析
 
 ## 时间序列数据处理建议
 
@@ -49,3 +46,104 @@
 3. **数据完整性**：确保时间序列数据的连续性和一致性
 
 这样我们就可以构建一个完整的时间序列数据库，支持历史分析、趋势追踪等高级分析功能！
+
+
+# table
+
+执行 `python3 model.py`，创建数据库模型，表包括：
+  - games
+  - leagues
+  - league_settings
+  - teams
+  - managers
+  - players
+  - player_stats_history
+  - team_stats
+  - rosters
+  - roster_history
+  - transactions
+  - transaction_players
+
+  # 现在我想你帮助我申请一个职位，首先请阅读以下关于这个职位的信息
+
+  ## About the job
+
+  ### Let’s talk talent
+
+  You have talent. Ready to make impact. We know. We also know that making impact starts with that first contact between likeminded people who have the same drive to shape their future. We see you, with your skills, personality and dreams. Now let’s take it to even greater heights by means of one of our talent programs for master’s graduates.
+
+  We are Mploy Associates, a talent focused consultancy firm ready to make not only our clients’ teams successful but also you. Your talent, our focus.
+
+
+
+  ### More specifically?
+
+  We are a consultancy firm specialized in the areas of data, finance, and analytics and work on a variety of projects like investment analyses, data engineering, quant modelling and much more. Our clients are banks, insurance companies, and asset managers and we are still expanding.
+
+  We help our clients build successful teams by providing the right skills, talents and know-how at the right place and time and developing ourselves continuously to stay successful. We believe that investing in talent through proven methods always pays out. Today we are proud to say that we are an international-driven company with more than 100 people and many top-tier clients who share the same vision.
+
+
+
+  ### How do you fit into this vision?
+
+  You will work as a Data Engineer for one of our clients with a special focus on your own development through one of our Talent Programs. Our Talent Programs are designed to accelerate your career from entry level to medior+ level within 24 months. By means of certified training courses, coaching and intervision sessions our employees follow an above-average steep career curve. Successful graduation in our Talent Programs usually results in a permanent medior+ or senior position at one of our clients or where it becomes your responsibility to keep the team successful.
+
+
+
+  ### Your activities as a Data Engineer
+
+  You are mainly involved in projects to enhance data storage solutions in cloud platforms as AWS, Azure, Google Cloud or Oracle Cloud. In these platforms you develop data pipelines and make data available for the business teams of our clients. Your day-to-day responsibilities include:
+
+  Supervising the technical implementation of data elements, from raw to cleansed data;
+  Making an inventory of the relevant databases within the organisation and gaining access to them;
+  Developing and maintaining scripts, tools and applications based on different languages and structures (e.g., Python, PySpark, Java);
+  Migrating projects between different environments (e.g. from Hadoop to Azure);
+  Documenting and presenting the implemented dataflows to relevant stakeholders.
+
+  ### What are we looking for?
+
+  We are looking for graduates with different data and IT-related backgrounds, experiences, and passions. It speaks for itself that you are ambitious, self-reflective and dare to be confident in an authentic way.
+
+  Furthermore, you are energized by stakeholder management and are well adept at gathering reliable information. You use this in combination with a consultive mindset to make our clients more successful. Last but not least, you are eager to develop yourself on personal, professional and technical level with our personalized in-house Talent Programs. To make it more specific:
+
+  You have 0-3 years of work experience and want to learn everything about data engineering;
+  You want to put the skills into practice that you have acquired during your master’s or PhD in Computer Science, Data Science or another related study;
+  You are familiar with one or more operating systems (e.g. Linux, Unix, Windows), cloud platforms (e.g., Azure, AWS, Google Cloud) and common programming languages (e.g., Java, SQL, Python, C#);
+  You do not hesitate to use your analytical skills to solve complex problems creatively and logically.
+
+
+  ### Interested?
+
+  For more information about our different positions and Talent Programs you can visit our website www.mployassociates.com. Want to know more about the vacancy? Use the apply button above or email us at careers@mployassociates.com from the moment you start your master’s so we can help you prepare for your dream career. We will be in touch.
+
+  Please note that unfortunately there is no point in applying when you do not live in the Netherlands or if you have more than 3 years of work experience. These applications will not be processed.
+
+  Are you interested in multiple positions at Mploy Associates? Apply for one position and mention the other position(s) in your motivation message. Together we will find the best match for you.
+
+  # 现在，你也知道我们在做一个yahoo nba fantasy的工具，我想通过这个project练习一些data engineer/data scientist/data analyst 会设计的技能，例如ETL，用pyspark处理大数据，还有更多。
+
+  # 我envision这个project会：
+
+  - 用户用yahoo账号登录这个工具，
+  - 工具会用 yahoo fantasy api 获取玩家的games和leagues，包括league_settings。
+  - 用户选择一个league使用这个工具。
+  - 工具用yahoo api：
+    1. 获取历史数据 （如果是第一次登录使用）
+    2. 更新最新数据 （如果数据库已经被更新过）
+    这些数据包括：
+    - teams
+    - managers
+    - players
+    - player_stats
+    - player_stats_history
+    - team_stats
+    - rosters
+    - roster_history
+    - transactions
+    - transaction_players
+  - 工具包括 (还未implement):
+    - team analysis 
+    - trade analysis
+    - add/drop suggestion based on current matchup
+    - streaming plan
+
