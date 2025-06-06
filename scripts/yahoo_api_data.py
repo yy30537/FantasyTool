@@ -1656,41 +1656,37 @@ class YahooFantasyDataFetcher:
         """执行完整的单联盟数据获取流程"""
         print("🚀 开始Yahoo Fantasy单联盟完整数据获取...")
         
-        try:
-            # 1. 基础数据获取和联盟选择
-            if not self.fetch_and_select_league(use_existing_data=False):
-                print("✗ 基础数据获取或联盟选择失败")
-                return False
-            
-            # 2. 获取完整联盟数据
-            if not self.fetch_complete_league_data():
-                print("✗ 联盟数据获取失败")
-                return False
-            
-            # 3. 显示数据统计
-            print(f"\n📊 数据获取统计:")
-            print(self.db_writer.get_stats_summary())
-            
-            print("🎉 单联盟数据获取成功！")
-            return True
-            
-        finally:
-            self.close()
+        # 检查是否已选择联盟
+        if not self.selected_league:
+            print("✗ 尚未选择联盟，请先选择联盟")
+            return False
+        
+        # 获取完整联盟数据
+        if not self.fetch_complete_league_data():
+            print("✗ 联盟数据获取失败")
+            return False
+        
+        # 显示数据统计
+        print(f"\n📊 数据获取统计:")
+        print(self.db_writer.get_stats_summary())
+        
+        print("🎉 单联盟数据获取成功！")
+        return True
     
     def run_historical_data_fetch(self, weeks_back: int = 5, days_back: int = 30) -> bool:
         """执行历史数据获取流程"""
         print("🚀 开始Yahoo Fantasy历史数据获取...")
         
-        # 1. 基础数据获取和联盟选择
-        if not self.fetch_and_select_league():
-            print("✗ 基础数据获取或联盟选择失败")
+        # 检查是否已选择联盟
+        if not self.selected_league:
+            print("✗ 尚未选择联盟，请先选择联盟")
             return False
         
         league_key = self.selected_league['league_key']
         game_code = self.selected_league.get('game_code', 'nfl')
         current_week = int(self.selected_league.get('current_week', 1))
         
-        # 2. 获取历史名单数据
+        # 获取历史名单数据
         print(f"\n📋 步骤1: 获取历史名单数据")
         if game_code.lower() == 'nfl':
             start_week = max(1, current_week - weeks_back)
@@ -1699,7 +1695,7 @@ class YahooFantasyDataFetcher:
             start_date = date.today() - timedelta(days=days_back)
             self.fetch_historical_rosters(start_date=start_date)
         
-        # 3. 获取历史球员统计数据
+        # 获取历史球员统计数据
         print(f"\n📋 步骤2: 获取历史球员统计数据")
         if game_code.lower() == 'nfl':
             start_week = max(1, current_week - weeks_back)
@@ -1708,7 +1704,7 @@ class YahooFantasyDataFetcher:
             start_date = date.today() - timedelta(days=days_back)
             self.fetch_historical_player_stats(start_date=start_date)
         
-        # 4. 显示统计摘要
+        # 显示统计摘要
         print(f"\n📊 数据获取统计:")
         print(self.db_writer.get_stats_summary())
         
@@ -1717,16 +1713,46 @@ class YahooFantasyDataFetcher:
     
     # ===== 交互式菜单系统 =====
     
+    def select_league_interactive(self) -> bool:
+        """交互式选择联盟"""
+        print("🔍 开始获取联盟信息和选择联盟...")
+        
+        # 获取基础数据并选择联盟
+        if not self.fetch_and_select_league(use_existing_data=True):
+            print("✗ 联盟获取或选择失败")
+            return False
+        
+        print(f"✅ 联盟选择成功!")
+        print(f"   联盟名称: {self.selected_league.get('name', 'Unknown')}")
+        print(f"   联盟键: {self.selected_league.get('league_key', 'Unknown')}")
+        print(f"   赛季: {self.selected_league.get('season', 'Unknown')}")
+        print(f"   游戏类型: {self.selected_league.get('game_code', 'Unknown')}")
+        
+        return True
+    
     def show_main_menu(self) -> None:
         """显示主菜单"""
         print("\n" + "="*60)
         print("🏈 Yahoo Fantasy 统一数据获取工具")
         print("="*60)
+        
+        # 显示当前选择的联盟信息
+        if self.selected_league:
+            league_name = self.selected_league.get('name', 'Unknown')
+            league_key = self.selected_league.get('league_key', 'Unknown')
+            season = self.selected_league.get('season', 'Unknown')
+            print(f"📍 当前选择的联盟: {league_name} ({season})")
+            print(f"   联盟键: {league_key}")
+        else:
+            print("📍 当前选择的联盟: 未选择")
+        
+        print("="*60)
         print("1. 单联盟完整数据获取")
         print("2. 时间序列历史数据获取")
-        print("3. 显示数据库摘要")
-        print("4. 清空数据库（慎用！）")
-        print("5. 退出")
+        print("3. 选择联盟")
+        print("4. 显示数据库摘要")
+        print("5. 清空数据库")
+        print("6. 退出")
         print("="*60)
     
     def run_interactive_menu(self) -> None:
@@ -1734,7 +1760,7 @@ class YahooFantasyDataFetcher:
         while True:
             try:
                 self.show_main_menu()
-                choice = input("请选择操作 (1-5): ").strip()
+                choice = input("请选择操作 (1-6): ").strip()
                 
                 if choice == "1":
                     # 单联盟完整数据获取
@@ -1761,10 +1787,18 @@ class YahooFantasyDataFetcher:
                         print("\n❌ 历史数据获取失败")
                 
                 elif choice == "3":
+                    # 选择联盟
+                    print("\n🔍 联盟选择...")
+                    if self.select_league_interactive():
+                        print("✅ 联盟选择成功")
+                    else:
+                        print("❌ 联盟选择失败")
+                
+                elif choice == "4":
                     # 显示数据库摘要
                     self.show_database_summary()
                 
-                elif choice == "4":
+                elif choice == "5":
                     # 清空数据库
                     print("\n⚠️ 即将清空数据库，所有数据将被删除！")
                     confirm = input("请输入 'YES' 确认清空数据库: ").strip()
@@ -1776,16 +1810,16 @@ class YahooFantasyDataFetcher:
                     else:
                         print("❌ 操作已取消")
                 
-                elif choice == "5":
+                elif choice == "6":
                     # 退出
                     print("\n👋 感谢使用！再见！")
                     break
                 
                 else:
-                    print("❌ 无效选择，请输入1-5之间的数字")
+                    print("❌ 无效选择，请输入1-6之间的数字")
                 
                 # 等待用户确认后继续
-                if choice in ["1", "2", "3", "4"]:
+                if choice in ["1", "2", "3", "4", "5"]:
                     input("\n按回车键继续...")
                     
             except KeyboardInterrupt:
@@ -1855,6 +1889,12 @@ def main():
             elif args.single_league:
                 # 执行单联盟完整流程
                 print("🚀 开始单联盟完整数据获取流程")
+                
+                # 首先选择联盟
+                if not fetcher.select_league_interactive():
+                    print("\n❌ 联盟选择失败")
+                    return
+                
                 fetcher.show_database_summary()  # 显示开始前的状态
                 
                 if fetcher.run_complete_league_fetch():
@@ -1865,6 +1905,12 @@ def main():
             elif args.time_series or args.historical:
                 # 执行时间序列流程
                 print("🚀 开始时间序列历史数据获取流程")
+                
+                # 首先选择联盟
+                if not fetcher.select_league_interactive():
+                    print("\n❌ 联盟选择失败")
+                    return
+                
                 fetcher.show_database_summary()  # 显示开始前的状态
                 
                 if fetcher.run_historical_data_fetch(weeks_back=args.weeks_back, days_back=args.days_back):

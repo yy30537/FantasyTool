@@ -14,7 +14,7 @@ from sqlalchemy import and_, or_
 # 确保可以正确导入模块
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from model import (
-    create_database_engine, create_tables, get_session,
+    create_database_engine, create_tables, recreate_tables, get_session,
     Game, League, LeagueSettings, Team, Manager, Player, 
     Roster, Transaction, TransactionPlayer, PlayerStatsHistory, 
     TeamStats, RosterHistory
@@ -31,7 +31,14 @@ class FantasyDatabaseWriter:
         """
         self.batch_size = batch_size
         self.engine = create_database_engine()
-        create_tables(self.engine)
+        
+        # 检查并修复表结构问题
+        if self._check_table_structure_issues():
+            print("🔧 检测到数据库表结构问题，正在修复...")
+            recreate_tables(self.engine)
+        else:
+            create_tables(self.engine)
+            
         self.session = get_session(self.engine)
         
         # 统计计数器
@@ -54,6 +61,34 @@ class FantasyDatabaseWriter:
         """关闭数据库连接"""
         if self.session:
             self.session.close()
+    
+    def _check_table_structure_issues(self) -> bool:
+        """检查数据库表结构是否存在问题
+        
+        Returns:
+            bool: True表示存在问题需要重新创建表，False表示正常
+        """
+        try:
+            # 创建一个临时session来检查表结构
+            temp_session = get_session(self.engine)
+            
+            # 尝试查询transactions表的所有列，如果缺少列会抛出异常
+            try:
+                temp_session.query(Transaction).first()
+                temp_session.close()
+                return False  # 没有问题
+            except Exception as e:
+                temp_session.close()
+                error_msg = str(e).lower()
+                # 检查是否是列不存在的错误
+                if "does not exist" in error_msg or "undefinedcolumn" in error_msg:
+                    print(f"检测到表结构问题: {e}")
+                    return True  # 需要重新创建表
+                return False  # 其他类型的错误，不重新创建表
+                
+        except Exception as e:
+            print(f"检查表结构时出错: {e}")
+            return True  # 安全起见，重新创建表
     
     def get_stats_summary(self) -> str:
         """获取统计摘要"""

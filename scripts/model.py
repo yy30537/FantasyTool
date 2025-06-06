@@ -440,6 +440,13 @@ def create_tables(engine):
     """创建所有表"""
     Base.metadata.create_all(engine)
 
+def recreate_tables(engine):
+    """重新创建所有表（先删除再创建）"""
+    print("🔄 重新创建数据库表...")
+    Base.metadata.drop_all(engine)
+    Base.metadata.create_all(engine)
+    print("✅ 数据库表重新创建完成")
+
 def get_session(engine):
     """获取数据库会话"""
     Session = sessionmaker(bind=engine)
