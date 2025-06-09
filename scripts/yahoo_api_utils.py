@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Yahoo Fantasy API 通用工具模块 - 单联盟模式
-专注于单个联盟的深度数据获取
+Yahoo Fantasy API 通用工具模块
+专注于API请求和令牌管理
 """
 import requests
 import json
@@ -15,210 +15,43 @@ from dotenv import load_dotenv
 # 加载环境变量
 load_dotenv()
 
-# 路径配置 - 使用项目根目录
+# 路径配置 - 只保留tokens目录
 BASE_DIR = pathlib.Path(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 TOKENS_DIR = BASE_DIR / "tokens"
-DATA_DIR = BASE_DIR / "data"
-
-# 基础数据目录
-GAMES_DIR = DATA_DIR
-LEAGUES_DIR = DATA_DIR
 
 # OAuth配置（最好从环境变量加载）
 CLIENT_ID = os.getenv("YAHOO_CLIENT_ID", "dj0yJmk9U0NqTDRYdXd0NW9yJmQ9WVdrOVRGaGhkRUZLTmxnbWNHbzlNQT09JnM9Y29uc3VtZXJzZWNyZXQmc3Y9MCZ4PTFk")
 CLIENT_SECRET = os.getenv("YAHOO_CLIENT_SECRET", "a5b3a6e1ff6a3e982036ec873a78f6fa46431508")
 TOKEN_URL = "https://api.login.yahoo.com/oauth2/get_token"
 
-def ensure_data_directories():
-    """确保基础数据目录存在"""
-    directories = [TOKENS_DIR, DATA_DIR]
-    
-    for directory in directories:
-        if not directory.exists():
-            directory.mkdir(parents=True, exist_ok=True)
-            print(f"创建目录: {directory}")
+def ensure_tokens_directory():
+    """确保tokens目录存在"""
+    if not TOKENS_DIR.exists():
+        TOKENS_DIR.mkdir(parents=True, exist_ok=True)
+        print(f"创建目录: {TOKENS_DIR}")
 
-def create_league_directory(league_key):
-    """为选定的联盟创建专用目录结构
-    
-    Args:
-        league_key: 联盟键，如 "385.l.24889"
-    
-    Returns:
-        dict: 包含所有子目录路径的字典
-    """
-    league_dir = DATA_DIR / f"selected_league_{league_key}"
-    
-    # 创建子目录结构
-    directories = {
-        'base': league_dir,
-        'rosters': league_dir / "rosters",
-        'players': league_dir / "players",
-        'transactions': league_dir / "transactions"
-    }
-    
-    for dir_path in directories.values():
-        if not dir_path.exists():
-            dir_path.mkdir(parents=True, exist_ok=True)
-            print(f"创建联盟目录: {dir_path}")
-    
-    return directories
-
-def get_league_directory(league_key):
-    """获取联盟目录路径
-    
-    Args:
-        league_key: 联盟键
-        
-    Returns:
-        dict: 包含所有子目录路径的字典
-    """
-    league_dir = DATA_DIR / f"selected_league_{league_key}"
-    
-    return {
-        'base': league_dir,
-        'rosters': league_dir / "rosters",
-        'players': league_dir / "players",
-        'transactions': league_dir / "transactions"
-    }
-
-# 在模块加载时创建基础目录
-ensure_data_directories()
+# 在模块加载时创建tokens目录
+ensure_tokens_directory()
 
 # 令牌文件路径
 DEFAULT_TOKEN_FILE = TOKENS_DIR / "yahoo_token.token"
 
-def create_transaction_team_directories(league_dirs, teams_data):
-    """为联盟中的每个团队创建transaction子目录
-    
-    Args:
-        league_dirs: 联盟目录字典
-        teams_data: 团队数据
-    
-    Returns:
-        dict: team_key -> 目录路径的映射
-    """
-    transaction_base_dir = league_dirs['transactions']
-    team_directories = {}
-    
-    # 提取团队信息
-    team_keys = extract_team_keys_from_data(teams_data)
-    team_names = extract_team_names_from_data(teams_data)
-    
-    for team_key in team_keys:
-        # 获取团队名称，用于创建更友好的目录名
-        team_name = team_names.get(team_key, f"team_{team_key.split('.')[-1]}")
-        safe_team_name = "".join(c for c in team_name if c.isalnum() or c in (' ', '-', '_')).strip()
-        safe_team_name = safe_team_name.replace(' ', '_')
-        
-        team_dir = transaction_base_dir / f"{safe_team_name}_{team_key.split('.')[-1]}"
-        
-        if not team_dir.exists():
-            team_dir.mkdir(parents=True, exist_ok=True)
-            print(f"创建团队transaction目录: {team_dir}")
-        
-        team_directories[team_key] = team_dir
-    
-    return team_directories
-
-def extract_team_keys_from_data(teams_data):
-    """从团队数据中提取团队键列表
-    
-    Args:
-        teams_data: Yahoo API返回的团队数据
-    
-    Returns:
-        list: 团队键列表
-    """
-    team_keys = []
-    
+def save_token(token):
+    """保存令牌到文件"""
     try:
-        fantasy_content = teams_data["fantasy_content"]
-        league_data = fantasy_content["league"]
-        
-        teams_container = None
-        if isinstance(league_data, list) and len(league_data) > 1:
-            for item in league_data:
-                if isinstance(item, dict) and "teams" in item:
-                    teams_container = item["teams"]
-                    break
-        
-        if teams_container:
-            teams_count = int(teams_container.get("count", 0))
-            for i in range(teams_count):
-                str_index = str(i)
-                if str_index in teams_container:
-                    team_container = teams_container[str_index]
-                    if "team" in team_container:
-                        team_data = team_container["team"]
-                        if (isinstance(team_data, list) and 
-                            len(team_data) > 0 and 
-                            isinstance(team_data[0], list) and 
-                            len(team_data[0]) > 0):
-                            
-                            team_key = team_data[0][0].get("team_key")
-                            if team_key:
-                                team_keys.append(team_key)
-    
+        # 确保目录存在
+        DEFAULT_TOKEN_FILE.parent.mkdir(parents=True, exist_ok=True)
+        with open(DEFAULT_TOKEN_FILE, 'wb') as f:
+            pickle.dump(token, f)
+        print(f"令牌已保存到: {DEFAULT_TOKEN_FILE}")
+        return True
     except Exception as e:
-        print(f"提取团队键时出错: {e}")
-    
-    return team_keys
-
-def extract_team_names_from_data(teams_data):
-    """从团队数据中提取团队名称映射
-    
-    Args:
-        teams_data: Yahoo API返回的团队数据
-    
-    Returns:
-        dict: team_key -> team_name的映射
-    """
-    team_names = {}
-    
-    try:
-        fantasy_content = teams_data["fantasy_content"]
-        league_data = fantasy_content["league"]
-        
-        teams_container = None
-        if isinstance(league_data, list) and len(league_data) > 1:
-            for item in league_data:
-                if isinstance(item, dict) and "teams" in item:
-                    teams_container = item["teams"]
-                    break
-        
-        if teams_container:
-            teams_count = int(teams_container.get("count", 0))
-            for i in range(teams_count):
-                str_index = str(i)
-                if str_index in teams_container:
-                    team_container = teams_container[str_index]
-                    if "team" in team_container:
-                        team_data = team_container["team"]
-                        if (isinstance(team_data, list) and 
-                            len(team_data) > 0 and 
-                            isinstance(team_data[0], list)):
-                            
-                            # 合并团队基本信息
-                            team_info = {}
-                            for info_item in team_data[0]:
-                                if isinstance(info_item, dict):
-                                    team_info.update(info_item)
-                            
-                            team_key = team_info.get("team_key")
-                            team_name = team_info.get("name", "Unknown Team")
-                            
-                            if team_key:
-                                team_names[team_key] = team_name
-    
-    except Exception as e:
-        print(f"提取团队名称时出错: {e}")
-    
-    return team_names
+        print(f"保存令牌时出错: {str(e)}")
+        return False
 
 def load_token():
     """从文件加载令牌"""
-    # 首先尝试从当前目录加载
+    # 首先尝试从统一位置加载
     if DEFAULT_TOKEN_FILE.exists():
         try:
             with open(DEFAULT_TOKEN_FILE, 'rb') as f:
@@ -226,10 +59,10 @@ def load_token():
         except Exception as e:
             print(f"加载令牌时出错: {str(e)}")
     else:
-        # 如果当前目录不存在，尝试从其他可能的位置加载
+        # 如果统一位置不存在，尝试从其他可能的位置加载并迁移
         possible_token_paths = [
-            BASE_DIR / "tokens" / "yahoo_token.token",  # 项目根目录
             pathlib.Path("tokens/yahoo_token.token"),  # 当前目录下的tokens
+            pathlib.Path("scripts/tokens/yahoo_token.token"),  # scripts目录下的tokens
         ]
         
         for token_path in possible_token_paths:
@@ -237,10 +70,9 @@ def load_token():
                 try:
                     with open(token_path, 'rb') as f:
                         token = pickle.load(f)
-                        # 将令牌保存到正确的位置
-                        with open(DEFAULT_TOKEN_FILE, 'wb') as new_f:
-                            pickle.dump(token, new_f)
-                        print(f"从 {token_path} 复制令牌到 {DEFAULT_TOKEN_FILE}")
+                        # 迁移到统一位置
+                        if save_token(token):
+                            print(f"已将令牌从 {token_path} 迁移到 {DEFAULT_TOKEN_FILE}")
                         return token
                 except Exception as e:
                     print(f"从 {token_path} 加载令牌时出错: {str(e)}")
@@ -248,43 +80,6 @@ def load_token():
         print("未找到token文件，请先运行app.py完成授权")
     
     return None
-
-def save_json_data(data, file_path):
-    """保存数据到JSON文件
-    
-    Args:
-        data: 要保存的数据
-        file_path: 文件路径
-    """
-    try:
-        # 确保目录存在
-        os.makedirs(os.path.dirname(os.path.abspath(file_path)), exist_ok=True)
-        
-        with open(file_path, "w", encoding="utf-8") as f:
-            json.dump(data, f, indent=2, ensure_ascii=False)
-        print(f"数据已保存到: {file_path}")
-        return True
-    except Exception as e:
-        print(f"保存数据到 {file_path} 时出错: {str(e)}")
-        return False
-
-def load_json_data(file_path):
-    """从JSON文件加载数据
-    
-    Args:
-        file_path: 文件路径
-    """
-    try:
-        if not os.path.exists(file_path):
-            print(f"文件不存在: {file_path}")
-            return None
-            
-        with open(file_path, "r", encoding="utf-8") as f:
-            data = json.load(f)
-        return data
-    except Exception as e:
-        print(f"从 {file_path} 加载数据时出错: {str(e)}")
-        return None
 
 def refresh_token_if_needed(token):
     """检查并刷新令牌（如果已过期）"""
@@ -320,8 +115,7 @@ def refresh_token_if_needed(token):
                     new_token['refresh_token'] = refresh_token
                 
                 # 保存更新的令牌
-                with open(DEFAULT_TOKEN_FILE, 'wb') as f:
-                    pickle.dump(new_token, f)
+                save_token(new_token)
                 
                 print("令牌刷新成功")
                 return new_token
@@ -465,111 +259,4 @@ def select_league_interactively(leagues_data):
             print("请输入有效的数字")
         except KeyboardInterrupt:
             print("\n用户取消选择")
-            return None
-
-def get_league_data_overview(league_key):
-    """获取联盟数据概览"""
-    league_dirs = get_league_directory(league_key)
-    overview = {
-        'league_key': league_key,
-        'data_exists': league_dirs['base'].exists(),
-        'files': {},
-        'total_size': 0
-    }
-    
-    if not overview['data_exists']:
-        return overview
-    
-    # 检查各个数据文件
-    file_checks = {
-        'league_info': league_dirs['base'] / "league_info.json",
-        'teams': league_dirs['base'] / "teams.json",
-        'static_players': league_dirs['players'] / "static_players.json",
-        'dynamic_players': league_dirs['players'] / "dynamic_players.json",
-        'player_stats': league_dirs['players'] / "player_stats.json"
-    }
-    
-    # 检查rosters目录
-    roster_files = list(league_dirs['rosters'].glob("*.json")) if league_dirs['rosters'].exists() else []
-    
-    # 检查transactions目录
-    transaction_files = list(league_dirs['transactions'].glob("**/*.json")) if league_dirs['transactions'].exists() else []
-    
-    for file_type, file_path in file_checks.items():
-        if file_path.exists():
-            size = file_path.stat().st_size
-            overview['files'][file_type] = {
-                'exists': True,
-                'size_mb': size / 1024 / 1024,
-                'path': str(file_path)
-            }
-            overview['total_size'] += size
-        else:
-            overview['files'][file_type] = {'exists': False}
-    
-    # 添加rosters信息
-    overview['files']['rosters'] = {
-        'exists': len(roster_files) > 0,
-        'count': len(roster_files),
-        'total_size_mb': sum(f.stat().st_size for f in roster_files) / 1024 / 1024 if roster_files else 0
-    }
-    
-    # 添加transactions信息
-    overview['files']['transactions'] = {
-        'exists': len(transaction_files) > 0,
-        'count': len(transaction_files),
-        'total_size_mb': sum(f.stat().st_size for f in transaction_files) / 1024 / 1024 if transaction_files else 0
-    }
-    
-    overview['total_size'] += sum(f.stat().st_size for f in roster_files)
-    overview['total_size'] += sum(f.stat().st_size for f in transaction_files)
-    overview['total_size_mb'] = overview['total_size'] / 1024 / 1024
-    
-    return overview
-
-def print_data_overview(league_key=None):
-    """打印数据概览"""
-    print("\n" + "="*50)
-    print("Yahoo Fantasy 数据概览 - 单联盟模式")
-    print("="*50)
-    
-    # 检查基础数据
-    games_file = GAMES_DIR / "games_data.json"
-    leagues_file = LEAGUES_DIR / "all_leagues_data.json"
-    
-    print("=== 基础数据 ===")
-    print(f"Games数据: {'✓' if games_file.exists() else '✗'}")
-    print(f"Leagues数据: {'✓' if leagues_file.exists() else '✗'}")
-    
-    # 如果指定了联盟，显示联盟数据概览
-    if league_key:
-        print(f"\n=== 联盟数据: {league_key} ===")
-        overview = get_league_data_overview(league_key)
-        
-        if overview['data_exists']:
-            for file_type, file_info in overview['files'].items():
-                if file_type == 'rosters':
-                    status = "✓" if file_info['exists'] else "✗"
-                    print(f"{status} {file_type}: {file_info['count']} 个文件, {file_info['total_size_mb']:.1f} MB")
-                elif file_type == 'transactions':
-                    status = "✓" if file_info['exists'] else "✗"
-                    print(f"{status} {file_type}: {file_info['count']} 个文件, {file_info['total_size_mb']:.1f} MB")
-                else:
-                    status = "✓" if file_info['exists'] else "✗"
-                    size_info = f", {file_info['size_mb']:.1f} MB" if file_info['exists'] else ""
-                    print(f"{status} {file_type}{size_info}")
-            
-            print(f"\n总大小: {overview['total_size_mb']:.1f} MB")
-        else:
-            print("✗ 联盟数据目录不存在")
-    else:
-        # 查找现有的联盟数据
-        league_dirs = list(DATA_DIR.glob("selected_league_*"))
-        if league_dirs:
-            print(f"\n=== 现有联盟数据 ===")
-            for league_dir in league_dirs:
-                league_key = league_dir.name.replace("selected_league_", "")
-                overview = get_league_data_overview(league_key)
-                print(f"联盟 {league_key}: {overview['total_size_mb']:.1f} MB")
-    
-    print("="*50) 
+            return None 

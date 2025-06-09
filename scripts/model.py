@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, Column, Integer, String, Boolean, DateTime, JSON, ForeignKey, Index, Date
+from sqlalchemy import create_engine, Column, Integer, String, Boolean, DateTime, JSON, ForeignKey, Index, Date, text, Float, ForeignKeyConstraint
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 from datetime import datetime
@@ -81,6 +81,7 @@ class League(Base):
     league_settings = relationship("LeagueSettings", back_populates="league", uselist=False)
     players = relationship("Player", back_populates="league")
     transactions = relationship("Transaction", back_populates="league")
+    stat_categories = relationship("StatCategory", back_populates="league")
     
     # 索引
     __table_args__ = (
@@ -122,13 +123,46 @@ class LeagueSettings(Base):
     is_publicly_viewable = Column(Boolean, default=True)
     can_trade_draft_picks = Column(Boolean, default=False)
     sendbird_channel_url = Column(String(200))
-    roster_positions = Column(JSON)  # 存储阵容位置配置
-    stat_categories = Column(JSON)  # 存储统计类别配置
+    roster_positions = Column(JSON)  # 保留：存储阵容位置配置
+    stat_categories = Column(JSON)  # 保留：存储统计类别配置
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     # 关系
     league = relationship("League", back_populates="league_settings")
+
+class StatCategory(Base):
+    """统计类别定义表 - 标记核心统计项"""
+    __tablename__ = 'stat_categories'
+    
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    league_key = Column(String(50), ForeignKey('leagues.league_key'), nullable=False)
+    stat_id = Column(Integer, nullable=False)
+    name = Column(String(200), nullable=False)
+    display_name = Column(String(100), nullable=False)
+    abbr = Column(String(20), nullable=False)
+    group_name = Column(String(50))
+    sort_order = Column(Integer)
+    position_type = Column(String(10))
+    is_enabled = Column(Boolean, default=True)
+    is_only_display_stat = Column(Boolean, default=False)
+    
+    # 标记是否为核心统计项（用于提取到独立列）
+    is_core_stat = Column(Boolean, default=False)
+    core_stat_column = Column(String(50))  # 对应的列名
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # 关系
+    league = relationship("League", back_populates="stat_categories")
+    
+    # 索引
+    __table_args__ = (
+        Index('idx_stat_category_unique', 'league_key', 'stat_id', unique=True),
+        Index('idx_stat_category_league', 'league_key'),
+        Index('idx_stat_category_core', 'is_core_stat', 'league_key'),
+    )
 
 class Team(Base):
     """团队信息表"""
@@ -155,7 +189,7 @@ class Team(Base):
     # 关系
     league = relationship("League", back_populates="teams")
     managers = relationship("Manager", back_populates="team")
-    rosters = relationship("Roster", back_populates="team")
+    roster_daily = relationship("RosterDaily", back_populates="team")
     
     # 索引
     __table_args__ = (Index('idx_team_league', 'league_key'),)
@@ -181,7 +215,7 @@ class Manager(Base):
     team = relationship("Team", back_populates="managers")
 
 class Player(Base):
-    """球员信息表（合并静态和动态信息）"""
+    """球员信息表（移除eligible_positions JSON列）"""
     __tablename__ = 'players'
     
     player_key = Column(String(50), primary_key=True)
@@ -206,7 +240,6 @@ class Player(Base):
     image_url = Column(String(500))
     headshot_url = Column(String(500))
     is_undroppable = Column(Boolean, default=False)
-    eligible_positions = Column(JSON)  # 存储合适的位置列表
     season = Column(String(10), nullable=False)
     last_updated = Column(DateTime)
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -214,7 +247,8 @@ class Player(Base):
     
     # 关系
     league = relationship("League", back_populates="players")
-    rosters = relationship("Roster", back_populates="player")
+    roster_daily = relationship("RosterDaily", back_populates="player")
+    eligible_positions = relationship("PlayerEligiblePosition", back_populates="player")
     
     # 索引
     __table_args__ = (
@@ -224,121 +258,61 @@ class Player(Base):
         Index('idx_player_position', 'display_position'),
     )
 
-class PlayerStatsHistory(Base):
-    """球员历史统计数据表（专门用于时间序列分析）"""
-    __tablename__ = 'player_stats_history'
+class PlayerEligiblePosition(Base):
+    """球员合适位置表"""
+    __tablename__ = 'player_eligible_positions'
     
     id = Column(Integer, primary_key=True, autoincrement=True)
-    player_key = Column(String(50), nullable=False)  # 移除外键约束
-    editorial_player_key = Column(String(50), nullable=False)  # 便于跨联盟分析
-    league_key = Column(String(50), nullable=False)  # 移除外键约束
+    player_key = Column(String(50), ForeignKey('players.player_key'), nullable=False)
+    position = Column(String(10), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
     
-    # 时间维度
-    coverage_type = Column(String(20), nullable=False)  # season, week, date
-    season = Column(String(10), nullable=False)
-    week = Column(Integer)  # 周数（NFL）
-    coverage_date = Column(Date)  # 具体日期（MLB/NBA/NHL）
-    
-    # 统计数据（JSON格式存储所有统计）
-    stats_data = Column(JSON, nullable=False)  # 完整统计数据
-    fantasy_points = Column(String(20))  # 幻想分数
-    
-    # 元数据
-    fetched_at = Column(DateTime, default=datetime.utcnow)
-    data_source = Column(String(50), default='yahoo_api')  # 数据来源
+    # 关系
+    player = relationship("Player", back_populates="eligible_positions")
     
     # 索引
     __table_args__ = (
-        Index('idx_player_history_unique', 'player_key', 'league_key', 'coverage_type', 'season', 'week', 'coverage_date', unique=True),
-        Index('idx_player_history_time', 'coverage_type', 'season', 'week', 'coverage_date'),
-        Index('idx_player_history_editorial', 'editorial_player_key', 'season'),
-        Index('idx_player_history_league_time', 'league_key', 'coverage_type', 'season'),
+        Index('idx_player_position_unique', 'player_key', 'position', unique=True),
+        Index('idx_player_position_pos', 'position'),
     )
 
-class TeamStats(Base):
-    """团队统计数据表"""
-    __tablename__ = 'team_stats'
+class MatchupStatWinners(Base):
+    """比赛统计类别获胜者表"""
+    __tablename__ = 'matchup_stat_winners'
     
     id = Column(Integer, primary_key=True, autoincrement=True)
-    team_key = Column(String(50), nullable=False)  # 移除外键约束
-    league_key = Column(String(50), nullable=False)  # 移除外键约束
-    
-    # 时间维度
-    coverage_type = Column(String(20), nullable=False)  # season, week, date
+    league_key = Column(String(50), ForeignKey('leagues.league_key'), nullable=False)
     season = Column(String(10), nullable=False)
-    week = Column(Integer)  # 周数（NFL）
-    coverage_date = Column(Date)  # 具体日期（MLB/NBA/NHL）
-    
-    # 统计数据
-    stats_data = Column(JSON)  # 完整统计数据
-    total_points = Column(String(20))  # 总分
-    
-    # Matchup相关数据
-    opponent_team_key = Column(String(50))  # 对手团队
-    is_playoff = Column(Boolean, default=False)  # 是否季后赛
-    win = Column(Boolean)  # 是否获胜
-    loss = Column(Boolean)  # 是否失败
-    tie = Column(Boolean)  # 是否平局
+    week = Column(Integer, nullable=False)
+    stat_id = Column(Integer, nullable=False)
+    winner_team_key = Column(String(50), ForeignKey('teams.team_key'), nullable=False)
+    is_tied = Column(Boolean, default=False)
     
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     # 索引
     __table_args__ = (
-        Index('idx_team_stats_unique', 'team_key', 'coverage_type', 'season', 'week', 'coverage_date', unique=True),
-        Index('idx_team_stats_time', 'coverage_type', 'season', 'week', 'coverage_date'),
-        Index('idx_team_stats_league_time', 'league_key', 'coverage_type', 'season'),
+        Index('idx_matchup_stat_winner_unique', 'league_key', 'week', 'stat_id', unique=True),
+        Index('idx_matchup_stat_winner_team', 'winner_team_key', 'week'),
+        Index('idx_matchup_stat_winner_stat', 'stat_id', 'week'),
     )
 
-class Roster(Base):
-    """团队名单表"""
-    __tablename__ = 'rosters'
+class RosterDaily(Base):
+    """每日名单表 - 记录每天的球员分配情况"""
+    __tablename__ = 'roster_daily'
     
     id = Column(Integer, primary_key=True, autoincrement=True)
     team_key = Column(String(50), ForeignKey('teams.team_key'), nullable=False)
     player_key = Column(String(50), ForeignKey('players.player_key'), nullable=False)
-    coverage_date = Column(String(20))  # 名单日期
-    is_prescoring = Column(Boolean, default=False)
-    is_editable = Column(Boolean, default=False)
+    league_key = Column(String(50), ForeignKey('leagues.league_key'), nullable=False)
     
-    # 球员当前状态信息
-    status = Column(String(20))  # INJ等
-    status_full = Column(String(100))
-    injury_note = Column(String(200))
-    is_keeper = Column(Boolean, default=False)
-    keeper_cost = Column(String(20))
-    kept = Column(Boolean, default=False)
+    # 时间维度 - 统一为date
+    date = Column(Date, nullable=False)  # 名单日期
+    season = Column(String(10), nullable=False)  # 赛季
+    week = Column(Integer)  # 周数（NFL/NBA等）
     
-    # 位置信息
-    selected_position = Column(String(20))  # 当前选择的位置
-    eligible_positions_to_add = Column(JSON)  # 可以添加的位置
-    
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
-    # 关系
-    team = relationship("Team", back_populates="rosters")
-    player = relationship("Player", back_populates="rosters")
-    
-    # 索引
-    __table_args__ = (Index('idx_roster_unique', 'team_key', 'player_key', 'coverage_date', unique=True),)
-
-class RosterHistory(Base):
-    """团队名单历史表（专门用于时间序列分析）"""
-    __tablename__ = 'roster_history'
-    
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    team_key = Column(String(50), nullable=False)  # 移除外键约束
-    player_key = Column(String(50), nullable=False)  # 移除外键约束
-    league_key = Column(String(50), nullable=False)  # 移除外键约束
-    
-    # 时间维度
-    coverage_type = Column(String(20), nullable=False)  # week, date
-    season = Column(String(10), nullable=False)
-    week = Column(Integer)  # 周数（NFL）
-    coverage_date = Column(Date)  # 具体日期（MLB/NBA/NHL）
-    
-    # Roster状态
+    # 名单位置信息
     selected_position = Column(String(20))  # 当前选择的位置
     is_starting = Column(Boolean, default=False)  # 是否首发
     is_bench = Column(Boolean, default=False)  # 是否替补
@@ -346,17 +320,30 @@ class RosterHistory(Base):
     
     # 球员状态信息
     player_status = Column(String(20))  # INJ等
-    injury_note = Column(String(200))
+    status_full = Column(String(100))  # 完整状态描述
+    injury_note = Column(String(200))  # 伤病说明
+    
+    # Fantasy相关
+    is_keeper = Column(Boolean, default=False)  # 是否keeper
+    keeper_cost = Column(String(20))  # keeper成本
+    is_prescoring = Column(Boolean, default=False)  # 是否预评分
+    is_editable = Column(Boolean, default=False)  # 是否可编辑
     
     # 元数据
     fetched_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # 关系
+    team = relationship("Team", back_populates="roster_daily")
+    player = relationship("Player", back_populates="roster_daily")
     
     # 索引
     __table_args__ = (
-        Index('idx_roster_history_unique', 'team_key', 'player_key', 'coverage_type', 'season', 'week', 'coverage_date', unique=True),
-        Index('idx_roster_history_time', 'coverage_type', 'season', 'week', 'coverage_date'),
-        Index('idx_roster_history_team_time', 'team_key', 'coverage_type', 'season'),
-        Index('idx_roster_history_player_time', 'player_key', 'coverage_type', 'season'),
+        Index('idx_roster_daily_unique', 'team_key', 'player_key', 'date', unique=True),
+        Index('idx_roster_daily_date', 'date', 'league_key'),
+        Index('idx_roster_daily_team_date', 'team_key', 'date'),
+        Index('idx_roster_daily_player_date', 'player_key', 'date'),
+        Index('idx_roster_daily_season', 'league_key', 'season'),
     )
 
 class Transaction(Base):
@@ -377,7 +364,7 @@ class Transaction(Base):
     tradee_team_name = Column(String(200))  # 交易接受方团队名称
     picks_data = Column(JSON)  # 存储draft picks交易数据
     
-    players_data = Column(JSON)  # 存储完整的球员交易数据
+    players_data = Column(JSON)  # 保留：存储完整的球员交易数据
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
@@ -419,6 +406,137 @@ class TransactionPlayer(Base):
     # 索引
     __table_args__ = (Index('idx_transaction_player_unique', 'transaction_key', 'player_key', unique=True),)
 
+class DateDimension(Base):
+    """日期维度表 - 用于管理赛季日程"""
+    __tablename__ = 'date_dimension'
+    
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    date = Column(Date, nullable=False)  # 统一为date
+    league_key = Column(String(50), ForeignKey('leagues.league_key'), nullable=False)
+    season = Column(String(10), nullable=False)
+    
+    # 索引
+    __table_args__ = (
+        Index('idx_date_unique', 'date', 'league_key', unique=True),
+        Index('idx_date_season', 'league_key', 'season'),
+    )
+
+class PlayerDailyStats(Base):
+    """球员日统计表 - 恢复JSON存储，只标准化核心统计"""
+    __tablename__ = 'player_daily_stats'
+    
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    player_key = Column(String(50), nullable=False)
+    editorial_player_key = Column(String(50), nullable=False)
+    league_key = Column(String(50), ForeignKey('leagues.league_key'), nullable=False)
+    season = Column(String(10), nullable=False)
+    date = Column(Date, nullable=False)
+    week = Column(Integer)
+    
+    # 完整统计数据JSON存储
+    stats_data = Column(JSON, nullable=False)
+    
+    # 只提取核心统计项为独立列（便于快速查询和排序）
+    points = Column(Float)          # Fantasy Points (总分)
+    assists = Column(Integer)       # 助攻 (NBA: stat_id=5)
+    rebounds = Column(Integer)      # 篮板 (NBA: stat_id=8)
+    steals = Column(Integer)        # 抢断 (NBA: stat_id=6)
+    blocks = Column(Integer)        # 盖帽 (NBA: stat_id=7)
+    turnovers = Column(Integer)     # 失误 (NBA: stat_id=9)
+    field_goals_made = Column(Integer)      # 投篮命中 (NBA: stat_id=0)
+    field_goals_attempted = Column(Integer) # 投篮尝试 (NBA: stat_id=1)
+    free_throws_made = Column(Integer)      # 罚球命中 (NBA: stat_id=2)
+    free_throws_attempted = Column(Integer) # 罚球尝试 (NBA: stat_id=3)
+    three_pointers_made = Column(Integer)   # 三分命中 (NBA: stat_id=4)
+    
+    # 元数据
+    fetched_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # 索引
+    __table_args__ = (
+        Index('idx_player_daily_unique', 'player_key', 'date', unique=True),
+        Index('idx_player_daily_league_date', 'league_key', 'date'),
+        Index('idx_player_daily_points', 'points', 'date'),  # 按得分查询
+        Index('idx_player_daily_season', 'season', 'date'),
+    )
+
+class PlayerSeasonStats(Base):
+    """球员赛季统计表 - 恢复JSON存储，只标准化核心统计"""
+    __tablename__ = 'player_season_stats'
+    
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    player_key = Column(String(50), nullable=False)
+    editorial_player_key = Column(String(50), nullable=False)
+    league_key = Column(String(50), ForeignKey('leagues.league_key'), nullable=False)
+    season = Column(String(10), nullable=False)
+    
+    # 完整统计数据JSON存储
+    stats_data = Column(JSON, nullable=False)
+    
+    # 核心统计项（用于快速查询排序）
+    total_points = Column(Float)           # 总Fantasy Points
+    games_played = Column(Integer)         # 比赛场次
+    avg_points = Column(Float)             # 平均分
+    total_assists = Column(Integer)        # 总助攻
+    total_rebounds = Column(Integer)       # 总篮板
+    total_steals = Column(Integer)         # 总抢断
+    total_blocks = Column(Integer)         # 总盖帽
+    field_goal_percentage = Column(Float)  # 投篮命中率
+    free_throw_percentage = Column(Float)  # 罚球命中率
+    three_point_percentage = Column(Float) # 三分命中率
+    
+    # 元数据
+    fetched_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # 索引
+    __table_args__ = (
+        Index('idx_player_season_unique', 'player_key', 'season', unique=True),
+        Index('idx_player_season_league', 'league_key', 'season'),
+        Index('idx_player_season_points', 'total_points', 'season'),
+        Index('idx_player_season_avg', 'avg_points', 'season'),
+    )
+
+class TeamStats(Base):
+    """团队统计表 - 恢复JSON存储"""
+    __tablename__ = 'team_stats'
+    
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    team_key = Column(String(50), ForeignKey('teams.team_key'), nullable=False)
+    league_key = Column(String(50), ForeignKey('leagues.league_key'), nullable=False)
+    season = Column(String(10), nullable=False)
+    coverage_type = Column(String(20), nullable=False)  # season, week, date
+    week = Column(Integer)
+    date = Column(Date)
+    
+    # JSON存储完整统计数据
+    stats_data = Column(JSON, nullable=False)
+    stats_winners = Column(JSON)  # matchup获胜统计
+    
+    # 核心统计项（便于快速查询）
+    total_points = Column(Float)     # 团队总分
+    wins = Column(Integer)           # 获胜数
+    losses = Column(Integer)         # 失败数
+    ties = Column(Integer)           # 平局数
+    win_percentage = Column(Float)   # 胜率
+    
+    # Matchup相关信息
+    opponent_team_key = Column(String(50), ForeignKey('teams.team_key'))
+    is_playoff = Column(Boolean, default=False)
+    win = Column(Boolean)
+    
+    # 元数据
+    fetched_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # 索引
+    __table_args__ = (
+        Index('idx_team_stat_unique', 'team_key', 'coverage_type', 'season', 'week', 'date', unique=True),
+        Index('idx_team_stat_league_time', 'league_key', 'coverage_type', 'season'),
+        Index('idx_team_stat_points', 'total_points', 'season'),
+    )
+
 # 数据库连接配置
 def get_database_url():
     """获取数据库连接URL"""
@@ -443,9 +561,71 @@ def create_tables(engine):
 def recreate_tables(engine):
     """重新创建所有表（先删除再创建）"""
     print("🔄 重新创建数据库表...")
-    Base.metadata.drop_all(engine)
-    Base.metadata.create_all(engine)
-    print("✅ 数据库表重新创建完成")
+    
+    try:
+        with engine.connect() as conn:
+            trans = conn.begin()
+            try:
+                # 首先查询数据库中的所有表
+                result = conn.execute(text("""
+                    SELECT tablename FROM pg_tables 
+                    WHERE schemaname = 'public' 
+                    ORDER BY tablename;
+                """))
+                existing_tables = [row[0] for row in result.fetchall()]
+                
+                if existing_tables:
+                    print(f"发现 {len(existing_tables)} 个现有表")
+                    
+                    # 删除所有现有表，使用CASCADE处理依赖
+                    for table_name in existing_tables:
+                        try:
+                            conn.execute(text(f"DROP TABLE IF EXISTS {table_name} CASCADE;"))
+                            print(f"✓ 删除表 {table_name}")
+                        except Exception as e:
+                            print(f"删除表 {table_name} 时出错: {e}")
+                            
+                    # 确保删除可能遗留的旧表
+                    legacy_tables = ['rosters', 'roster_history', 'player_stats_history', 'player_season_stats', 'player_daily_stats', 'team_stats']
+                    for table_name in legacy_tables:
+                        try:
+                            conn.execute(text(f"DROP TABLE IF EXISTS {table_name} CASCADE;"))
+                            print(f"✓ 删除遗留表 {table_name}")
+                        except Exception as e:
+                            print(f"删除遗留表 {table_name} 时出错（可能不存在）: {e}")
+                else:
+                    print("✓ 数据库中没有现有表")
+                
+                trans.commit()
+                print("✓ 所有表删除完成")
+                
+            except Exception as e:
+                trans.rollback()
+                raise e
+    
+    except Exception as e:
+        print(f"删除表时出错: {e}")
+        print("尝试使用SQLAlchemy标准方法...")
+        try:
+            # 如果CASCADE删除失败，尝试标准删除
+            Base.metadata.drop_all(engine)
+            print("✓ 使用标准方法删除表成功")
+        except Exception as e2:
+            print(f"标准删除也失败: {e2}")
+            print("⚠️ 无法自动删除表，请手动执行以下SQL:")
+            print("DROP SCHEMA public CASCADE;")
+            print("CREATE SCHEMA public;")
+            print("然后重新运行程序")
+            return False
+    
+    # 重新创建所有表
+    try:
+        Base.metadata.create_all(engine)
+        print("✅ 数据库表重新创建完成")
+        return True
+    except Exception as e:
+        print(f"创建表失败: {e}")
+        return False
 
 def get_session(engine):
     """获取数据库会话"""

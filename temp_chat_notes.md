@@ -4,16 +4,15 @@
 根据你对`Yahoo-Fantasy-Sports-API-Guide.md`的详细查看，以下是支持时间选择的数据类型：
 
 ### 1. **Roster数据 - 支持按时间获取**
-- **NFL**: 按周获取 - `roster;week=10`
-- **MLB/NBA/NHL**: 按日期获取 - `roster;date=2011-05-01`
+- 按日期获取 - `roster;date=2011-05-01`
 - **示例URL**: 
   - `https://fantasysports.yahooapis.com/fantasy/v2/team/{team_key}/roster;week=10`
   - `https://fantasysports.yahooapis.com/fantasy/v2/team/{team_key}/roster;date=2011-05-01`
 
 ### 2. **球员统计数据 - 支持多种时间维度**
 - **Season统计**: `stats;type=season` (整赛季数据)
-- **Weekly统计** (NFL): `stats;type=week;week=10`  
-- **Daily统计** (MLB/NBA/NHL): `stats;type=date;date=2011-07-06`
+- **Weekly统计**: `stats;type=week;week=10`  
+- **Daily统计**: `stats;type=date;date=2011-07-06`
 - **示例URL**:
   - `https://fantasysports.yahooapis.com/fantasy/v2/team/{team_key}/stats;type=season`
   - `https://fantasysports.yahooapis.com/fantasy/v2/team/{team_key}/stats;type=date;date=2011-07-06`
@@ -22,7 +21,7 @@
 - 与球员统计类似，支持season、week、date等维度
 
 ### 4. **Matchups数据 - 支持按周获取**
-- **NFL**: `matchups;weeks=1,5` (可以指定多个周)
+- `matchups;weeks=1,5` (可以指定多个周)
 - **示例URL**: `https://fantasysports.yahooapis.com/fantasy/v2/team/{team_key}/matchups;weeks=1,5`
 
 ### 5. **Players Collection过滤器 - 支持时间排序**

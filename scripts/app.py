@@ -9,17 +9,20 @@ import pickle
 import pathlib
 from datetime import datetime
 
+# 导入统一的令牌管理功能
+from yahoo_api_utils import load_token, save_token, DEFAULT_TOKEN_FILE, CLIENT_ID, CLIENT_SECRET, TOKEN_URL
+
 # 加载环境变量
 load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
 
-# Yahoo OAuth配置
-client_id = os.getenv("CLIENT_ID")
-client_secret = os.getenv("CLIENT_SECRET")
+# Yahoo OAuth配置 - 使用yahoo_api_utils.py中的配置
+client_id = CLIENT_ID
+client_secret = CLIENT_SECRET
 authorization_base_url = "https://api.login.yahoo.com/oauth2/request_auth"
-token_url = "https://api.login.yahoo.com/oauth2/get_token"
+token_url = TOKEN_URL
 redirect_uri = os.getenv("REDIRECT_URI", "oob")  # 默认使用oob
 scope = ["fspt-w"]  # Fantasy Sports读写权限
 
@@ -28,35 +31,15 @@ print("🔍 OAuth配置检查:")
 print(f"CLIENT_ID: {'✓设置' if client_id else '❌未设置'}")
 print(f"CLIENT_SECRET: {'✓设置' if client_secret else '❌未设置'}")
 print(f"REDIRECT_URI: {redirect_uri}")
+print(f"TOKEN文件路径: {DEFAULT_TOKEN_FILE}")
 
 if not client_id or not client_secret:
     print("❌ 错误: 缺少CLIENT_ID或CLIENT_SECRET环境变量")
     print("请参考 oauth_setup_guide.md 进行配置")
 
-# 创建令牌存储目录
-TOKENS_DIR = pathlib.Path("tokens")
-TOKENS_DIR.mkdir(exist_ok=True)
-DEFAULT_TOKEN_FILE = TOKENS_DIR / "yahoo_token.token"
-
 # 创建OAuth2Session
 def get_oauth_session():
     return OAuth2Session(client_id, redirect_uri=redirect_uri, scope=scope)
-
-# 保存令牌到文件
-def save_token(token):
-    with open(DEFAULT_TOKEN_FILE, 'wb') as f:
-        pickle.dump(token, f)
-
-# 从文件加载令牌
-def load_token():
-    if DEFAULT_TOKEN_FILE.exists():
-        try:
-            with open(DEFAULT_TOKEN_FILE, 'rb') as f:
-                return pickle.load(f)
-        except Exception as e:
-            print(f"加载令牌时出错: {str(e)}")
-    
-    return None
 
 def refresh_token_if_expired():
     """检查并刷新令牌（如果已过期）"""
