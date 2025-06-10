@@ -1,67 +1,5 @@
 
-## 关于Yahoo Fantasy API时间序列数据支持的分析
 
-根据你对`Yahoo-Fantasy-Sports-API-Guide.md`的详细查看，以下是支持时间选择的数据类型：
-
-### 1. **Roster数据 - 支持按时间获取**
-- 按日期获取 - `roster;date=2011-05-01`
-- **示例URL**: 
-  - `https://fantasysports.yahooapis.com/fantasy/v2/team/{team_key}/roster;week=10`
-  - `https://fantasysports.yahooapis.com/fantasy/v2/team/{team_key}/roster;date=2011-05-01`
-
-### 2. **球员统计数据 - 支持多种时间维度**
-- **Season统计**: `stats;type=season` (整赛季数据)
-- **Weekly统计**: `stats;type=week;week=10`  
-- **Daily统计**: `stats;type=date;date=2011-07-06`
-- **示例URL**:
-  - `https://fantasysports.yahooapis.com/fantasy/v2/team/{team_key}/stats;type=season`
-  - `https://fantasysports.yahooapis.com/fantasy/v2/team/{team_key}/stats;type=date;date=2011-07-06`
-
-### 3. **团队统计数据 - 支持时间维度**
-- 与球员统计类似，支持season、week、date等维度
-
-### 4. **Matchups数据 - 支持按周获取**
-- `matchups;weeks=1,5` (可以指定多个周)
-- **示例URL**: `https://fantasysports.yahooapis.com/fantasy/v2/team/{team_key}/matchups;weeks=1,5`
-
-### 5. **Players Collection过滤器 - 支持时间排序**
-- `sort_type`: season, date, week, lastweek, lastmonth
-- `sort_season`: 年份
-- `sort_date`: YYYY-MM-DD (棒球、篮球、冰球)
-- `sort_week`: 周数 (橄榄球)
-
-
-
-## 时间序列数据处理建议
-
-### 数据库设计方面：
-1. **Roster表**：已经有`coverage_date`字段，可以存储不同日期的roster快照
-2. **PlayerStats表**：可以增加时间维度字段（`coverage_type`, `week`, `date`, `season`）
-3. **新增时间维度表**：考虑增加专门的时间序列统计表
-
-### 实现策略：
-1. **获取历史数据**：使用API的时间参数循环获取不同时期的数据
-2. **增量更新**：定期更新最新数据，避免重复获取
-3. **数据完整性**：确保时间序列数据的连续性和一致性
-
-这样我们就可以构建一个完整的时间序列数据库，支持历史分析、趋势追踪等高级分析功能！
-
-
-# table
-
-执行 `python3 model.py`，创建数据库模型，表包括：
-  - games
-  - leagues
-  - league_settings
-  - teams
-  - managers
-  - players
-  - player_stats_history
-  - team_stats
-  - rosters
-  - roster_history
-  - transactions
-  - transaction_players
 
   # 现在我想你帮助我申请一个职位，首先请阅读以下关于这个职位的信息
 
@@ -119,30 +57,6 @@
 
   Are you interested in multiple positions at Mploy Associates? Apply for one position and mention the other position(s) in your motivation message. Together we will find the best match for you.
 
-  # 现在，你也知道我们在做一个yahoo nba fantasy的工具，我想通过这个project练习一些data engineer/data scientist/data analyst 会设计的技能，例如ETL，用pyspark处理大数据，还有更多。
 
-  # 我envision这个project会：
 
-  - 用户用yahoo账号登录这个工具，
-  - 工具会用 yahoo fantasy api 获取玩家的games和leagues，包括league_settings。
-  - 用户选择一个league使用这个工具。
-  - 工具用yahoo api：
-    1. 获取历史数据 （如果是第一次登录使用）
-    2. 更新最新数据 （如果数据库已经被更新过）
-    这些数据包括：
-    - teams
-    - managers
-    - players
-    - player_stats
-    - player_stats_history
-    - team_stats
-    - rosters
-    - roster_history
-    - transactions
-    - transaction_players
-  - 工具包括 (还未implement):
-    - team analysis 
-    - trade analysis
-    - add/drop suggestion based on current matchup
-    - streaming plan
 

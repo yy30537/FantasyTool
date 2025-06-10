@@ -1,0 +1,86 @@
+{
+  "metadata": {
+    "fetched_at": "2025-06-10T14:06:32.561224",
+    "description": "游戏 364 的用户联盟数据",
+    "filename": "user_leagues_364"
+  },
+  "data": {
+    "fantasy_content": {
+      "xml:lang": "en-US",
+      "yahoo:uri": "/fantasy/v2/users;use_login=1/games;game_keys=364/leagues",
+      "users": {
+        "0": {
+          "user": [
+            {
+              "guid": "KXA3W3CETCFEXMK2XNDMEN26RA"
+            },
+            {
+              "games": {
+                "0": {
+                  "game": [
+                    {
+                      "game_key": "364",
+                      "game_id": "364",
+                      "name": "Basketball",
+                      "code": "nba",
+                      "type": "full",
+                      "url": "https://basketball.fantasysports.yahoo.com/2016/nba",
+                      "season": "2016",
+                      "is_registration_over": 1,
+                      "is_game_over": 1,
+                      "is_offseason": 1
+                    },
+                    {
+                      "leagues": {
+                        "0": {
+                          "league": [
+                            {
+                              "league_key": "364.l.15712",
+                              "league_id": "15712",
+                              "name": "跳蚤市场2.0",
+                              "url": "https://basketball.fantasysports.yahoo.com/2016/nba/15712",
+                              "logo_url": false,
+                              "draft_status": "postdraft",
+                              "num_teams": 14,
+                              "edit_key": "2017-04-02",
+                              "weekly_deadline": "",
+                              "league_update_timestamp": "1491204099",
+                              "scoring_type": "head",
+                              "league_type": "private",
+                              "renew": "",
+                              "renewed": "375_7446",
+                              "felo_tier": "silver",
+                              "iris_group_chat_id": "",
+                              "allow_add_to_dl_extra_pos": 0,
+                              "is_pro_league": "0",
+                              "is_cash_league": "0",
+                              "current_week": "22",
+                              "start_week": "1",
+                              "start_date": "2016-10-25",
+                              "end_week": "22",
+                              "end_date": "2017-04-02",
+                              "is_finished": 1,
+                              "is_plus_league": "0",
+                              "game_code": "nba",
+                              "season": "2016"
+                            }
+                          ]
+                        },
+                        "count": 1
+                      }
+                    }
+                  ]
+                },
+                "count": 1
+              }
+            }
+          ]
+        },
+        "count": 1
+      },
+      "time": "40.980100631714ms",
+      "copyright": "Certain Data by Sportradar, Stats Perform and Rotowire",
+      "refresh_rate": "60"
+    }
+  }
+}

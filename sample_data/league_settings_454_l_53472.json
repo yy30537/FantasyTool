@@ -1,0 +1,434 @@
+{
+  "metadata": {
+    "fetched_at": "2025-06-10T14:06:40.284373",
+    "description": "联盟 454.l.53472 设置信息",
+    "filename": "league_settings_454_l_53472"
+  },
+  "data": {
+    "fantasy_content": {
+      "xml:lang": "en-US",
+      "yahoo:uri": "/fantasy/v2/league/454.l.53472/settings",
+      "league": [
+        {
+          "league_key": "454.l.53472",
+          "league_id": "53472",
+          "name": "跳蚤市场 International (V4.0)",
+          "url": "https://basketball.fantasysports.yahoo.com/nba/53472",
+          "logo_url": "https://s.yimg.com/ep/cx/blendr/v2/image-basketball-player-emoji-png_1721253814729.png",
+          "draft_status": "postdraft",
+          "num_teams": 14,
+          "edit_key": "2025-04-06",
+          "weekly_deadline": "intraday",
+          "league_update_timestamp": "1744020338",
+          "scoring_type": "head",
+          "league_type": "private",
+          "renew": "428_1559",
+          "renewed": "",
+          "felo_tier": "gold",
+          "iris_group_chat_id": "",
+          "allow_add_to_dl_extra_pos": 1,
+          "is_pro_league": "0",
+          "is_cash_league": "0",
+          "current_week": "22",
+          "start_week": "1",
+          "start_date": "2024-10-22",
+          "end_week": "22",
+          "end_date": "2025-04-06",
+          "is_finished": 1,
+          "is_plus_league": "0",
+          "game_code": "nba",
+          "season": "2024"
+        },
+        {
+          "settings": [
+            {
+              "draft_type": "live",
+              "is_auction_draft": "0",
+              "scoring_type": "head",
+              "persistent_url": "https://basketball.fantasysports.yahoo.com/league/uw16",
+              "uses_playoff": "1",
+              "has_playoff_consolation_games": true,
+              "playoff_start_week": "20",
+              "uses_playoff_reseeding": 0,
+              "uses_lock_eliminated_teams": 0,
+              "num_playoff_teams": "8",
+              "num_playoff_consolation_teams": 0,
+              "has_multiweek_championship": 0,
+              "waiver_type": "FR",
+              "waiver_rule": "all",
+              "uses_faab": "1",
+              "draft_time": "1729400400",
+              "draft_pick_time": "90",
+              "post_draft_players": "W",
+              "max_teams": "16",
+              "waiver_time": "2",
+              "trade_end_date": "2025-03-06",
+              "trade_ratify_type": "commish",
+              "trade_reject_time": "5",
+              "player_pool": "ALL",
+              "cant_cut_list": "none",
+              "draft_together": 0,
+              "is_publicly_viewable": "1",
+              "can_trade_draft_picks": "1",
+              "sendbird_channel_url": "c03a7d21eeac8af43cbf9e0993e971d9",
+              "roster_positions": [
+                {
+                  "roster_position": {
+                    "position": "PG",
+                    "position_type": "P",
+                    "count": 1,
+                    "is_starting_position": 1
+                  }
+                },
+                {
+                  "roster_position": {
+                    "position": "SG",
+                    "position_type": "P",
+                    "count": 1,
+                    "is_starting_position": 1
+                  }
+                },
+                {
+                  "roster_position": {
+                    "position": "G",
+                    "position_type": "P",
+                    "count": 1,
+                    "is_starting_position": 1
+                  }
+                },
+                {
+                  "roster_position": {
+                    "position": "SF",
+                    "position_type": "P",
+                    "count": 1,
+                    "is_starting_position": 1
+                  }
+                },
+                {
+                  "roster_position": {
+                    "position": "PF",
+                    "position_type": "P",
+                    "count": 1,
+                    "is_starting_position": 1
+                  }
+                },
+                {
+                  "roster_position": {
+                    "position": "F",
+                    "position_type": "P",
+                    "count": 1,
+                    "is_starting_position": 1
+                  }
+                },
+                {
+                  "roster_position": {
+                    "position": "C",
+                    "position_type": "P",
+                    "count": 2,
+                    "is_starting_position": 1
+                  }
+                },
+                {
+                  "roster_position": {
+                    "position": "Util",
+                    "position_type": "P",
+                    "count": 2,
+                    "is_starting_position": 1
+                  }
+                },
+                {
+                  "roster_position": {
+                    "position": "BN",
+                    "count": 3,
+                    "is_starting_position": 0
+                  }
+                },
+                {
+                  "roster_position": {
+                    "position": "IL",
+                    "count": "1",
+                    "is_starting_position": 0
+                  }
+                },
+                {
+                  "roster_position": {
+                    "position": "IL+",
+                    "count": "1",
+                    "is_starting_position": 0
+                  }
+                }
+              ],
+              "stat_categories": {
+                "stats": [
+                  {
+                    "stat": {
+                      "stat_id": 9004003,
+                      "enabled": "1",
+                      "name": "Field Goals Made / Field Goals Attempted",
+                      "display_name": "FGM/A",
+                      "group": "field_goals",
+                      "abbr": "FGM / FGA",
+                      "sort_order": "1",
+                      "position_type": "P",
+                      "stat_position_types": [
+                        {
+                          "stat_position_type": {
+                            "position_type": "P",
+                            "is_only_display_stat": "1"
+                          }
+                        }
+                      ],
+                      "is_only_display_stat": "1"
+                    }
+                  },
+                  {
+                    "stat": {
+                      "stat_id": 5,
+                      "enabled": "1",
+                      "name": "Field Goal Percentage",
+                      "display_name": "FG%",
+                      "group": "field_goals",
+                      "abbr": "FG%",
+                      "sort_order": "1",
+                      "position_type": "P",
+                      "stat_position_types": [
+                        {
+                          "stat_position_type": {
+                            "position_type": "P"
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "stat": {
+                      "stat_id": 9007006,
+                      "enabled": "1",
+                      "name": "Free Throws Made / Free Throws Attempted",
+                      "display_name": "FTM/A",
+                      "group": "free_throws",
+                      "abbr": "FTM / FTA",
+                      "sort_order": "1",
+                      "position_type": "P",
+                      "stat_position_types": [
+                        {
+                          "stat_position_type": {
+                            "position_type": "P",
+                            "is_only_display_stat": "1"
+                          }
+                        }
+                      ],
+                      "is_only_display_stat": "1"
+                    }
+                  },
+                  {
+                    "stat": {
+                      "stat_id": 8,
+                      "enabled": "1",
+                      "name": "Free Throw Percentage",
+                      "display_name": "FT%",
+                      "group": "free_throws",
+                      "abbr": "FT%",
+                      "sort_order": "1",
+                      "position_type": "P",
+                      "stat_position_types": [
+                        {
+                          "stat_position_type": {
+                            "position_type": "P"
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "stat": {
+                      "stat_id": 10,
+                      "enabled": "1",
+                      "name": "3-point Shots Made",
+                      "display_name": "3PTM",
+                      "group": "three_pointers",
+                      "abbr": "3PTM",
+                      "sort_order": "1",
+                      "position_type": "P",
+                      "stat_position_types": [
+                        {
+                          "stat_position_type": {
+                            "position_type": "P"
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "stat": {
+                      "stat_id": 12,
+                      "enabled": "1",
+                      "name": "Points Scored",
+                      "display_name": "PTS",
+                      "group": "misc",
+                      "abbr": "PTS",
+                      "sort_order": "1",
+                      "position_type": "P",
+                      "stat_position_types": [
+                        {
+                          "stat_position_type": {
+                            "position_type": "P"
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "stat": {
+                      "stat_id": 15,
+                      "enabled": "1",
+                      "name": "Total Rebounds",
+                      "display_name": "REB",
+                      "group": "misc",
+                      "abbr": "REB",
+                      "sort_order": "1",
+                      "position_type": "P",
+                      "stat_position_types": [
+                        {
+                          "stat_position_type": {
+                            "position_type": "P"
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "stat": {
+                      "stat_id": 16,
+                      "enabled": "1",
+                      "name": "Assists",
+                      "display_name": "AST",
+                      "group": "misc",
+                      "abbr": "AST",
+                      "sort_order": "1",
+                      "position_type": "P",
+                      "stat_position_types": [
+                        {
+                          "stat_position_type": {
+                            "position_type": "P"
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "stat": {
+                      "stat_id": 17,
+                      "enabled": "1",
+                      "name": "Steals",
+                      "display_name": "ST",
+                      "group": "misc",
+                      "abbr": "ST",
+                      "sort_order": "1",
+                      "position_type": "P",
+                      "stat_position_types": [
+                        {
+                          "stat_position_type": {
+                            "position_type": "P"
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "stat": {
+                      "stat_id": 18,
+                      "enabled": "1",
+                      "name": "Blocked Shots",
+                      "display_name": "BLK",
+                      "group": "misc",
+                      "abbr": "BLK",
+                      "sort_order": "1",
+                      "position_type": "P",
+                      "stat_position_types": [
+                        {
+                          "stat_position_type": {
+                            "position_type": "P"
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "stat": {
+                      "stat_id": 19,
+                      "enabled": "1",
+                      "name": "Turnovers",
+                      "display_name": "TO",
+                      "group": "misc",
+                      "abbr": "TO",
+                      "sort_order": "0",
+                      "position_type": "P",
+                      "stat_position_types": [
+                        {
+                          "stat_position_type": {
+                            "position_type": "P"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ],
+                "groups": [
+                  {
+                    "group": {
+                      "group_name": "field_goals",
+                      "group_display_name": "Field Goals",
+                      "group_abbr": "FG"
+                    }
+                  },
+                  {
+                    "group": {
+                      "group_name": "free_throws",
+                      "group_display_name": "",
+                      "group_abbr": "FT"
+                    }
+                  },
+                  {
+                    "group": {
+                      "group_name": "three_pointers",
+                      "group_display_name": "",
+                      "group_abbr": ""
+                    }
+                  },
+                  {
+                    "group": {
+                      "group_name": "misc",
+                      "group_display_name": "Misc",
+                      "group_abbr": "Misc"
+                    }
+                  }
+                ]
+              },
+              "divisions": [
+                {
+                  "division": {
+                    "division_id": 1,
+                    "name": "卧虎"
+                  }
+                },
+                {
+                  "division": {
+                    "division_id": 2,
+                    "name": "藏龙"
+                  }
+                }
+              ],
+              "max_weekly_adds": "4",
+              "uses_median_score": false,
+              "league_premium_features": []
+            }
+          ]
+        }
+      ],
+      "time": "30.078887939453ms",
+      "copyright": "Certain Data by Sportradar, Stats Perform and Rotowire",
+      "refresh_rate": "60"
+    }
+  }
+}

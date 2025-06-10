@@ -1,0 +1,4095 @@
+{
+  "metadata": {
+    "fetched_at": "2025-06-10T14:06:42.547497",
+    "description": "联盟 454.l.53472 交易数据 (前50个)",
+    "filename": "league_transactions_454_l_53472"
+  },
+  "data": {
+    "fantasy_content": {
+      "xml:lang": "en-US",
+      "yahoo:uri": "/fantasy/v2/league/454.l.53472/transactions;count=50",
+      "league": [
+        {
+          "league_key": "454.l.53472",
+          "league_id": "53472",
+          "name": "跳蚤市场 International (V4.0)",
+          "url": "https://basketball.fantasysports.yahoo.com/nba/53472",
+          "logo_url": "https://s.yimg.com/ep/cx/blendr/v2/image-basketball-player-emoji-png_1721253814729.png",
+          "draft_status": "postdraft",
+          "num_teams": 14,
+          "edit_key": "2025-04-06",
+          "weekly_deadline": "intraday",
+          "league_update_timestamp": "1744020338",
+          "scoring_type": "head",
+          "league_type": "private",
+          "renew": "428_1559",
+          "renewed": "",
+          "felo_tier": "gold",
+          "iris_group_chat_id": "",
+          "allow_add_to_dl_extra_pos": 1,
+          "is_pro_league": "0",
+          "is_cash_league": "0",
+          "current_week": "22",
+          "start_week": "1",
+          "start_date": "2024-10-22",
+          "end_week": "22",
+          "end_date": "2025-04-06",
+          "is_finished": 1,
+          "is_plus_league": "0",
+          "game_code": "nba",
+          "season": "2024"
+        },
+        {
+          "transactions": {
+            "0": {
+              "transaction": [
+                {
+                  "transaction_key": "454.l.53472.tr.682",
+                  "transaction_id": "682",
+                  "type": "add/drop",
+                  "status": "successful",
+                  "timestamp": "1743939071"
+                },
+                {
+                  "players": {
+                    "0": {
+                      "player": [
+                        [
+                          {
+                            "player_key": "454.p.10308"
+                          },
+                          {
+                            "player_id": "10308"
+                          },
+                          {
+                            "name": {
+                              "full": "Quinten Post",
+                              "first": "Quinten",
+                              "last": "Post",
+                              "ascii_first": "Quinten",
+                              "ascii_last": "Post"
+                            }
+                          },
+                          {
+                            "editorial_team_abbr": "GSW"
+                          },
+                          {
+                            "display_position": "C"
+                          },
+                          {
+                            "position_type": "P"
+                          }
+                        ],
+                        {
+                          "transaction_data": [
+                            {
+                              "type": "add",
+                              "source_type": "freeagents",
+                              "destination_type": "team",
+                              "destination_team_key": "454.l.53472.t.9",
+                              "destination_team_name": "injless team"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    "1": {
+                      "player": [
+                        [
+                          {
+                            "player_key": "454.p.6408"
+                          },
+                          {
+                            "player_id": "6408"
+                          },
+                          {
+                            "name": {
+                              "full": "Isaiah Stewart",
+                              "first": "Isaiah",
+                              "last": "Stewart",
+                              "ascii_first": "Isaiah",
+                              "ascii_last": "Stewart"
+                            }
+                          },
+                          {
+                            "editorial_team_abbr": "DET"
+                          },
+                          {
+                            "display_position": "PF,C"
+                          },
+                          {
+                            "position_type": "P"
+                          }
+                        ],
+                        {
+                          "transaction_data": {
+                            "type": "drop",
+                            "source_type": "team",
+                            "source_team_key": "454.l.53472.t.9",
+                            "source_team_name": "injless team",
+                            "destination_type": "waivers"
+                          }
+                        }
+                      ]
+                    },
+                    "count": 2
+                  }
+                }
+              ]
+            },
+            "1": {
+              "transaction": [
+                {
+                  "transaction_key": "454.l.53472.tr.681",
+                  "transaction_id": "681",
+                  "type": "add/drop",
+                  "status": "successful",
+                  "timestamp": "1743934528"
+                },
+                {
+                  "players": {
+                    "0": {
+                      "player": [
+                        [
+                          {
+                            "player_key": "454.p.4888"
+                          },
+                          {
+                            "player_id": "4888"
+                          },
+                          {
+                            "name": {
+                              "full": "Bismack Biyombo",
+                              "first": "Bismack",
+                              "last": "Biyombo",
+                              "ascii_first": "Bismack",
+                              "ascii_last": "Biyombo"
+                            }
+                          },
+                          {
+                            "editorial_team_abbr": "SAS"
+                          },
+                          {
+                            "display_position": "C"
+                          },
+                          {
+                            "position_type": "P"
+                          }
+                        ],
+                        {
+                          "transaction_data": [
+                            {
+                              "type": "add",
+                              "source_type": "freeagents",
+                              "destination_type": "team",
+                              "destination_team_key": "454.l.53472.t.12",
+                              "destination_team_name": "54 De Baddies"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    "1": {
+                      "player": [
+                        [
+                          {
+                            "player_key": "454.p.4563"
+                          },
+                          {
+                            "player_id": "4563"
+                          },
+                          {
+                            "name": {
+                              "full": "James Harden",
+                              "first": "James",
+                              "last": "Harden",
+                              "ascii_first": "James",
+                              "ascii_last": "Harden"
+                            }
+                          },
+                          {
+                            "editorial_team_abbr": "LAC"
+                          },
+                          {
+                            "display_position": "PG,SG"
+                          },
+                          {
+                            "position_type": "P"
+                          }
+                        ],
+                        {
+                          "transaction_data": {
+                            "type": "drop",
+                            "source_type": "team",
+                            "source_team_key": "454.l.53472.t.12",
+                            "source_team_name": "54 De Baddies",
+                            "destination_type": "waivers"
+                          }
+                        }
+                      ]
+                    },
+                    "count": 2
+                  }
+                }
+              ]
+            },
+            "2": {
+              "transaction": [
+                {
+                  "transaction_key": "454.l.53472.tr.680",
+                  "transaction_id": "680",
+                  "type": "add/drop",
+                  "status": "successful",
+                  "timestamp": "1743933711"
+                },
+                {
+                  "players": {
+                    "0": {
+                      "player": [
+                        [
+                          {
+                            "player_key": "454.p.5858"
+                          },
+                          {
+                            "player_id": "5858"
+                          },
+                          {
+                            "name": {
+                              "full": "Dillon Brooks",
+                              "first": "Dillon",
+                              "last": "Brooks",
+                              "ascii_first": "Dillon",
+                              "ascii_last": "Brooks"
+                            }
+                          },
+                          {
+                            "editorial_team_abbr": "HOU"
+                          },
+                          {
+                            "display_position": "SG,SF,PF"
+                          },
+                          {
+                            "position_type": "P"
+                          }
+                        ],
+                        {
+                          "transaction_data": [
+                            {
+                              "type": "add",
+                              "source_type": "freeagents",
+                              "destination_type": "team",
+                              "destination_team_key": "454.l.53472.t.11",
+                              "destination_team_name": "ADventurer(人民医院版)"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    "1": {
+                      "player": [
+                        [
+                          {
+                            "player_key": "454.p.10097"
+                          },
+                          {
+                            "player_id": "10097"
+                          },
+                          {
+                            "name": {
+                              "full": "Dereck Lively II",
+                              "first": "Dereck",
+                              "last": "Lively II",
+                              "ascii_first": "Dereck",
+                              "ascii_last": "Lively II"
+                            }
+                          },
+                          {
+                            "editorial_team_abbr": "DAL"
+                          },
+                          {
+                            "display_position": "C"
+                          },
+                          {
+                            "position_type": "P"
+                          }
+                        ],
+                        {
+                          "transaction_data": {
+                            "type": "drop",
+                            "source_type": "team",
+                            "source_team_key": "454.l.53472.t.11",
+                            "source_team_name": "ADventurer(人民医院版)",
+                            "destination_type": "waivers"
+                          }
+                        }
+                      ]
+                    },
+                    "count": 2
+                  }
+                }
+              ]
+            },
+            "3": {
+              "transaction": [
+                {
+                  "transaction_key": "454.l.53472.tr.679",
+                  "transaction_id": "679",
+                  "type": "add",
+                  "status": "successful",
+                  "timestamp": "1743929912"
+                },
+                {
+                  "players": {
+                    "0": {
+                      "player": [
+                        [
+                          {
+                            "player_key": "454.p.6588"
+                          },
+                          {
+                            "player_id": "6588"
+                          },
+                          {
+                            "name": {
+                              "full": "Dalano Banton",
+                              "first": "Dalano",
+                              "last": "Banton",
+                              "ascii_first": "Dalano",
+                              "ascii_last": "Banton"
+                            }
+                          },
+                          {
+                            "editorial_team_abbr": "POR"
+                          },
+                          {
+                            "display_position": "SG,SF"
+                          },
+                          {
+                            "position_type": "P"
+                          }
+                        ],
+                        {
+                          "transaction_data": [
+                            {
+                              "type": "add",
+                              "source_type": "freeagents",
+                              "destination_type": "team",
+                              "destination_team_key": "454.l.53472.t.5",
+                              "destination_team_name": "Miruacle"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    "count": 1
+                  }
+                }
+              ]
+            },
+            "4": {
+              "transaction": [
+                {
+                  "transaction_key": "454.l.53472.tr.678",
+                  "transaction_id": "678",
+                  "type": "drop",
+                  "status": "successful",
+                  "timestamp": "1743905577"
+                },
+                {
+                  "players": {
+                    "0": {
+                      "player": [
+                        [
+                          {
+                            "player_key": "454.p.6170"
+                          },
+                          {
+                            "player_id": "6170"
+                          },
+                          {
+                            "name": {
+                              "full": "Jaxson Hayes",
+                              "first": "Jaxson",
+                              "last": "Hayes",
+                              "ascii_first": "Jaxson",
+                              "ascii_last": "Hayes"
+                            }
+                          },
+                          {
+                            "editorial_team_abbr": "LAL"
+                          },
+                          {
+                            "display_position": "PF,C"
+                          },
+                          {
+                            "position_type": "P"
+                          }
+                        ],
+                        {
+                          "transaction_data": {
+                            "type": "drop",
+                            "source_type": "team",
+                            "source_team_key": "454.l.53472.t.11",
+                            "source_team_name": "ADventurer(人民医院版)",
+                            "destination_type": "waivers"
+                          }
+                        }
+                      ]
+                    },
+                    "count": 1
+                  }
+                }
+              ]
+            },
+            "5": {
+              "transaction": [
+                {
+                  "transaction_key": "454.l.53472.tr.677",
+                  "transaction_id": "677",
+                  "type": "add/drop",
+                  "status": "successful",
+                  "timestamp": "1743886462"
+                },
+                {
+                  "players": {
+                    "0": {
+                      "player": [
+                        [
+                          {
+                            "player_key": "454.p.6755"
+                          },
+                          {
+                            "player_id": "6755"
+                          },
+                          {
+                            "name": {
+                              "full": "AJ Green",
+                              "first": "AJ",
+                              "last": "Green",
+                              "ascii_first": "AJ",
+                              "ascii_last": "Green"
+                            }
+                          },
+                          {
+                            "editorial_team_abbr": "MIL"
+                          },
+                          {
+                            "display_position": "PG,SG"
+                          },
+                          {
+                            "position_type": "P"
+                          }
+                        ],
+                        {
+                          "transaction_data": [
+                            {
+                              "type": "add",
+                              "source_type": "freeagents",
+                              "destination_type": "team",
+                              "destination_team_key": "454.l.53472.t.12",
+                              "destination_team_name": "54 De Baddies"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    "1": {
+                      "player": [
+                        [
+                          {
+                            "player_key": "454.p.6727"
+                          },
+                          {
+                            "player_id": "6727"
+                          },
+                          {
+                            "name": {
+                              "full": "Jaden Hardy",
+                              "first": "Jaden",
+                              "last": "Hardy",
+                              "ascii_first": "Jaden",
+                              "ascii_last": "Hardy"
+                            }
+                          },
+                          {
+                            "editorial_team_abbr": "DAL"
+                          },
+                          {
+                            "display_position": "PG,SG"
+                          },
+                          {
+                            "position_type": "P"
+                          }
+                        ],
+                        {
+                          "transaction_data": {
+                            "type": "drop",
+                            "source_type": "team",
+                            "source_team_key": "454.l.53472.t.12",
+                            "source_team_name": "54 De Baddies",
+                            "destination_type": "waivers"
+                          }
+                        }
+                      ]
+                    },
+                    "count": 2
+                  }
+                }
+              ]
+            },
+            "6": {
+              "transaction": [
+                {
+                  "transaction_key": "454.l.53472.tr.676",
+                  "transaction_id": "676",
+                  "type": "add/drop",
+                  "status": "successful",
+                  "timestamp": "1743860023"
+                },
+                {
+                  "players": {
+                    "0": {
+                      "player": [
+                        [
+                          {
+                            "player_key": "454.p.6408"
+                          },
+                          {
+                            "player_id": "6408"
+                          },
+                          {
+                            "name": {
+                              "full": "Isaiah Stewart",
+                              "first": "Isaiah",
+                              "last": "Stewart",
+                              "ascii_first": "Isaiah",
+                              "ascii_last": "Stewart"
+                            }
+                          },
+                          {
+                            "editorial_team_abbr": "DET"
+                          },
+                          {
+                            "display_position": "PF,C"
+                          },
+                          {
+                            "position_type": "P"
+                          }
+                        ],
+                        {
+                          "transaction_data": [
+                            {
+                              "type": "add",
+                              "source_type": "freeagents",
+                              "destination_type": "team",
+                              "destination_team_key": "454.l.53472.t.9",
+                              "destination_team_name": "injless team"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    "1": {
+                      "player": [
+                        [
+                          {
+                            "player_key": "454.p.6053"
+                          },
+                          {
+                            "player_id": "6053"
+                          },
+                          {
+                            "name": {
+                              "full": "Bruce Brown",
+                              "first": "Bruce",
+                              "last": "Brown",
+                              "ascii_first": "Bruce",
+                              "ascii_last": "Brown"
+                            }
+                          },
+                          {
+                            "editorial_team_abbr": "NOP"
+                          },
+                          {
+                            "display_position": "SG,SF"
+                          },
+                          {
+                            "position_type": "P"
+                          }
+                        ],
+                        {
+                          "transaction_data": {
+                            "type": "drop",
+                            "source_type": "team",
+                            "source_team_key": "454.l.53472.t.9",
+                            "source_team_name": "injless team",
+                            "destination_type": "waivers"
+                          }
+                        }
+                      ]
+                    },
+                    "count": 2
+                  }
+                }
+              ]
+            },
+            "7": {
+              "transaction": [
+                {
+                  "transaction_key": "454.l.53472.tr.675",
+                  "transaction_id": "675",
+                  "type": "drop",
+                  "status": "successful",
+                  "timestamp": "1743859767"
+                },
+                {
+                  "players": {
+                    "0": {
+                      "player": [
+                        [
+                          {
+                            "player_key": "454.p.6802"
+                          },
+                          {
+                            "player_id": "6802"
+                          },
+                          {
+                            "name": {
+                              "full": "Orlando Robinson",
+                              "first": "Orlando",
+                              "last": "Robinson",
+                              "ascii_first": "Orlando",
+                              "ascii_last": "Robinson"
+                            }
+                          },
+                          {
+                            "editorial_team_abbr": "TOR"
+                          },
+                          {
+                            "display_position": "C"
+                          },
+                          {
+                            "position_type": "P"
+                          }
+                        ],
+                        {
+                          "transaction_data": {
+                            "type": "drop",
+                            "source_type": "team",
+                            "source_team_key": "454.l.53472.t.9",
+                            "source_team_name": "injless team",
+                            "destination_type": "waivers"
+                          }
+                        }
+                      ]
+                    },
+                    "count": 1
+                  }
+                }
+              ]
+            },
+            "8": {
+              "transaction": [
+                {
+                  "transaction_key": "454.l.53472.tr.674",
+                  "transaction_id": "674",
+                  "type": "add/drop",
+                  "status": "successful",
+                  "timestamp": "1743803063"
+                },
+                {
+                  "players": {
+                    "0": {
+                      "player": [
+                        [
+                          {
+                            "player_key": "454.p.6727"
+                          },
+                          {
+                            "player_id": "6727"
+                          },
+                          {
+                            "name": {
+                              "full": "Jaden Hardy",
+                              "first": "Jaden",
+                              "last": "Hardy",
+                              "ascii_first": "Jaden",
+                              "ascii_last": "Hardy"
+                            }
+                          },
+                          {
+                            "editorial_team_abbr": "DAL"
+                          },
+                          {
+                            "display_position": "PG,SG"
+                          },
+                          {
+                            "position_type": "P"
+                          }
+                        ],
+                        {
+                          "transaction_data": [
+                            {
+                              "type": "add",
+                              "source_type": "freeagents",
+                              "destination_type": "team",
+                              "destination_team_key": "454.l.53472.t.12",
+                              "destination_team_name": "54 De Baddies"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    "1": {
+                      "player": [
+                        [
+                          {
+                            "player_key": "454.p.6206"
+                          },
+                          {
+                            "player_id": "6206"
+                          },
+                          {
+                            "name": {
+                              "full": "Goga Bitadze",
+                              "first": "Goga",
+                              "last": "Bitadze",
+                              "ascii_first": "Goga",
+                              "ascii_last": "Bitadze"
+                            }
+                          },
+                          {
+                            "editorial_team_abbr": "ORL"
+                          },
+                          {
+                            "display_position": "C"
+                          },
+                          {
+                            "position_type": "P"
+                          }
+                        ],
+                        {
+                          "transaction_data": {
+                            "type": "drop",
+                            "source_type": "team",
+                            "source_team_key": "454.l.53472.t.12",
+                            "source_team_name": "54 De Baddies",
+                            "destination_type": "waivers"
+                          }
+                        }
+                      ]
+                    },
+                    "count": 2
+                  }
+                }
+              ]
+            },
+            "9": {
+              "transaction": [
+                {
+                  "transaction_key": "454.l.53472.tr.673",
+                  "transaction_id": "673",
+                  "type": "add/drop",
+                  "status": "successful",
+                  "timestamp": "1743799763"
+                },
+                {
+                  "players": {
+                    "0": {
+                      "player": [
+                        [
+                          {
+                            "player_key": "454.p.6619"
+                          },
+                          {
+                            "player_id": "6619"
+                          },
+                          {
+                            "name": {
+                              "full": "Sam Hauser",
+                              "first": "Sam",
+                              "last": "Hauser",
+                              "ascii_first": "Sam",
+                              "ascii_last": "Hauser"
+                            }
+                          },
+                          {
+                            "editorial_team_abbr": "BOS"
+                          },
+                          {
+                            "display_position": "SF,PF"
+                          },
+                          {
+                            "position_type": "P"
+                          }
+                        ],
+                        {
+                          "transaction_data": [
+                            {
+                              "type": "add",
+                              "source_type": "freeagents",
+                              "destination_type": "team",
+                              "destination_team_key": "454.l.53472.t.1",
+                              "destination_team_name": "明年冠军"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    "1": {
+                      "player": [
+                        [
+                          {
+                            "player_key": "454.p.5825"
+                          },
+                          {
+                            "player_id": "5825"
+                          },
+                          {
+                            "name": {
+                              "full": "Luke Kennard",
+                              "first": "Luke",
+                              "last": "Kennard",
+                              "ascii_first": "Luke",
+                              "ascii_last": "Kennard"
+                            }
+                          },
+                          {
+                            "editorial_team_abbr": "MEM"
+                          },
+                          {
+                            "display_position": "PG,SG"
+                          },
+                          {
+                            "position_type": "P"
+                          }
+                        ],
+                        {
+                          "transaction_data": {
+                            "type": "drop",
+                            "source_type": "team",
+                            "source_team_key": "454.l.53472.t.1",
+                            "source_team_name": "明年冠军",
+                            "destination_type": "waivers"
+                          }
+                        }
+                      ]
+                    },
+                    "count": 2
+                  }
+                }
+              ]
+            },
+            "10": {
+              "transaction": [
+                {
+                  "transaction_key": "454.l.53472.tr.672",
+                  "transaction_id": "672",
+                  "type": "add/drop",
+                  "status": "successful",
+                  "timestamp": "1743775077"
+                },
+                {
+                  "players": {
+                    "0": {
+                      "player": [
+                        [
+                          {
+                            "player_key": "454.p.6802"
+                          },
+                          {
+                            "player_id": "6802"
+                          },
+                          {
+                            "name": {
+                              "full": "Orlando Robinson",
+                              "first": "Orlando",
+                              "last": "Robinson",
+                              "ascii_first": "Orlando",
+                              "ascii_last": "Robinson"
+                            }
+                          },
+                          {
+                            "editorial_team_abbr": "TOR"
+                          },
+                          {
+                            "display_position": "C"
+                          },
+                          {
+                            "position_type": "P"
+                          }
+                        ],
+                        {
+                          "transaction_data": [
+                            {
+                              "type": "add",
+                              "source_type": "freeagents",
+                              "destination_type": "team",
+                              "destination_team_key": "454.l.53472.t.9",
+                              "destination_team_name": "injless team"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    "1": {
+                      "player": [
+                        [
+                          {
+                            "player_key": "454.p.6018"
+                          },
+                          {
+                            "player_id": "6018"
+                          },
+                          {
+                            "name": {
+                              "full": "Wendell Carter Jr.",
+                              "first": "Wendell",
+                              "last": "Carter Jr.",
+                              "ascii_first": "Wendell",
+                              "ascii_last": "Carter Jr."
+                            }
+                          },
+                          {
+                            "editorial_team_abbr": "ORL"
+                          },
+                          {
+                            "display_position": "PF,C"
+                          },
+                          {
+                            "position_type": "P"
+                          }
+                        ],
+                        {
+                          "transaction_data": {
+                            "type": "drop",
+                            "source_type": "team",
+                            "source_team_key": "454.l.53472.t.9",
+                            "source_team_name": "injless team",
+                            "destination_type": "waivers"
+                          }
+                        }
+                      ]
+                    },
+                    "count": 2
+                  }
+                }
+              ]
+            },
+            "11": {
+              "transaction": [
+                {
+                  "transaction_key": "454.l.53472.tr.671",
+                  "transaction_id": "671",
+                  "type": "add/drop",
+                  "status": "successful",
+                  "timestamp": "1743774993"
+                },
+                {
+                  "players": {
+                    "0": {
+                      "player": [
+                        [
+                          {
+                            "player_key": "454.p.5013"
+                          },
+                          {
+                            "player_id": "5013"
+                          },
+                          {
+                            "name": {
+                              "full": "Harrison Barnes",
+                              "first": "Harrison",
+                              "last": "Barnes",
+                              "ascii_first": "Harrison",
+                              "ascii_last": "Barnes"
+                            }
+                          },
+                          {
+                            "editorial_team_abbr": "SAS"
+                          },
+                          {
+                            "display_position": "SF,PF"
+                          },
+                          {
+                            "position_type": "P"
+                          }
+                        ],
+                        {
+                          "transaction_data": [
+                            {
+                              "type": "add",
+                              "source_type": "freeagents",
+                              "destination_type": "team",
+                              "destination_team_key": "454.l.53472.t.9",
+                              "destination_team_name": "injless team"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    "1": {
+                      "player": [
+                        [
+                          {
+                            "player_key": "454.p.6691"
+                          },
+                          {
+                            "player_id": "6691"
+                          },
+                          {
+                            "name": {
+                              "full": "Paolo Banchero",
+                              "first": "Paolo",
+                              "last": "Banchero",
+                              "ascii_first": "Paolo",
+                              "ascii_last": "Banchero"
+                            }
+                          },
+                          {
+                            "editorial_team_abbr": "ORL"
+                          },
+                          {
+                            "display_position": "SF,PF"
+                          },
+                          {
+                            "position_type": "P"
+                          }
+                        ],
+                        {
+                          "transaction_data": {
+                            "type": "drop",
+                            "source_type": "team",
+                            "source_team_key": "454.l.53472.t.9",
+                            "source_team_name": "injless team",
+                            "destination_type": "waivers"
+                          }
+                        }
+                      ]
+                    },
+                    "count": 2
+                  }
+                }
+              ]
+            },
+            "12": {
+              "transaction": [
+                {
+                  "transaction_key": "454.l.53472.tr.670",
+                  "transaction_id": "670",
+                  "type": "drop",
+                  "status": "successful",
+                  "timestamp": "1743757903"
+                },
+                {
+                  "players": {
+                    "0": {
+                      "player": [
+                        [
+                          {
+                            "player_key": "454.p.10310"
+                          },
+                          {
+                            "player_id": "10310"
+                          },
+                          {
+                            "name": {
+                              "full": "Justin Edwards",
+                              "first": "Justin",
+                              "last": "Edwards",
+                              "ascii_first": "Justin",
+                              "ascii_last": "Edwards"
+                            }
+                          },
+                          {
+                            "editorial_team_abbr": "PHI"
+                          },
+                          {
+                            "display_position": "SF"
+                          },
+                          {
+                            "position_type": "P"
+                          }
+                        ],
+                        {
+                          "transaction_data": {
+                            "type": "drop",
+                            "source_type": "team",
+                            "source_team_key": "454.l.53472.t.11",
+                            "source_team_name": "ADventurer(人民医院版)",
+                            "destination_type": "waivers"
+                          }
+                        }
+                      ]
+                    },
+                    "count": 1
+                  }
+                }
+              ]
+            },
+            "13": {
+              "transaction": [
+                {
+                  "transaction_key": "454.l.53472.tr.669",
+                  "transaction_id": "669",
+                  "type": "add/drop",
+                  "status": "successful",
+                  "timestamp": "1743746979"
+                },
+                {
+                  "players": {
+                    "0": {
+                      "player": [
+                        [
+                          {
+                            "player_key": "454.p.6030"
+                          },
+                          {
+                            "player_id": "6030"
+                          },
+                          {
+                            "name": {
+                              "full": "Kevin Huerter",
+                              "first": "Kevin",
+                              "last": "Huerter",
+                              "ascii_first": "Kevin",
+                              "ascii_last": "Huerter"
+                            }
+                          },
+                          {
+                            "editorial_team_abbr": "CHI"
+                          },
+                          {
+                            "display_position": "SG,SF"
+                          },
+                          {
+                            "position_type": "P"
+                          }
+                        ],
+                        {
+                          "transaction_data": [
+                            {
+                              "type": "add",
+                              "source_type": "freeagents",
+                              "destination_type": "team",
+                              "destination_team_key": "454.l.53472.t.1",
+                              "destination_team_name": "明年冠军"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    "1": {
+                      "player": [
+                        [
+                          {
+                            "player_key": "454.p.5769"
+                          },
+                          {
+                            "player_id": "5769"
+                          },
+                          {
+                            "name": {
+                              "full": "Lauri Markkanen",
+                              "first": "Lauri",
+                              "last": "Markkanen",
+                              "ascii_first": "Lauri",
+                              "ascii_last": "Markkanen"
+                            }
+                          },
+                          {
+                            "editorial_team_abbr": "UTA"
+                          },
+                          {
+                            "display_position": "SF,PF"
+                          },
+                          {
+                            "position_type": "P"
+                          }
+                        ],
+                        {
+                          "transaction_data": {
+                            "type": "drop",
+                            "source_type": "team",
+                            "source_team_key": "454.l.53472.t.1",
+                            "source_team_name": "明年冠军",
+                            "destination_type": "waivers"
+                          }
+                        }
+                      ]
+                    },
+                    "count": 2
+                  }
+                }
+              ]
+            },
+            "14": {
+              "transaction": [
+                {
+                  "transaction_key": "454.l.53472.tr.668",
+                  "transaction_id": "668",
+                  "type": "add/drop",
+                  "status": "successful",
+                  "timestamp": "1743714468"
+                },
+                {
+                  "players": {
+                    "0": {
+                      "player": [
+                        [
+                          {
+                            "player_key": "454.p.5693"
+                          },
+                          {
+                            "player_id": "5693"
+                          },
+                          {
+                            "name": {
+                              "full": "Dorian Finney-Smith",
+                              "first": "Dorian",
+                              "last": "Finney-Smith",
+                              "ascii_first": "Dorian",
+                              "ascii_last": "Finney-Smith"
+                            }
+                          },
+                          {
+                            "editorial_team_abbr": "LAL"
+                          },
+                          {
+                            "display_position": "SF,PF,C"
+                          },
+                          {
+                            "position_type": "P"
+                          }
+                        ],
+                        {
+                          "transaction_data": [
+                            {
+                              "type": "add",
+                              "source_type": "freeagents",
+                              "destination_type": "team",
+                              "destination_team_key": "454.l.53472.t.1",
+                              "destination_team_name": "明年冠军"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    "1": {
+                      "player": [
+                        [
+                          {
+                            "player_key": "454.p.5582"
+                          },
+                          {
+                            "player_id": "5582"
+                          },
+                          {
+                            "name": {
+                              "full": "T.J. McConnell",
+                              "first": "T.J.",
+                              "last": "McConnell",
+                              "ascii_first": "T.J.",
+                              "ascii_last": "McConnell"
+                            }
+                          },
+                          {
+                            "editorial_team_abbr": "IND"
+                          },
+                          {
+                            "display_position": "PG"
+                          },
+                          {
+                            "position_type": "P"
+                          }
+                        ],
+                        {
+                          "transaction_data": {
+                            "type": "drop",
+                            "source_type": "team",
+                            "source_team_key": "454.l.53472.t.1",
+                            "source_team_name": "明年冠军",
+                            "destination_type": "waivers"
+                          }
+                        }
+                      ]
+                    },
+                    "count": 2
+                  }
+                }
+              ]
+            },
+            "15": {
+              "transaction": [
+                {
+                  "transaction_key": "454.l.53472.tr.667",
+                  "transaction_id": "667",
+                  "type": "drop",
+                  "status": "successful",
+                  "timestamp": "1743695985"
+                },
+                {
+                  "players": {
+                    "0": {
+                      "player": [
+                        [
+                          {
+                            "player_key": "454.p.6725"
+                          },
+                          {
+                            "player_id": "6725"
+                          },
+                          {
+                            "name": {
+                              "full": "Max Christie",
+                              "first": "Max",
+                              "last": "Christie",
+                              "ascii_first": "Max",
+                              "ascii_last": "Christie"
+                            }
+                          },
+                          {
+                            "editorial_team_abbr": "DAL"
+                          },
+                          {
+                            "display_position": "SG,SF"
+                          },
+                          {
+                            "position_type": "P"
+                          }
+                        ],
+                        {
+                          "transaction_data": {
+                            "type": "drop",
+                            "source_type": "team",
+                            "source_team_key": "454.l.53472.t.5",
+                            "source_team_name": "Miruacle",
+                            "destination_type": "waivers"
+                          }
+                        }
+                      ]
+                    },
+                    "count": 1
+                  }
+                }
+              ]
+            },
+            "16": {
+              "transaction": [
+                {
+                  "transaction_key": "454.l.53472.tr.666",
+                  "transaction_id": "666",
+                  "type": "add/drop",
+                  "status": "successful",
+                  "timestamp": "1743539010"
+                },
+                {
+                  "players": {
+                    "0": {
+                      "player": [
+                        [
+                          {
+                            "player_key": "454.p.10278"
+                          },
+                          {
+                            "player_id": "10278"
+                          },
+                          {
+                            "name": {
+                              "full": "Ja'Kobe Walter",
+                              "first": "Ja'Kobe",
+                              "last": "Walter",
+                              "ascii_first": "Ja'Kobe",
+                              "ascii_last": "Walter"
+                            }
+                          },
+                          {
+                            "editorial_team_abbr": "TOR"
+                          },
+                          {
+                            "display_position": "SG"
+                          },
+                          {
+                            "position_type": "P"
+                          }
+                        ],
+                        {
+                          "transaction_data": [
+                            {
+                              "type": "add",
+                              "source_type": "freeagents",
+                              "destination_type": "team",
+                              "destination_team_key": "454.l.53472.t.14",
+                              "destination_team_name": "LBJ"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    "1": {
+                      "player": [
+                        [
+                          {
+                            "player_key": "454.p.6704"
+                          },
+                          {
+                            "player_id": "6704"
+                          },
+                          {
+                            "name": {
+                              "full": "Ochai Agbaji",
+                              "first": "Ochai",
+                              "last": "Agbaji",
+                              "ascii_first": "Ochai",
+                              "ascii_last": "Agbaji"
+                            }
+                          },
+                          {
+                            "editorial_team_abbr": "TOR"
+                          },
+                          {
+                            "display_position": "SG,SF"
+                          },
+                          {
+                            "position_type": "P"
+                          }
+                        ],
+                        {
+                          "transaction_data": {
+                            "type": "drop",
+                            "source_type": "team",
+                            "source_team_key": "454.l.53472.t.14",
+                            "source_team_name": "LBJ",
+                            "destination_type": "waivers"
+                          }
+                        }
+                      ]
+                    },
+                    "count": 2
+                  }
+                }
+              ]
+            },
+            "17": {
+              "transaction": [
+                {
+                  "transaction_key": "454.l.53472.tr.665",
+                  "transaction_id": "665",
+                  "type": "add/drop",
+                  "status": "successful",
+                  "timestamp": "1743494494",
+                  "faab_bid": "16"
+                },
+                {
+                  "players": {
+                    "0": {
+                      "player": [
+                        [
+                          {
+                            "player_key": "454.p.6720"
+                          },
+                          {
+                            "player_id": "6720"
+                          },
+                          {
+                            "name": {
+                              "full": "Peyton Watson",
+                              "first": "Peyton",
+                              "last": "Watson",
+                              "ascii_first": "Peyton",
+                              "ascii_last": "Watson"
+                            }
+                          },
+                          {
+                            "editorial_team_abbr": "DEN"
+                          },
+                          {
+                            "display_position": "SF,PF"
+                          },
+                          {
+                            "position_type": "P"
+                          }
+                        ],
+                        {
+                          "transaction_data": [
+                            {
+                              "type": "add",
+                              "source_type": "waivers",
+                              "destination_type": "team",
+                              "destination_team_key": "454.l.53472.t.11",
+                              "destination_team_name": "ADventurer(人民医院版)"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    "1": {
+                      "player": [
+                        [
+                          {
+                            "player_key": "454.p.10120"
+                          },
+                          {
+                            "player_id": "10120"
+                          },
+                          {
+                            "name": {
+                              "full": "Nick Smith Jr.",
+                              "first": "Nick",
+                              "last": "Smith Jr.",
+                              "ascii_first": "Nick",
+                              "ascii_last": "Smith Jr."
+                            }
+                          },
+                          {
+                            "editorial_team_abbr": "CHA"
+                          },
+                          {
+                            "display_position": "PG,SG"
+                          },
+                          {
+                            "position_type": "P"
+                          }
+                        ],
+                        {
+                          "transaction_data": {
+                            "type": "drop",
+                            "source_type": "team",
+                            "source_team_key": "454.l.53472.t.11",
+                            "source_team_name": "ADventurer(人民医院版)",
+                            "destination_type": "waivers"
+                          }
+                        }
+                      ]
+                    },
+                    "count": 2
+                  }
+                }
+              ]
+            },
+            "18": {
+              "transaction": [
+                {
+                  "transaction_key": "454.l.53472.tr.664",
+                  "transaction_id": "664",
+                  "type": "add/drop",
+                  "status": "successful",
+                  "timestamp": "1743466019"
+                },
+                {
+                  "players": {
+                    "0": {
+                      "player": [
+                        [
+                          {
+                            "player_key": "454.p.10107"
+                          },
+                          {
+                            "player_id": "10107"
+                          },
+                          {
+                            "name": {
+                              "full": "Cason Wallace",
+                              "first": "Cason",
+                              "last": "Wallace",
+                              "ascii_first": "Cason",
+                              "ascii_last": "Wallace"
+                            }
+                          },
+                          {
+                            "editorial_team_abbr": "OKC"
+                          },
+                          {
+                            "display_position": "PG,SG"
+                          },
+                          {
+                            "position_type": "P"
+                          }
+                        ],
+                        {
+                          "transaction_data": [
+                            {
+                              "type": "add",
+                              "source_type": "freeagents",
+                              "destination_type": "team",
+                              "destination_team_key": "454.l.53472.t.11",
+                              "destination_team_name": "ADventurer(人民医院版)"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    "1": {
+                      "player": [
+                        [
+                          {
+                            "player_key": "454.p.5484"
+                          },
+                          {
+                            "player_id": "5484"
+                          },
+                          {
+                            "name": {
+                              "full": "Tyus Jones",
+                              "first": "Tyus",
+                              "last": "Jones",
+                              "ascii_first": "Tyus",
+                              "ascii_last": "Jones"
+                            }
+                          },
+                          {
+                            "editorial_team_abbr": "PHX"
+                          },
+                          {
+                            "display_position": "PG"
+                          },
+                          {
+                            "position_type": "P"
+                          }
+                        ],
+                        {
+                          "transaction_data": {
+                            "type": "drop",
+                            "source_type": "team",
+                            "source_team_key": "454.l.53472.t.11",
+                            "source_team_name": "ADventurer(人民医院版)",
+                            "destination_type": "waivers"
+                          }
+                        }
+                      ]
+                    },
+                    "count": 2
+                  }
+                }
+              ]
+            },
+            "19": {
+              "transaction": [
+                {
+                  "transaction_key": "454.l.53472.tr.663",
+                  "transaction_id": "663",
+                  "type": "add/drop",
+                  "status": "successful",
+                  "timestamp": "1743440659"
+                },
+                {
+                  "players": {
+                    "0": {
+                      "player": [
+                        [
+                          {
+                            "player_key": "454.p.6400"
+                          },
+                          {
+                            "player_id": "6400"
+                          },
+                          {
+                            "name": {
+                              "full": "Obi Toppin",
+                              "first": "Obi",
+                              "last": "Toppin",
+                              "ascii_first": "Obi",
+                              "ascii_last": "Toppin"
+                            }
+                          },
+                          {
+                            "editorial_team_abbr": "IND"
+                          },
+                          {
+                            "display_position": "PF"
+                          },
+                          {
+                            "position_type": "P"
+                          }
+                        ],
+                        {
+                          "transaction_data": [
+                            {
+                              "type": "add",
+                              "source_type": "freeagents",
+                              "destination_type": "team",
+                              "destination_team_key": "454.l.53472.t.10",
+                              "destination_team_name": "保12争11"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    "1": {
+                      "player": [
+                        [
+                          {
+                            "player_key": "454.p.10080"
+                          },
+                          {
+                            "player_id": "10080"
+                          },
+                          {
+                            "name": {
+                              "full": "Trayce Jackson-Davis",
+                              "first": "Trayce",
+                              "last": "Jackson-Davis",
+                              "ascii_first": "Trayce",
+                              "ascii_last": "Jackson-Davis"
+                            }
+                          },
+                          {
+                            "editorial_team_abbr": "GSW"
+                          },
+                          {
+                            "display_position": "PF,C"
+                          },
+                          {
+                            "position_type": "P"
+                          }
+                        ],
+                        {
+                          "transaction_data": {
+                            "type": "drop",
+                            "source_type": "team",
+                            "source_team_key": "454.l.53472.t.10",
+                            "source_team_name": "保12争11",
+                            "destination_type": "waivers"
+                          }
+                        }
+                      ]
+                    },
+                    "count": 2
+                  }
+                }
+              ]
+            },
+            "20": {
+              "transaction": [
+                {
+                  "transaction_key": "454.l.53472.tr.662",
+                  "transaction_id": "662",
+                  "type": "add/drop",
+                  "status": "successful",
+                  "timestamp": "1743431152"
+                },
+                {
+                  "players": {
+                    "0": {
+                      "player": [
+                        [
+                          {
+                            "player_key": "454.p.6206"
+                          },
+                          {
+                            "player_id": "6206"
+                          },
+                          {
+                            "name": {
+                              "full": "Goga Bitadze",
+                              "first": "Goga",
+                              "last": "Bitadze",
+                              "ascii_first": "Goga",
+                              "ascii_last": "Bitadze"
+                            }
+                          },
+                          {
+                            "editorial_team_abbr": "ORL"
+                          },
+                          {
+                            "display_position": "C"
+                          },
+                          {
+                            "position_type": "P"
+                          }
+                        ],
+                        {
+                          "transaction_data": [
+                            {
+                              "type": "add",
+                              "source_type": "freeagents",
+                              "destination_type": "team",
+                              "destination_team_key": "454.l.53472.t.12",
+                              "destination_team_name": "54 De Baddies"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    "1": {
+                      "player": [
+                        [
+                          {
+                            "player_key": "454.p.6636"
+                          },
+                          {
+                            "player_id": "6636"
+                          },
+                          {
+                            "name": {
+                              "full": "Jeff Dowtin Jr.",
+                              "first": "Jeff",
+                              "last": "Dowtin Jr.",
+                              "ascii_first": "Jeff",
+                              "ascii_last": "Dowtin Jr."
+                            }
+                          },
+                          {
+                            "editorial_team_abbr": "PHI"
+                          },
+                          {
+                            "display_position": "PG"
+                          },
+                          {
+                            "position_type": "P"
+                          }
+                        ],
+                        {
+                          "transaction_data": {
+                            "type": "drop",
+                            "source_type": "team",
+                            "source_team_key": "454.l.53472.t.12",
+                            "source_team_name": "54 De Baddies",
+                            "destination_type": "waivers"
+                          }
+                        }
+                      ]
+                    },
+                    "count": 2
+                  }
+                }
+              ]
+            },
+            "21": {
+              "transaction": [
+                {
+                  "transaction_key": "454.l.53472.tr.661",
+                  "transaction_id": "661",
+                  "type": "add/drop",
+                  "status": "successful",
+                  "timestamp": "1743407566"
+                },
+                {
+                  "players": {
+                    "0": {
+                      "player": [
+                        [
+                          {
+                            "player_key": "454.p.10335"
+                          },
+                          {
+                            "player_id": "10335"
+                          },
+                          {
+                            "name": {
+                              "full": "Adem Bona",
+                              "first": "Adem",
+                              "last": "Bona",
+                              "ascii_first": "Adem",
+                              "ascii_last": "Bona"
+                            }
+                          },
+                          {
+                            "editorial_team_abbr": "PHI"
+                          },
+                          {
+                            "display_position": "C"
+                          },
+                          {
+                            "position_type": "P"
+                          }
+                        ],
+                        {
+                          "transaction_data": [
+                            {
+                              "type": "add",
+                              "source_type": "freeagents",
+                              "destination_type": "team",
+                              "destination_team_key": "454.l.53472.t.13",
+                              "destination_team_name": "湖人状元签"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    "1": {
+                      "player": [
+                        [
+                          {
+                            "player_key": "454.p.5013"
+                          },
+                          {
+                            "player_id": "5013"
+                          },
+                          {
+                            "name": {
+                              "full": "Harrison Barnes",
+                              "first": "Harrison",
+                              "last": "Barnes",
+                              "ascii_first": "Harrison",
+                              "ascii_last": "Barnes"
+                            }
+                          },
+                          {
+                            "editorial_team_abbr": "SAS"
+                          },
+                          {
+                            "display_position": "SF,PF"
+                          },
+                          {
+                            "position_type": "P"
+                          }
+                        ],
+                        {
+                          "transaction_data": {
+                            "type": "drop",
+                            "source_type": "team",
+                            "source_team_key": "454.l.53472.t.13",
+                            "source_team_name": "湖人状元签",
+                            "destination_type": "waivers"
+                          }
+                        }
+                      ]
+                    },
+                    "count": 2
+                  }
+                }
+              ]
+            },
+            "22": {
+              "transaction": [
+                {
+                  "transaction_key": "454.l.53472.tr.660",
+                  "transaction_id": "660",
+                  "type": "add",
+                  "status": "successful",
+                  "timestamp": "1743407514"
+                },
+                {
+                  "players": {
+                    "0": {
+                      "player": [
+                        [
+                          {
+                            "player_key": "454.p.10097"
+                          },
+                          {
+                            "player_id": "10097"
+                          },
+                          {
+                            "name": {
+                              "full": "Dereck Lively II",
+                              "first": "Dereck",
+                              "last": "Lively II",
+                              "ascii_first": "Dereck",
+                              "ascii_last": "Lively II"
+                            }
+                          },
+                          {
+                            "editorial_team_abbr": "DAL"
+                          },
+                          {
+                            "display_position": "C"
+                          },
+                          {
+                            "position_type": "P"
+                          }
+                        ],
+                        {
+                          "transaction_data": [
+                            {
+                              "type": "add",
+                              "source_type": "freeagents",
+                              "destination_type": "team",
+                              "destination_team_key": "454.l.53472.t.11",
+                              "destination_team_name": "ADventurer(人民医院版)"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    "count": 1
+                  }
+                }
+              ]
+            },
+            "23": {
+              "transaction": [
+                {
+                  "transaction_key": "454.l.53472.tr.659",
+                  "transaction_id": "659",
+                  "type": "add/drop",
+                  "status": "successful",
+                  "timestamp": "1743375068"
+                },
+                {
+                  "players": {
+                    "0": {
+                      "player": [
+                        [
+                          {
+                            "player_key": "454.p.6053"
+                          },
+                          {
+                            "player_id": "6053"
+                          },
+                          {
+                            "name": {
+                              "full": "Bruce Brown",
+                              "first": "Bruce",
+                              "last": "Brown",
+                              "ascii_first": "Bruce",
+                              "ascii_last": "Brown"
+                            }
+                          },
+                          {
+                            "editorial_team_abbr": "NOP"
+                          },
+                          {
+                            "display_position": "SG,SF"
+                          },
+                          {
+                            "position_type": "P"
+                          }
+                        ],
+                        {
+                          "transaction_data": [
+                            {
+                              "type": "add",
+                              "source_type": "freeagents",
+                              "destination_type": "team",
+                              "destination_team_key": "454.l.53472.t.9",
+                              "destination_team_name": "injless team"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    "1": {
+                      "player": [
+                        [
+                          {
+                            "player_key": "454.p.6030"
+                          },
+                          {
+                            "player_id": "6030"
+                          },
+                          {
+                            "name": {
+                              "full": "Kevin Huerter",
+                              "first": "Kevin",
+                              "last": "Huerter",
+                              "ascii_first": "Kevin",
+                              "ascii_last": "Huerter"
+                            }
+                          },
+                          {
+                            "editorial_team_abbr": "CHI"
+                          },
+                          {
+                            "display_position": "SG,SF"
+                          },
+                          {
+                            "position_type": "P"
+                          }
+                        ],
+                        {
+                          "transaction_data": {
+                            "type": "drop",
+                            "source_type": "team",
+                            "source_team_key": "454.l.53472.t.9",
+                            "source_team_name": "injless team",
+                            "destination_type": "waivers"
+                          }
+                        }
+                      ]
+                    },
+                    "count": 2
+                  }
+                }
+              ]
+            },
+            "24": {
+              "transaction": [
+                {
+                  "transaction_key": "454.l.53472.tr.658",
+                  "transaction_id": "658",
+                  "type": "add/drop",
+                  "status": "successful",
+                  "timestamp": "1743337401"
+                },
+                {
+                  "players": {
+                    "0": {
+                      "player": [
+                        [
+                          {
+                            "player_key": "454.p.6734"
+                          },
+                          {
+                            "player_id": "6734"
+                          },
+                          {
+                            "name": {
+                              "full": "Ryan Rollins",
+                              "first": "Ryan",
+                              "last": "Rollins",
+                              "ascii_first": "Ryan",
+                              "ascii_last": "Rollins"
+                            }
+                          },
+                          {
+                            "editorial_team_abbr": "MIL"
+                          },
+                          {
+                            "display_position": "PG"
+                          },
+                          {
+                            "position_type": "P"
+                          }
+                        ],
+                        {
+                          "transaction_data": [
+                            {
+                              "type": "add",
+                              "source_type": "freeagents",
+                              "destination_type": "team",
+                              "destination_team_key": "454.l.53472.t.9",
+                              "destination_team_name": "injless team"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    "1": {
+                      "player": [
+                        [
+                          {
+                            "player_key": "454.p.6441"
+                          },
+                          {
+                            "player_id": "6441"
+                          },
+                          {
+                            "name": {
+                              "full": "Isaiah Joe",
+                              "first": "Isaiah",
+                              "last": "Joe",
+                              "ascii_first": "Isaiah",
+                              "ascii_last": "Joe"
+                            }
+                          },
+                          {
+                            "editorial_team_abbr": "OKC"
+                          },
+                          {
+                            "display_position": "PG,SG"
+                          },
+                          {
+                            "position_type": "P"
+                          }
+                        ],
+                        {
+                          "transaction_data": {
+                            "type": "drop",
+                            "source_type": "team",
+                            "source_team_key": "454.l.53472.t.9",
+                            "source_team_name": "injless team",
+                            "destination_type": "waivers"
+                          }
+                        }
+                      ]
+                    },
+                    "count": 2
+                  }
+                }
+              ]
+            },
+            "25": {
+              "transaction": [
+                {
+                  "transaction_key": "454.l.53472.tr.657",
+                  "transaction_id": "657",
+                  "type": "add/drop",
+                  "status": "successful",
+                  "timestamp": "1743264782"
+                },
+                {
+                  "players": {
+                    "0": {
+                      "player": [
+                        [
+                          {
+                            "player_key": "454.p.6632"
+                          },
+                          {
+                            "player_id": "6632"
+                          },
+                          {
+                            "name": {
+                              "full": "Justin Champagnie",
+                              "first": "Justin",
+                              "last": "Champagnie",
+                              "ascii_first": "Justin",
+                              "ascii_last": "Champagnie"
+                            }
+                          },
+                          {
+                            "editorial_team_abbr": "WAS"
+                          },
+                          {
+                            "display_position": "SG,SF"
+                          },
+                          {
+                            "position_type": "P"
+                          }
+                        ],
+                        {
+                          "transaction_data": [
+                            {
+                              "type": "add",
+                              "source_type": "freeagents",
+                              "destination_type": "team",
+                              "destination_team_key": "454.l.53472.t.13",
+                              "destination_team_name": "湖人状元签"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    "1": {
+                      "player": [
+                        [
+                          {
+                            "player_key": "454.p.6762"
+                          },
+                          {
+                            "player_id": "6762"
+                          },
+                          {
+                            "name": {
+                              "full": "Johnny Juzang",
+                              "first": "Johnny",
+                              "last": "Juzang",
+                              "ascii_first": "Johnny",
+                              "ascii_last": "Juzang"
+                            }
+                          },
+                          {
+                            "editorial_team_abbr": "UTA"
+                          },
+                          {
+                            "display_position": "SG,SF"
+                          },
+                          {
+                            "position_type": "P"
+                          }
+                        ],
+                        {
+                          "transaction_data": {
+                            "type": "drop",
+                            "source_type": "team",
+                            "source_team_key": "454.l.53472.t.13",
+                            "source_team_name": "湖人状元签",
+                            "destination_type": "waivers"
+                          }
+                        }
+                      ]
+                    },
+                    "count": 2
+                  }
+                }
+              ]
+            },
+            "26": {
+              "transaction": [
+                {
+                  "transaction_key": "454.l.53472.tr.656",
+                  "transaction_id": "656",
+                  "type": "drop",
+                  "status": "successful",
+                  "timestamp": "1743259465"
+                },
+                {
+                  "players": {
+                    "0": {
+                      "player": [
+                        [
+                          {
+                            "player_key": "454.p.6395"
+                          },
+                          {
+                            "player_id": "6395"
+                          },
+                          {
+                            "name": {
+                              "full": "LaMelo Ball",
+                              "first": "LaMelo",
+                              "last": "Ball",
+                              "ascii_first": "LaMelo",
+                              "ascii_last": "Ball"
+                            }
+                          },
+                          {
+                            "editorial_team_abbr": "CHA"
+                          },
+                          {
+                            "display_position": "PG,SG"
+                          },
+                          {
+                            "position_type": "P"
+                          }
+                        ],
+                        {
+                          "transaction_data": {
+                            "type": "drop",
+                            "source_type": "team",
+                            "source_team_key": "454.l.53472.t.12",
+                            "source_team_name": "54 De Baddies",
+                            "destination_type": "waivers"
+                          }
+                        }
+                      ]
+                    },
+                    "count": 1
+                  }
+                }
+              ]
+            },
+            "27": {
+              "transaction": [
+                {
+                  "transaction_key": "454.l.53472.tr.655",
+                  "transaction_id": "655",
+                  "type": "add/drop",
+                  "status": "successful",
+                  "timestamp": "1743236844"
+                },
+                {
+                  "players": {
+                    "0": {
+                      "player": [
+                        [
+                          {
+                            "player_key": "454.p.6636"
+                          },
+                          {
+                            "player_id": "6636"
+                          },
+                          {
+                            "name": {
+                              "full": "Jeff Dowtin Jr.",
+                              "first": "Jeff",
+                              "last": "Dowtin Jr.",
+                              "ascii_first": "Jeff",
+                              "ascii_last": "Dowtin Jr."
+                            }
+                          },
+                          {
+                            "editorial_team_abbr": "PHI"
+                          },
+                          {
+                            "display_position": "PG"
+                          },
+                          {
+                            "position_type": "P"
+                          }
+                        ],
+                        {
+                          "transaction_data": [
+                            {
+                              "type": "add",
+                              "source_type": "freeagents",
+                              "destination_type": "team",
+                              "destination_team_key": "454.l.53472.t.12",
+                              "destination_team_name": "54 De Baddies"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    "1": {
+                      "player": [
+                        [
+                          {
+                            "player_key": "454.p.10114"
+                          },
+                          {
+                            "player_id": "10114"
+                          },
+                          {
+                            "name": {
+                              "full": "Marcus Sasser",
+                              "first": "Marcus",
+                              "last": "Sasser",
+                              "ascii_first": "Marcus",
+                              "ascii_last": "Sasser"
+                            }
+                          },
+                          {
+                            "editorial_team_abbr": "DET"
+                          },
+                          {
+                            "display_position": "PG"
+                          },
+                          {
+                            "position_type": "P"
+                          }
+                        ],
+                        {
+                          "transaction_data": {
+                            "type": "drop",
+                            "source_type": "team",
+                            "source_team_key": "454.l.53472.t.12",
+                            "source_team_name": "54 De Baddies",
+                            "destination_type": "waivers"
+                          }
+                        }
+                      ]
+                    },
+                    "count": 2
+                  }
+                }
+              ]
+            },
+            "28": {
+              "transaction": [
+                {
+                  "transaction_key": "454.l.53472.tr.654",
+                  "transaction_id": "654",
+                  "type": "drop",
+                  "status": "successful",
+                  "timestamp": "1743236807"
+                },
+                {
+                  "players": {
+                    "0": {
+                      "player": [
+                        [
+                          {
+                            "player_key": "454.p.10308"
+                          },
+                          {
+                            "player_id": "10308"
+                          },
+                          {
+                            "name": {
+                              "full": "Quinten Post",
+                              "first": "Quinten",
+                              "last": "Post",
+                              "ascii_first": "Quinten",
+                              "ascii_last": "Post"
+                            }
+                          },
+                          {
+                            "editorial_team_abbr": "GSW"
+                          },
+                          {
+                            "display_position": "C"
+                          },
+                          {
+                            "position_type": "P"
+                          }
+                        ],
+                        {
+                          "transaction_data": {
+                            "type": "drop",
+                            "source_type": "team",
+                            "source_team_key": "454.l.53472.t.5",
+                            "source_team_name": "Miruacle",
+                            "destination_type": "waivers"
+                          }
+                        }
+                      ]
+                    },
+                    "count": 1
+                  }
+                }
+              ]
+            },
+            "29": {
+              "transaction": [
+                {
+                  "transaction_key": "454.l.53472.tr.652",
+                  "transaction_id": "652",
+                  "type": "add/drop",
+                  "status": "successful",
+                  "timestamp": "1743235347",
+                  "faab_bid": "25"
+                },
+                {
+                  "players": {
+                    "0": {
+                      "player": [
+                        [
+                          {
+                            "player_key": "454.p.6549"
+                          },
+                          {
+                            "player_id": "6549"
+                          },
+                          {
+                            "name": {
+                              "full": "Jonathan Kuminga",
+                              "first": "Jonathan",
+                              "last": "Kuminga",
+                              "ascii_first": "Jonathan",
+                              "ascii_last": "Kuminga"
+                            }
+                          },
+                          {
+                            "editorial_team_abbr": "GSW"
+                          },
+                          {
+                            "display_position": "SF,PF"
+                          },
+                          {
+                            "position_type": "P"
+                          }
+                        ],
+                        {
+                          "transaction_data": [
+                            {
+                              "type": "add",
+                              "source_type": "waivers",
+                              "destination_type": "team",
+                              "destination_team_key": "454.l.53472.t.11",
+                              "destination_team_name": "ADventurer(人民医院版)"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    "1": {
+                      "player": [
+                        [
+                          {
+                            "player_key": "454.p.6720"
+                          },
+                          {
+                            "player_id": "6720"
+                          },
+                          {
+                            "name": {
+                              "full": "Peyton Watson",
+                              "first": "Peyton",
+                              "last": "Watson",
+                              "ascii_first": "Peyton",
+                              "ascii_last": "Watson"
+                            }
+                          },
+                          {
+                            "editorial_team_abbr": "DEN"
+                          },
+                          {
+                            "display_position": "SF,PF"
+                          },
+                          {
+                            "position_type": "P"
+                          }
+                        ],
+                        {
+                          "transaction_data": {
+                            "type": "drop",
+                            "source_type": "team",
+                            "source_team_key": "454.l.53472.t.11",
+                            "source_team_name": "ADventurer(人民医院版)",
+                            "destination_type": "waivers"
+                          }
+                        }
+                      ]
+                    },
+                    "count": 2
+                  }
+                }
+              ]
+            },
+            "30": {
+              "transaction": [
+                {
+                  "transaction_key": "454.l.53472.tr.651",
+                  "transaction_id": "651",
+                  "type": "add",
+                  "status": "successful",
+                  "timestamp": "1743211773"
+                },
+                {
+                  "players": {
+                    "0": {
+                      "player": [
+                        [
+                          {
+                            "player_key": "454.p.5187"
+                          },
+                          {
+                            "player_id": "5187"
+                          },
+                          {
+                            "name": {
+                              "full": "Dennis Schröder",
+                              "first": "Dennis",
+                              "last": "Schröder",
+                              "ascii_first": "Dennis",
+                              "ascii_last": "Schröder"
+                            }
+                          },
+                          {
+                            "editorial_team_abbr": "DET"
+                          },
+                          {
+                            "display_position": "PG,SG"
+                          },
+                          {
+                            "position_type": "P"
+                          }
+                        ],
+                        {
+                          "transaction_data": [
+                            {
+                              "type": "add",
+                              "source_type": "freeagents",
+                              "destination_type": "team",
+                              "destination_team_key": "454.l.53472.t.9",
+                              "destination_team_name": "injless team"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    "count": 1
+                  }
+                }
+              ]
+            },
+            "31": {
+              "transaction": [
+                {
+                  "transaction_key": "454.l.53472.tr.650",
+                  "transaction_id": "650",
+                  "type": "add/drop",
+                  "status": "successful",
+                  "timestamp": "1743196608"
+                },
+                {
+                  "players": {
+                    "0": {
+                      "player": [
+                        [
+                          {
+                            "player_key": "454.p.10120"
+                          },
+                          {
+                            "player_id": "10120"
+                          },
+                          {
+                            "name": {
+                              "full": "Nick Smith Jr.",
+                              "first": "Nick",
+                              "last": "Smith Jr.",
+                              "ascii_first": "Nick",
+                              "ascii_last": "Smith Jr."
+                            }
+                          },
+                          {
+                            "editorial_team_abbr": "CHA"
+                          },
+                          {
+                            "display_position": "PG,SG"
+                          },
+                          {
+                            "position_type": "P"
+                          }
+                        ],
+                        {
+                          "transaction_data": [
+                            {
+                              "type": "add",
+                              "source_type": "freeagents",
+                              "destination_type": "team",
+                              "destination_team_key": "454.l.53472.t.11",
+                              "destination_team_name": "ADventurer(人民医院版)"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    "1": {
+                      "player": [
+                        [
+                          {
+                            "player_key": "454.p.5858"
+                          },
+                          {
+                            "player_id": "5858"
+                          },
+                          {
+                            "name": {
+                              "full": "Dillon Brooks",
+                              "first": "Dillon",
+                              "last": "Brooks",
+                              "ascii_first": "Dillon",
+                              "ascii_last": "Brooks"
+                            }
+                          },
+                          {
+                            "editorial_team_abbr": "HOU"
+                          },
+                          {
+                            "display_position": "SG,SF,PF"
+                          },
+                          {
+                            "position_type": "P"
+                          }
+                        ],
+                        {
+                          "transaction_data": {
+                            "type": "drop",
+                            "source_type": "team",
+                            "source_team_key": "454.l.53472.t.11",
+                            "source_team_name": "ADventurer(人民医院版)",
+                            "destination_type": "waivers"
+                          }
+                        }
+                      ]
+                    },
+                    "count": 2
+                  }
+                }
+              ]
+            },
+            "32": {
+              "transaction": [
+                {
+                  "transaction_key": "454.l.53472.tr.649",
+                  "transaction_id": "649",
+                  "type": "add/drop",
+                  "status": "successful",
+                  "timestamp": "1743189259"
+                },
+                {
+                  "players": {
+                    "0": {
+                      "player": [
+                        [
+                          {
+                            "player_key": "454.p.10333"
+                          },
+                          {
+                            "player_id": "10333"
+                          },
+                          {
+                            "name": {
+                              "full": "Jamal Shead",
+                              "first": "Jamal",
+                              "last": "Shead",
+                              "ascii_first": "Jamal",
+                              "ascii_last": "Shead"
+                            }
+                          },
+                          {
+                            "editorial_team_abbr": "TOR"
+                          },
+                          {
+                            "display_position": "PG"
+                          },
+                          {
+                            "position_type": "P"
+                          }
+                        ],
+                        {
+                          "transaction_data": [
+                            {
+                              "type": "add",
+                              "source_type": "freeagents",
+                              "destination_type": "team",
+                              "destination_team_key": "454.l.53472.t.1",
+                              "destination_team_name": "明年冠军"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    "1": {
+                      "player": [
+                        [
+                          {
+                            "player_key": "454.p.4886"
+                          },
+                          {
+                            "player_id": "4886"
+                          },
+                          {
+                            "name": {
+                              "full": "Jonas Valančiūnas",
+                              "first": "Jonas",
+                              "last": "Valančiūnas",
+                              "ascii_first": "Jonas",
+                              "ascii_last": "Valančiūnas"
+                            }
+                          },
+                          {
+                            "editorial_team_abbr": "SAC"
+                          },
+                          {
+                            "display_position": "C"
+                          },
+                          {
+                            "position_type": "P"
+                          }
+                        ],
+                        {
+                          "transaction_data": {
+                            "type": "drop",
+                            "source_type": "team",
+                            "source_team_key": "454.l.53472.t.1",
+                            "source_team_name": "明年冠军",
+                            "destination_type": "waivers"
+                          }
+                        }
+                      ]
+                    },
+                    "count": 2
+                  }
+                }
+              ]
+            },
+            "33": {
+              "transaction": [
+                {
+                  "transaction_key": "454.l.53472.tr.648",
+                  "transaction_id": "648",
+                  "type": "add/drop",
+                  "status": "successful",
+                  "timestamp": "1743189060"
+                },
+                {
+                  "players": {
+                    "0": {
+                      "player": [
+                        [
+                          {
+                            "player_key": "454.p.10330"
+                          },
+                          {
+                            "player_id": "10330"
+                          },
+                          {
+                            "name": {
+                              "full": "Jonathan Mogbo",
+                              "first": "Jonathan",
+                              "last": "Mogbo",
+                              "ascii_first": "Jonathan",
+                              "ascii_last": "Mogbo"
+                            }
+                          },
+                          {
+                            "editorial_team_abbr": "TOR"
+                          },
+                          {
+                            "display_position": "PF,C"
+                          },
+                          {
+                            "position_type": "P"
+                          }
+                        ],
+                        {
+                          "transaction_data": [
+                            {
+                              "type": "add",
+                              "source_type": "freeagents",
+                              "destination_type": "team",
+                              "destination_team_key": "454.l.53472.t.12",
+                              "destination_team_name": "54 De Baddies"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    "1": {
+                      "player": [
+                        [
+                          {
+                            "player_key": "454.p.6724"
+                          },
+                          {
+                            "player_id": "6724"
+                          },
+                          {
+                            "name": {
+                              "full": "Jaylin Williams",
+                              "first": "Jaylin",
+                              "last": "Williams",
+                              "ascii_first": "Jaylin",
+                              "ascii_last": "Williams"
+                            }
+                          },
+                          {
+                            "editorial_team_abbr": "OKC"
+                          },
+                          {
+                            "display_position": "PF,C"
+                          },
+                          {
+                            "position_type": "P"
+                          }
+                        ],
+                        {
+                          "transaction_data": {
+                            "type": "drop",
+                            "source_type": "team",
+                            "source_team_key": "454.l.53472.t.12",
+                            "source_team_name": "54 De Baddies",
+                            "destination_type": "waivers"
+                          }
+                        }
+                      ]
+                    },
+                    "count": 2
+                  }
+                }
+              ]
+            },
+            "34": {
+              "transaction": [
+                {
+                  "transaction_key": "454.l.53472.tr.647",
+                  "transaction_id": "647",
+                  "type": "add",
+                  "status": "successful",
+                  "timestamp": "1743181085"
+                },
+                {
+                  "players": {
+                    "0": {
+                      "player": [
+                        [
+                          {
+                            "player_key": "454.p.10114"
+                          },
+                          {
+                            "player_id": "10114"
+                          },
+                          {
+                            "name": {
+                              "full": "Marcus Sasser",
+                              "first": "Marcus",
+                              "last": "Sasser",
+                              "ascii_first": "Marcus",
+                              "ascii_last": "Sasser"
+                            }
+                          },
+                          {
+                            "editorial_team_abbr": "DET"
+                          },
+                          {
+                            "display_position": "PG"
+                          },
+                          {
+                            "position_type": "P"
+                          }
+                        ],
+                        {
+                          "transaction_data": [
+                            {
+                              "type": "add",
+                              "source_type": "freeagents",
+                              "destination_type": "team",
+                              "destination_team_key": "454.l.53472.t.12",
+                              "destination_team_name": "54 De Baddies"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    "count": 1
+                  }
+                }
+              ]
+            },
+            "35": {
+              "transaction": [
+                {
+                  "transaction_key": "454.l.53472.tr.646",
+                  "transaction_id": "646",
+                  "type": "add/drop",
+                  "status": "successful",
+                  "timestamp": "1743170059"
+                },
+                {
+                  "players": {
+                    "0": {
+                      "player": [
+                        [
+                          {
+                            "player_key": "454.p.5484"
+                          },
+                          {
+                            "player_id": "5484"
+                          },
+                          {
+                            "name": {
+                              "full": "Tyus Jones",
+                              "first": "Tyus",
+                              "last": "Jones",
+                              "ascii_first": "Tyus",
+                              "ascii_last": "Jones"
+                            }
+                          },
+                          {
+                            "editorial_team_abbr": "PHX"
+                          },
+                          {
+                            "display_position": "PG"
+                          },
+                          {
+                            "position_type": "P"
+                          }
+                        ],
+                        {
+                          "transaction_data": [
+                            {
+                              "type": "add",
+                              "source_type": "freeagents",
+                              "destination_type": "team",
+                              "destination_team_key": "454.l.53472.t.11",
+                              "destination_team_name": "ADventurer(人民医院版)"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    "1": {
+                      "player": [
+                        [
+                          {
+                            "player_key": "454.p.10107"
+                          },
+                          {
+                            "player_id": "10107"
+                          },
+                          {
+                            "name": {
+                              "full": "Cason Wallace",
+                              "first": "Cason",
+                              "last": "Wallace",
+                              "ascii_first": "Cason",
+                              "ascii_last": "Wallace"
+                            }
+                          },
+                          {
+                            "editorial_team_abbr": "OKC"
+                          },
+                          {
+                            "display_position": "PG,SG"
+                          },
+                          {
+                            "position_type": "P"
+                          }
+                        ],
+                        {
+                          "transaction_data": {
+                            "type": "drop",
+                            "source_type": "team",
+                            "source_team_key": "454.l.53472.t.11",
+                            "source_team_name": "ADventurer(人民医院版)",
+                            "destination_type": "waivers"
+                          }
+                        }
+                      ]
+                    },
+                    "count": 2
+                  }
+                }
+              ]
+            },
+            "36": {
+              "transaction": [
+                {
+                  "transaction_key": "454.l.53472.tr.645",
+                  "transaction_id": "645",
+                  "type": "add",
+                  "status": "successful",
+                  "timestamp": "1743122364"
+                },
+                {
+                  "players": {
+                    "0": {
+                      "player": [
+                        [
+                          {
+                            "player_key": "454.p.6762"
+                          },
+                          {
+                            "player_id": "6762"
+                          },
+                          {
+                            "name": {
+                              "full": "Johnny Juzang",
+                              "first": "Johnny",
+                              "last": "Juzang",
+                              "ascii_first": "Johnny",
+                              "ascii_last": "Juzang"
+                            }
+                          },
+                          {
+                            "editorial_team_abbr": "UTA"
+                          },
+                          {
+                            "display_position": "SG,SF"
+                          },
+                          {
+                            "position_type": "P"
+                          }
+                        ],
+                        {
+                          "transaction_data": [
+                            {
+                              "type": "add",
+                              "source_type": "freeagents",
+                              "destination_type": "team",
+                              "destination_team_key": "454.l.53472.t.13",
+                              "destination_team_name": "湖人状元签"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    "count": 1
+                  }
+                }
+              ]
+            },
+            "37": {
+              "transaction": [
+                {
+                  "transaction_key": "454.l.53472.tr.644",
+                  "transaction_id": "644",
+                  "type": "add/drop",
+                  "status": "successful",
+                  "timestamp": "1743120295"
+                },
+                {
+                  "players": {
+                    "0": {
+                      "player": [
+                        [
+                          {
+                            "player_key": "454.p.10122"
+                          },
+                          {
+                            "player_id": "10122"
+                          },
+                          {
+                            "name": {
+                              "full": "Brice Sensabaugh",
+                              "first": "Brice",
+                              "last": "Sensabaugh",
+                              "ascii_first": "Brice",
+                              "ascii_last": "Sensabaugh"
+                            }
+                          },
+                          {
+                            "editorial_team_abbr": "UTA"
+                          },
+                          {
+                            "display_position": "SF,PF"
+                          },
+                          {
+                            "position_type": "P"
+                          }
+                        ],
+                        {
+                          "transaction_data": [
+                            {
+                              "type": "add",
+                              "source_type": "freeagents",
+                              "destination_type": "team",
+                              "destination_team_key": "454.l.53472.t.13",
+                              "destination_team_name": "湖人状元签"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    "1": {
+                      "player": [
+                        [
+                          {
+                            "player_key": "454.p.5357"
+                          },
+                          {
+                            "player_id": "5357"
+                          },
+                          {
+                            "name": {
+                              "full": "Jordan Clarkson",
+                              "first": "Jordan",
+                              "last": "Clarkson",
+                              "ascii_first": "Jordan",
+                              "ascii_last": "Clarkson"
+                            }
+                          },
+                          {
+                            "editorial_team_abbr": "UTA"
+                          },
+                          {
+                            "display_position": "SG,SF"
+                          },
+                          {
+                            "position_type": "P"
+                          }
+                        ],
+                        {
+                          "transaction_data": {
+                            "type": "drop",
+                            "source_type": "team",
+                            "source_team_key": "454.l.53472.t.13",
+                            "source_team_name": "湖人状元签",
+                            "destination_type": "waivers"
+                          }
+                        }
+                      ]
+                    },
+                    "count": 2
+                  }
+                }
+              ]
+            },
+            "38": {
+              "transaction": [
+                {
+                  "transaction_key": "454.l.53472.tr.643",
+                  "transaction_id": "643",
+                  "type": "drop",
+                  "status": "successful",
+                  "timestamp": "1743105838"
+                },
+                {
+                  "players": {
+                    "0": {
+                      "player": [
+                        [
+                          {
+                            "player_key": "454.p.6434"
+                          },
+                          {
+                            "player_id": "6434"
+                          },
+                          {
+                            "name": {
+                              "full": "Nick Richards",
+                              "first": "Nick",
+                              "last": "Richards",
+                              "ascii_first": "Nick",
+                              "ascii_last": "Richards"
+                            }
+                          },
+                          {
+                            "editorial_team_abbr": "PHX"
+                          },
+                          {
+                            "display_position": "C"
+                          },
+                          {
+                            "position_type": "P"
+                          }
+                        ],
+                        {
+                          "transaction_data": {
+                            "type": "drop",
+                            "source_type": "team",
+                            "source_team_key": "454.l.53472.t.12",
+                            "source_team_name": "54 De Baddies",
+                            "destination_type": "waivers"
+                          }
+                        }
+                      ]
+                    },
+                    "count": 1
+                  }
+                }
+              ]
+            },
+            "39": {
+              "transaction": [
+                {
+                  "transaction_key": "454.l.53472.tr.642",
+                  "transaction_id": "642",
+                  "type": "add/drop",
+                  "status": "successful",
+                  "timestamp": "1743093250"
+                },
+                {
+                  "players": {
+                    "0": {
+                      "player": [
+                        [
+                          {
+                            "player_key": "454.p.5582"
+                          },
+                          {
+                            "player_id": "5582"
+                          },
+                          {
+                            "name": {
+                              "full": "T.J. McConnell",
+                              "first": "T.J.",
+                              "last": "McConnell",
+                              "ascii_first": "T.J.",
+                              "ascii_last": "McConnell"
+                            }
+                          },
+                          {
+                            "editorial_team_abbr": "IND"
+                          },
+                          {
+                            "display_position": "PG"
+                          },
+                          {
+                            "position_type": "P"
+                          }
+                        ],
+                        {
+                          "transaction_data": [
+                            {
+                              "type": "add",
+                              "source_type": "freeagents",
+                              "destination_type": "team",
+                              "destination_team_key": "454.l.53472.t.1",
+                              "destination_team_name": "明年冠军"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    "1": {
+                      "player": [
+                        [
+                          {
+                            "player_key": "454.p.5474"
+                          },
+                          {
+                            "player_id": "5474"
+                          },
+                          {
+                            "name": {
+                              "full": "Cameron Payne",
+                              "first": "Cameron",
+                              "last": "Payne",
+                              "ascii_first": "Cameron",
+                              "ascii_last": "Payne"
+                            }
+                          },
+                          {
+                            "editorial_team_abbr": "NYK"
+                          },
+                          {
+                            "display_position": "PG,SG"
+                          },
+                          {
+                            "position_type": "P"
+                          }
+                        ],
+                        {
+                          "transaction_data": {
+                            "type": "drop",
+                            "source_type": "team",
+                            "source_team_key": "454.l.53472.t.1",
+                            "source_team_name": "明年冠军",
+                            "destination_type": "waivers"
+                          }
+                        }
+                      ]
+                    },
+                    "count": 2
+                  }
+                }
+              ]
+            },
+            "40": {
+              "transaction": [
+                {
+                  "transaction_key": "454.l.53472.tr.641",
+                  "transaction_id": "641",
+                  "type": "drop",
+                  "status": "successful",
+                  "timestamp": "1743000909"
+                },
+                {
+                  "players": {
+                    "0": {
+                      "player": [
+                        [
+                          {
+                            "player_key": "454.p.6429"
+                          },
+                          {
+                            "player_id": "6429"
+                          },
+                          {
+                            "name": {
+                              "full": "Vít Krejčí",
+                              "first": "Vít",
+                              "last": "Krejčí",
+                              "ascii_first": "Vít",
+                              "ascii_last": "Krejčí"
+                            }
+                          },
+                          {
+                            "editorial_team_abbr": "ATL"
+                          },
+                          {
+                            "display_position": "SG,SF"
+                          },
+                          {
+                            "position_type": "P"
+                          }
+                        ],
+                        {
+                          "transaction_data": {
+                            "type": "drop",
+                            "source_type": "team",
+                            "source_team_key": "454.l.53472.t.9",
+                            "source_team_name": "injless team",
+                            "destination_type": "waivers"
+                          }
+                        }
+                      ]
+                    },
+                    "count": 1
+                  }
+                }
+              ]
+            },
+            "41": {
+              "transaction": [
+                {
+                  "transaction_key": "454.l.53472.tr.640",
+                  "transaction_id": "640",
+                  "type": "add/drop",
+                  "status": "successful",
+                  "timestamp": "1742980015"
+                },
+                {
+                  "players": {
+                    "0": {
+                      "player": [
+                        [
+                          {
+                            "player_key": "454.p.6720"
+                          },
+                          {
+                            "player_id": "6720"
+                          },
+                          {
+                            "name": {
+                              "full": "Peyton Watson",
+                              "first": "Peyton",
+                              "last": "Watson",
+                              "ascii_first": "Peyton",
+                              "ascii_last": "Watson"
+                            }
+                          },
+                          {
+                            "editorial_team_abbr": "DEN"
+                          },
+                          {
+                            "display_position": "SF,PF"
+                          },
+                          {
+                            "position_type": "P"
+                          }
+                        ],
+                        {
+                          "transaction_data": [
+                            {
+                              "type": "add",
+                              "source_type": "freeagents",
+                              "destination_type": "team",
+                              "destination_team_key": "454.l.53472.t.11",
+                              "destination_team_name": "ADventurer(人民医院版)"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    "1": {
+                      "player": [
+                        [
+                          {
+                            "player_key": "454.p.6549"
+                          },
+                          {
+                            "player_id": "6549"
+                          },
+                          {
+                            "name": {
+                              "full": "Jonathan Kuminga",
+                              "first": "Jonathan",
+                              "last": "Kuminga",
+                              "ascii_first": "Jonathan",
+                              "ascii_last": "Kuminga"
+                            }
+                          },
+                          {
+                            "editorial_team_abbr": "GSW"
+                          },
+                          {
+                            "display_position": "SF,PF"
+                          },
+                          {
+                            "position_type": "P"
+                          }
+                        ],
+                        {
+                          "transaction_data": {
+                            "type": "drop",
+                            "source_type": "team",
+                            "source_team_key": "454.l.53472.t.11",
+                            "source_team_name": "ADventurer(人民医院版)",
+                            "destination_type": "waivers"
+                          }
+                        }
+                      ]
+                    },
+                    "count": 2
+                  }
+                }
+              ]
+            },
+            "42": {
+              "transaction": [
+                {
+                  "transaction_key": "454.l.53472.tr.639",
+                  "transaction_id": "639",
+                  "type": "add/drop",
+                  "status": "successful",
+                  "timestamp": "1742951210"
+                },
+                {
+                  "players": {
+                    "0": {
+                      "player": [
+                        [
+                          {
+                            "player_key": "454.p.5825"
+                          },
+                          {
+                            "player_id": "5825"
+                          },
+                          {
+                            "name": {
+                              "full": "Luke Kennard",
+                              "first": "Luke",
+                              "last": "Kennard",
+                              "ascii_first": "Luke",
+                              "ascii_last": "Kennard"
+                            }
+                          },
+                          {
+                            "editorial_team_abbr": "MEM"
+                          },
+                          {
+                            "display_position": "PG,SG"
+                          },
+                          {
+                            "position_type": "P"
+                          }
+                        ],
+                        {
+                          "transaction_data": [
+                            {
+                              "type": "add",
+                              "source_type": "freeagents",
+                              "destination_type": "team",
+                              "destination_team_key": "454.l.53472.t.1",
+                              "destination_team_name": "明年冠军"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    "1": {
+                      "player": [
+                        [
+                          {
+                            "player_key": "454.p.10272"
+                          },
+                          {
+                            "player_id": "10272"
+                          },
+                          {
+                            "name": {
+                              "full": "Kyshawn George",
+                              "first": "Kyshawn",
+                              "last": "George",
+                              "ascii_first": "Kyshawn",
+                              "ascii_last": "George"
+                            }
+                          },
+                          {
+                            "editorial_team_abbr": "WAS"
+                          },
+                          {
+                            "display_position": "SG,SF"
+                          },
+                          {
+                            "position_type": "P"
+                          }
+                        ],
+                        {
+                          "transaction_data": {
+                            "type": "drop",
+                            "source_type": "team",
+                            "source_team_key": "454.l.53472.t.1",
+                            "source_team_name": "明年冠军",
+                            "destination_type": "waivers"
+                          }
+                        }
+                      ]
+                    },
+                    "count": 2
+                  }
+                }
+              ]
+            },
+            "43": {
+              "transaction": [
+                {
+                  "transaction_key": "454.l.53472.tr.638",
+                  "transaction_id": "638",
+                  "type": "add",
+                  "status": "successful",
+                  "timestamp": "1742950652"
+                },
+                {
+                  "players": {
+                    "0": {
+                      "player": [
+                        [
+                          {
+                            "player_key": "454.p.6254"
+                          },
+                          {
+                            "player_id": "6254"
+                          },
+                          {
+                            "name": {
+                              "full": "Luguentz Dort",
+                              "first": "Luguentz",
+                              "last": "Dort",
+                              "ascii_first": "Luguentz",
+                              "ascii_last": "Dort"
+                            }
+                          },
+                          {
+                            "editorial_team_abbr": "OKC"
+                          },
+                          {
+                            "display_position": "SG,SF"
+                          },
+                          {
+                            "position_type": "P"
+                          }
+                        ],
+                        {
+                          "transaction_data": [
+                            {
+                              "type": "add",
+                              "source_type": "freeagents",
+                              "destination_type": "team",
+                              "destination_team_key": "454.l.53472.t.12",
+                              "destination_team_name": "54 De Baddies"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    "count": 1
+                  }
+                }
+              ]
+            },
+            "44": {
+              "transaction": [
+                {
+                  "transaction_key": "454.l.53472.tr.637",
+                  "transaction_id": "637",
+                  "type": "add/drop",
+                  "status": "successful",
+                  "timestamp": "1742886222"
+                },
+                {
+                  "players": {
+                    "0": {
+                      "player": [
+                        [
+                          {
+                            "player_key": "454.p.5474"
+                          },
+                          {
+                            "player_id": "5474"
+                          },
+                          {
+                            "name": {
+                              "full": "Cameron Payne",
+                              "first": "Cameron",
+                              "last": "Payne",
+                              "ascii_first": "Cameron",
+                              "ascii_last": "Payne"
+                            }
+                          },
+                          {
+                            "editorial_team_abbr": "NYK"
+                          },
+                          {
+                            "display_position": "PG,SG"
+                          },
+                          {
+                            "position_type": "P"
+                          }
+                        ],
+                        {
+                          "transaction_data": [
+                            {
+                              "type": "add",
+                              "source_type": "freeagents",
+                              "destination_type": "team",
+                              "destination_team_key": "454.l.53472.t.1",
+                              "destination_team_name": "明年冠军"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    "1": {
+                      "player": [
+                        [
+                          {
+                            "player_key": "454.p.6578"
+                          },
+                          {
+                            "player_id": "6578"
+                          },
+                          {
+                            "name": {
+                              "full": "Miles McBride",
+                              "first": "Miles",
+                              "last": "McBride",
+                              "ascii_first": "Miles",
+                              "ascii_last": "McBride"
+                            }
+                          },
+                          {
+                            "editorial_team_abbr": "NYK"
+                          },
+                          {
+                            "display_position": "PG,SG"
+                          },
+                          {
+                            "position_type": "P"
+                          }
+                        ],
+                        {
+                          "transaction_data": {
+                            "type": "drop",
+                            "source_type": "team",
+                            "source_team_key": "454.l.53472.t.1",
+                            "source_team_name": "明年冠军",
+                            "destination_type": "waivers"
+                          }
+                        }
+                      ]
+                    },
+                    "count": 2
+                  }
+                }
+              ]
+            },
+            "45": {
+              "transaction": [
+                {
+                  "transaction_key": "454.l.53472.tr.636",
+                  "transaction_id": "636",
+                  "type": "drop",
+                  "status": "successful",
+                  "timestamp": "1742858122"
+                },
+                {
+                  "players": {
+                    "0": {
+                      "player": [
+                        [
+                          {
+                            "player_key": "454.p.6571"
+                          },
+                          {
+                            "player_id": "6571"
+                          },
+                          {
+                            "name": {
+                              "full": "Day'Ron Sharpe",
+                              "first": "Day'Ron",
+                              "last": "Sharpe",
+                              "ascii_first": "Day'Ron",
+                              "ascii_last": "Sharpe"
+                            }
+                          },
+                          {
+                            "editorial_team_abbr": "BKN"
+                          },
+                          {
+                            "display_position": "C"
+                          },
+                          {
+                            "position_type": "P"
+                          }
+                        ],
+                        {
+                          "transaction_data": {
+                            "type": "drop",
+                            "source_type": "team",
+                            "source_team_key": "454.l.53472.t.13",
+                            "source_team_name": "湖人状元签",
+                            "destination_type": "waivers"
+                          }
+                        }
+                      ]
+                    },
+                    "count": 1
+                  }
+                }
+              ]
+            },
+            "46": {
+              "transaction": [
+                {
+                  "transaction_key": "454.l.53472.tr.635",
+                  "transaction_id": "635",
+                  "type": "add",
+                  "status": "successful",
+                  "timestamp": "1742811116"
+                },
+                {
+                  "players": {
+                    "0": {
+                      "player": [
+                        [
+                          {
+                            "player_key": "454.p.6604"
+                          },
+                          {
+                            "player_id": "6604"
+                          },
+                          {
+                            "name": {
+                              "full": "Trendon Watford",
+                              "first": "Trendon",
+                              "last": "Watford",
+                              "ascii_first": "Trendon",
+                              "ascii_last": "Watford"
+                            }
+                          },
+                          {
+                            "editorial_team_abbr": "BKN"
+                          },
+                          {
+                            "display_position": "PF,C"
+                          },
+                          {
+                            "position_type": "P"
+                          }
+                        ],
+                        {
+                          "transaction_data": [
+                            {
+                              "type": "add",
+                              "source_type": "freeagents",
+                              "destination_type": "team",
+                              "destination_team_key": "454.l.53472.t.8",
+                              "destination_team_name": "HaliNot4Sell"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    "count": 1
+                  }
+                }
+              ]
+            },
+            "47": {
+              "transaction": [
+                {
+                  "transaction_key": "454.l.53472.tr.634",
+                  "transaction_id": "634",
+                  "type": "drop",
+                  "status": "successful",
+                  "timestamp": "1742811086"
+                },
+                {
+                  "players": {
+                    "0": {
+                      "player": [
+                        [
+                          {
+                            "player_key": "454.p.10335"
+                          },
+                          {
+                            "player_id": "10335"
+                          },
+                          {
+                            "name": {
+                              "full": "Adem Bona",
+                              "first": "Adem",
+                              "last": "Bona",
+                              "ascii_first": "Adem",
+                              "ascii_last": "Bona"
+                            }
+                          },
+                          {
+                            "editorial_team_abbr": "PHI"
+                          },
+                          {
+                            "display_position": "C"
+                          },
+                          {
+                            "position_type": "P"
+                          }
+                        ],
+                        {
+                          "transaction_data": {
+                            "type": "drop",
+                            "source_type": "team",
+                            "source_team_key": "454.l.53472.t.8",
+                            "source_team_name": "HaliNot4Sell",
+                            "destination_type": "waivers"
+                          }
+                        }
+                      ]
+                    },
+                    "count": 1
+                  }
+                }
+              ]
+            },
+            "48": {
+              "transaction": [
+                {
+                  "transaction_key": "454.l.53472.tr.633",
+                  "transaction_id": "633",
+                  "type": "add",
+                  "status": "successful",
+                  "timestamp": "1742803920",
+                  "faab_bid": "50"
+                },
+                {
+                  "players": {
+                    "0": {
+                      "player": [
+                        [
+                          {
+                            "player_key": "454.p.6218"
+                          },
+                          {
+                            "player_id": "6218"
+                          },
+                          {
+                            "name": {
+                              "full": "Kevin Porter Jr.",
+                              "first": "Kevin",
+                              "last": "Porter Jr.",
+                              "ascii_first": "Kevin",
+                              "ascii_last": "Porter Jr."
+                            }
+                          },
+                          {
+                            "editorial_team_abbr": "MIL"
+                          },
+                          {
+                            "display_position": "PG"
+                          },
+                          {
+                            "position_type": "P"
+                          }
+                        ],
+                        {
+                          "transaction_data": [
+                            {
+                              "type": "add",
+                              "source_type": "waivers",
+                              "destination_type": "team",
+                              "destination_team_key": "454.l.53472.t.9",
+                              "destination_team_name": "injless team"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    "count": 1
+                  }
+                }
+              ]
+            },
+            "49": {
+              "transaction": [
+                {
+                  "transaction_key": "454.l.53472.tr.632",
+                  "transaction_id": "632",
+                  "type": "add",
+                  "status": "successful",
+                  "timestamp": "1742784373"
+                },
+                {
+                  "players": {
+                    "0": {
+                      "player": [
+                        [
+                          {
+                            "player_key": "454.p.6724"
+                          },
+                          {
+                            "player_id": "6724"
+                          },
+                          {
+                            "name": {
+                              "full": "Jaylin Williams",
+                              "first": "Jaylin",
+                              "last": "Williams",
+                              "ascii_first": "Jaylin",
+                              "ascii_last": "Williams"
+                            }
+                          },
+                          {
+                            "editorial_team_abbr": "OKC"
+                          },
+                          {
+                            "display_position": "PF,C"
+                          },
+                          {
+                            "position_type": "P"
+                          }
+                        ],
+                        {
+                          "transaction_data": [
+                            {
+                              "type": "add",
+                              "source_type": "freeagents",
+                              "destination_type": "team",
+                              "destination_team_key": "454.l.53472.t.12",
+                              "destination_team_name": "54 De Baddies"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    "count": 1
+                  }
+                }
+              ]
+            },
+            "count": 50
+          }
+        }
+      ],
+      "time": "81.305027008057ms",
+      "copyright": "Certain Data by Sportradar, Stats Perform and Rotowire",
+      "refresh_rate": "60"
+    }
+  }
+}

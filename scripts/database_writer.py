@@ -17,7 +17,7 @@ from model import (
     create_database_engine, create_tables, recreate_tables, get_session,
     Game, League, LeagueSettings, Team, Manager, Player, StatCategory,
     PlayerEligiblePosition, PlayerSeasonStats, PlayerDailyStats,
-    TeamStats, MatchupStatWinners,
+    TeamStatsWeekly, TeamStatsSeason, LeagueStandings, TeamMatchups,
     RosterDaily, Transaction, TransactionPlayer, DateDimension
 )
 
@@ -53,8 +53,10 @@ class FantasyDatabaseWriter:
             'stat_categories': 0,
             'player_season_stats': 0,      # 新的混合存储表
             'player_daily_stats': 0,       # 新的混合存储表
-            'team_stats': 0,               # 新的混合存储表
-            'matchup_stat_winners': 0,
+            'team_stats_weekly': 0,        # 新的团队周统计表
+            'team_stats_season': 0,        # 新的团队赛季统计表
+            'league_standings': 0,         # 联盟排名表
+            'team_matchups': 0,           # 团队对战表
             'roster_daily': 0,
             'transactions': 0,
             'transaction_players': 0,
@@ -85,8 +87,11 @@ class FantasyDatabaseWriter:
                 print("🔍 检查 PlayerDailyStats 表结构...")
                 result = temp_session.query(PlayerDailyStats).first()
                 
-                print("🔍 检查 TeamStats 表结构...")
-                result = temp_session.query(TeamStats).first()
+                print("🔍 检查 TeamStatsWeekly 表结构...")
+                result = temp_session.query(TeamStatsWeekly).first()
+                
+                print("🔍 检查 TeamStatsSeason 表结构...")
+                result = temp_session.query(TeamStatsSeason).first()
                 
                 # 测试 DateDimension 表的新字段
                 print("🔍 检查 DateDimension 表结构...")
@@ -125,7 +130,8 @@ class FantasyDatabaseWriter:
                 f"团队({self.stats['teams']}) 球员({self.stats['players']}) "
                 f"交易({self.stats['transactions']}) 交易球员({self.stats['transaction_players']}) "
                 f"名单({self.stats['roster_daily']}) 赛季统计({self.stats['player_season_stats']}) "
-                f"日期统计({self.stats['player_daily_stats']}) 团队统计({self.stats['team_stats']})")
+                f"日期统计({self.stats['player_daily_stats']}) 团队周统计({self.stats['team_stats_weekly']}) "
+                f"团队赛季统计({self.stats['team_stats_season']})")
     
     # ===== 便利方法：支持旧接口 =====
     
@@ -299,8 +305,7 @@ class FantasyDatabaseWriter:
                 is_publicly_viewable=bool(int(settings_info.get("is_publicly_viewable", "1"))),
                 can_trade_draft_picks=bool(int(settings_info.get("can_trade_draft_picks", "0"))),
                 sendbird_channel_url=settings_info.get("sendbird_channel_url"),
-                roster_positions=settings_info.get("roster_positions"),
-                stat_categories=settings_info.get("stat_categories")
+                roster_positions=settings_info.get("roster_positions")
             )
             self.session.add(settings)
             self.session.commit()
@@ -409,7 +414,7 @@ class FantasyDatabaseWriter:
     
     def write_player_season_stat_values(self, player_key: str, editorial_player_key: str,
                                        league_key: str, season: str, stats_data: Dict) -> int:
-        """写入球员赛季统计值（混合存储：JSON + 核心统计列）"""
+        """写入球员赛季统计值（JSON存储 + 核心列）"""
         try:
             # 检查是否已存在
             existing = self.session.query(PlayerSeasonStats).filter_by(
@@ -418,7 +423,7 @@ class FantasyDatabaseWriter:
             ).first()
             
             # 提取核心统计项
-            core_stats = self._extract_core_season_stats(stats_data)
+            core_stats = self._extract_core_player_season_stats(stats_data)
             
             if existing:
                 # 更新现有记录
@@ -437,7 +442,7 @@ class FantasyDatabaseWriter:
                 self.stats['player_season_stats_updated'] = self.stats.get('player_season_stats_updated', 0) + 1
             else:
                 # 创建新记录
-                season_stats = PlayerSeasonStats(
+                player_stats = PlayerSeasonStats(
                     player_key=player_key,
                     editorial_player_key=editorial_player_key,
                     league_key=league_key,
@@ -454,57 +459,38 @@ class FantasyDatabaseWriter:
                     free_throw_percentage=core_stats.get('free_throw_percentage'),
                     three_point_percentage=core_stats.get('three_point_percentage')
                 )
-                self.session.add(season_stats)
+                self.session.add(player_stats)
                 self.stats['player_season_stats'] = self.stats.get('player_season_stats', 0) + 1
             
             self.session.commit()
             return 1
             
         except Exception as e:
-            print(f"写入球员赛季统计失败: {e}")
             self.session.rollback()
             return 0
     
-    def _extract_core_season_stats(self, stats_data: Dict) -> Dict:
-        """从统计数据中提取核心赛季统计项"""
+    def _extract_core_player_season_stats(self, stats_data: Dict) -> Dict:
+        """从球员赛季统计数据中提取核心统计项"""
         core_stats = {}
         
         try:
-            # NBA统计项映射 (Yahoo stat_id -> 核心统计)
-            total_points = self._safe_float(stats_data.get('9999'))  # Fantasy Points总分
-            core_stats['total_points'] = total_points
+            # 球员核心赛季统计项（根据NBA stat_id映射）
+            core_stats['total_points'] = self._safe_float(stats_data.get('9999'))  # Fantasy Points
+            core_stats['games_played'] = self._safe_int(stats_data.get('50'))  # Games Played
+            core_stats['total_assists'] = self._safe_int(stats_data.get('5'))  # Assists
+            core_stats['total_rebounds'] = self._safe_int(stats_data.get('8'))  # Rebounds
+            core_stats['total_steals'] = self._safe_int(stats_data.get('6'))  # Steals
+            core_stats['total_blocks'] = self._safe_int(stats_data.get('7'))  # Blocks
+            core_stats['field_goal_percentage'] = self._safe_float(stats_data.get('10'))  # FG%
+            core_stats['free_throw_percentage'] = self._safe_float(stats_data.get('11'))  # FT%
+            core_stats['three_point_percentage'] = self._safe_float(stats_data.get('12'))  # 3P%
             
-            # 计算场次和平均分
-            games_played = self._safe_int(stats_data.get('0'))  # 假设0是出场次数
-            core_stats['games_played'] = games_played
-            
-            if total_points and games_played and games_played > 0:
-                core_stats['avg_points'] = round(total_points / games_played, 2)
-            
-            # 其他核心统计
-            core_stats['total_assists'] = self._safe_int(stats_data.get('5'))  # 助攻
-            core_stats['total_rebounds'] = self._safe_int(stats_data.get('8'))  # 篮板
-            core_stats['total_steals'] = self._safe_int(stats_data.get('6'))  # 抢断
-            core_stats['total_blocks'] = self._safe_int(stats_data.get('7'))  # 盖帽
-            
-            # 百分比统计
-            fg_made = self._safe_int(stats_data.get('0'))  # 投篮命中
-            fg_attempted = self._safe_int(stats_data.get('1'))  # 投篮尝试
-            if fg_made and fg_attempted and fg_attempted > 0:
-                core_stats['field_goal_percentage'] = round((fg_made / fg_attempted) * 100, 1)
-            
-            ft_made = self._safe_int(stats_data.get('2'))  # 罚球命中
-            ft_attempted = self._safe_int(stats_data.get('3'))  # 罚球尝试
-            if ft_made and ft_attempted and ft_attempted > 0:
-                core_stats['free_throw_percentage'] = round((ft_made / ft_attempted) * 100, 1)
-            
-            three_made = self._safe_int(stats_data.get('4'))  # 三分命中
-            three_attempted = self._safe_int(stats_data.get('12'))  # 假设12是三分尝试
-            if three_made and three_attempted and three_attempted > 0:
-                core_stats['three_point_percentage'] = round((three_made / three_attempted) * 100, 1)
+            # 计算平均分
+            if core_stats['total_points'] and core_stats['games_played'] and core_stats['games_played'] > 0:
+                core_stats['avg_points'] = round(core_stats['total_points'] / core_stats['games_played'], 2)
             
         except Exception as e:
-            print(f"提取核心赛季统计失败: {e}")
+            pass
         
         return core_stats
     
@@ -600,153 +586,186 @@ class FantasyDatabaseWriter:
                              week: Optional[int] = None, date_obj: Optional[date] = None,
                              opponent_team_key: Optional[str] = None,
                              is_playoff: bool = False, win: Optional[bool] = None,
-                             stats_winners: Optional[Dict] = None) -> int:
-        """写入团队统计值（混合存储：JSON + 核心统计列）"""
+                             categories_won: int = 0) -> int:
+        """写入团队周统计值（只处理week数据）"""
         try:
+            # 只处理周数据
+            if coverage_type != "week" or week is None:
+                return 0
+            
             # 检查是否已存在
-            existing = self.session.query(TeamStats).filter_by(
+            existing = self.session.query(TeamStatsWeekly).filter_by(
                 team_key=team_key,
-                coverage_type=coverage_type,
                 season=season,
-                week=week,
-                date=date_obj
+                week=week
             ).first()
             
             # 提取核心统计项
-            core_stats = self._extract_core_team_stats(stats_data)
+            core_stats = self._extract_core_team_weekly_stats(categories_won, win)
             
             if existing:
                 # 更新现有记录
                 existing.stats_data = stats_data
-                existing.stats_winners = stats_winners
-                existing.total_points = core_stats.get('total_points')
-                existing.wins = core_stats.get('wins')
-                existing.losses = core_stats.get('losses')
-                existing.ties = core_stats.get('ties')
-                existing.win_percentage = core_stats.get('win_percentage')
+                existing.categories_won = core_stats.get('categories_won', 0)
                 existing.opponent_team_key = opponent_team_key
                 existing.is_playoff = is_playoff
                 existing.win = win
                 existing.updated_at = datetime.utcnow()
-                self.stats['team_stats_updated'] = self.stats.get('team_stats_updated', 0) + 1
+                self.stats['team_stats_weekly_updated'] = self.stats.get('team_stats_weekly_updated', 0) + 1
             else:
                 # 创建新记录
-                team_stats = TeamStats(
+                team_stats = TeamStatsWeekly(
                     team_key=team_key,
                     league_key=league_key,
                     season=season,
-                    coverage_type=coverage_type,
                     week=week,
-                    date=date_obj,
                     stats_data=stats_data,
-                    stats_winners=stats_winners,
-                    total_points=core_stats.get('total_points'),
-                    wins=core_stats.get('wins'),
-                    losses=core_stats.get('losses'),
-                    ties=core_stats.get('ties'),
-                    win_percentage=core_stats.get('win_percentage'),
+                    categories_won=core_stats.get('categories_won', 0),
                     opponent_team_key=opponent_team_key,
                     is_playoff=is_playoff,
                     win=win
                 )
                 self.session.add(team_stats)
-                self.stats['team_stats'] = self.stats.get('team_stats', 0) + 1
+                self.stats['team_stats_weekly'] = self.stats.get('team_stats_weekly', 0) + 1
             
             self.session.commit()
             return 1
             
         except Exception as e:
-            print(f"写入团队统计失败: {e}")
             self.session.rollback()
             return 0
     
-    def _extract_core_team_stats(self, stats_data: Dict) -> Dict:
-        """从统计数据中提取核心团队统计项"""
+    def _extract_core_team_weekly_stats(self, categories_won: int, win: Optional[bool] = None) -> Dict:
+        """从matchup数据中提取核心统计项"""
         core_stats = {}
         
         try:
-            # 团队核心统计项
-            core_stats['total_points'] = self._safe_float(stats_data.get('9999'))  # Fantasy Points
-            core_stats['wins'] = self._safe_int(stats_data.get('60', '0'))  # 获胜数
-            core_stats['losses'] = self._safe_int(stats_data.get('61', '0'))  # 失败数  
-            core_stats['ties'] = self._safe_int(stats_data.get('62', '0'))  # 平局数
-            
-            # 计算胜率
-            wins = core_stats['wins'] or 0
-            losses = core_stats['losses'] or 0
-            ties = core_stats['ties'] or 0
-            total_games = wins + losses + ties
-            
-            if total_games > 0:
-                core_stats['win_percentage'] = round((wins + ties * 0.5) / total_games * 100, 1)
+            # 设置获胜类别数量（0-9分，取决于实际的matchup结果和是否有tie）
+            core_stats['categories_won'] = categories_won
             
         except Exception as e:
-            print(f"提取核心团队统计失败: {e}")
+            pass  # 移除print输出
         
         return core_stats
     
-    def write_matchup_stat_winners(self, league_key: str, season: str, week: int, 
-                                 stat_winners: List) -> int:
-        """写入比赛统计类别获胜者（移除冗余字段）"""
+    def write_league_standings(self, league_key: str, team_key: str, season: str,
+                             rank: Optional[int] = None, playoff_seed: Optional[str] = None,
+                             wins: int = 0, losses: int = 0, ties: int = 0,
+                             win_percentage: float = 0.0, games_back: str = "-",
+                             divisional_wins: int = 0, divisional_losses: int = 0,
+                             divisional_ties: int = 0, season_stats_data: Optional[Dict] = None) -> bool:
+        """写入联盟排名数据"""
         try:
-            count = 0
+            # 检查是否已存在
+            existing = self.session.query(LeagueStandings).filter_by(
+                league_key=league_key,
+                team_key=team_key,
+                season=season
+            ).first()
             
-            for stat_winner_item in stat_winners:
-                if not isinstance(stat_winner_item, dict) or "stat_winner" not in stat_winner_item:
-                    continue
-                
-                stat_winner = stat_winner_item["stat_winner"]
-                if not isinstance(stat_winner, dict):
-                    continue
-                
-                stat_id = stat_winner.get("stat_id")
-                winner_team_key = stat_winner.get("winner_team_key")
-                is_tied = bool(stat_winner.get("is_tied", 0))
-                
-                if not stat_id or not winner_team_key:
-                    continue
-                
-                try:
-                    # 检查是否已存在
-                    existing = self.session.query(MatchupStatWinners).filter_by(
-                        league_key=league_key,
-                        week=week,
-                        stat_id=int(stat_id)
-                    ).first()
-                    
-                    if existing:
-                        # 更新现有记录
-                        existing.winner_team_key = winner_team_key
-                        existing.is_tied = is_tied
-                        existing.updated_at = datetime.utcnow()
-                        self.stats['matchup_stat_winners_updated'] = self.stats.get('matchup_stat_winners_updated', 0) + 1
-                    else:
-                        # 创建新记录
-                        winner_record = MatchupStatWinners(
-                            league_key=league_key,
-                            season=season,
-                            week=week,
-                            stat_id=int(stat_id),
-                            winner_team_key=winner_team_key,
-                            is_tied=is_tied
-                        )
-                        self.session.add(winner_record)
-                        count += 1
-                        
-                except Exception as e:
-                    print(f"处理获胜者统计 {stat_id} 失败: {e}")
-                    continue
+            if existing:
+                # 更新现有记录
+                existing.rank = rank
+                existing.playoff_seed = playoff_seed
+                existing.wins = wins
+                existing.losses = losses
+                existing.ties = ties
+                existing.win_percentage = win_percentage
+                existing.games_back = games_back
+                existing.divisional_wins = divisional_wins
+                existing.divisional_losses = divisional_losses
+                existing.divisional_ties = divisional_ties
+                existing.season_stats_data = season_stats_data
+                existing.updated_at = datetime.utcnow()
+            else:
+                # 创建新记录
+                standings = LeagueStandings(
+                    league_key=league_key,
+                    team_key=team_key,
+                    season=season,
+                    rank=rank,
+                    playoff_seed=playoff_seed,
+                    wins=wins,
+                    losses=losses,
+                    ties=ties,
+                    win_percentage=win_percentage,
+                    games_back=games_back,
+                    divisional_wins=divisional_wins,
+                    divisional_losses=divisional_losses,
+                    divisional_ties=divisional_ties,
+                    season_stats_data=season_stats_data
+                )
+                self.session.add(standings)
+                self.stats['league_standings'] += 1
             
-            if count > 0:
-                self.session.commit()
-                self.stats['matchup_stat_winners'] = self.stats.get('matchup_stat_winners', 0) + count
-            
-            return count
+            self.session.commit()
+            return True
             
         except Exception as e:
-            print(f"写入比赛统计获胜者失败: {e}")
+            print(f"写入联盟排名失败 {team_key}: {e}")
             self.session.rollback()
-            return 0
+            return False
+    
+    def write_team_matchup(self, league_key: str, team_key: str, season: str, week: int,
+                          week_start: Optional[str] = None, week_end: Optional[str] = None,
+                          status: Optional[str] = None, opponent_team_key: Optional[str] = None,
+                          is_winner: Optional[bool] = None, is_tied: bool = False,
+                          team_points: int = 0, is_playoffs: bool = False,
+                          is_consolation: bool = False, is_matchup_of_week: bool = False,
+                          matchup_data: Optional[Dict] = None) -> bool:
+        """写入团队对战数据"""
+        try:
+            # 检查是否已存在
+            existing = self.session.query(TeamMatchups).filter_by(
+                team_key=team_key,
+                season=season,
+                week=week
+            ).first()
+            
+            if existing:
+                # 更新现有记录
+                existing.league_key = league_key
+                existing.week_start = week_start
+                existing.week_end = week_end
+                existing.status = status
+                existing.opponent_team_key = opponent_team_key
+                existing.is_winner = is_winner
+                existing.is_tied = is_tied
+                existing.team_points = team_points
+                existing.is_playoffs = is_playoffs
+                existing.is_consolation = is_consolation
+                existing.is_matchup_of_week = is_matchup_of_week
+                existing.matchup_data = matchup_data
+                existing.updated_at = datetime.utcnow()
+            else:
+                # 创建新记录
+                matchup = TeamMatchups(
+                    league_key=league_key,
+                    team_key=team_key,
+                    season=season,
+                    week=week,
+                    week_start=week_start,
+                    week_end=week_end,
+                    status=status,
+                    opponent_team_key=opponent_team_key,
+                    is_winner=is_winner,
+                    is_tied=is_tied,
+                    team_points=team_points,
+                    is_playoffs=is_playoffs,
+                    is_consolation=is_consolation,
+                    is_matchup_of_week=is_matchup_of_week,
+                    matchup_data=matchup_data
+                )
+                self.session.add(matchup)
+                self.stats['team_matchups'] += 1
+            
+            self.session.commit()
+            return True
+            
+        except Exception as e:
+            print(f"写入团队对战失败 {team_key}/{week}: {e}")
+            self.session.rollback()
+            return False
     
     def write_player_eligible_positions(self, player_key: str, positions: List) -> int:
         """写入球员合适位置"""
@@ -891,8 +910,11 @@ class FantasyDatabaseWriter:
                 - season: 赛季
         """
         count = 0
+        new_count = 0
         
-        for date_data in dates_data:
+        print(f"开始批量写入 {len(dates_data)} 个日期维度记录...")
+        
+        for i, date_data in enumerate(dates_data):
             try:
                 date_obj = date_data['date']
                 league_key = date_data['league_key']
@@ -904,6 +926,8 @@ class FantasyDatabaseWriter:
                 ).first()
                 
                 if existing:
+                    if i < 5:  # 只显示前几个重复记录
+                        print(f"  日期 {date_obj} 已存在，跳过")
                     continue
                 
                 date_dim = DateDimension(
@@ -913,11 +937,12 @@ class FantasyDatabaseWriter:
                 )
                 
                 self.session.add(date_dim)
-                count += 1
+                new_count += 1
                 
                 # 批量提交
-                if count % self.batch_size == 0:
+                if new_count % self.batch_size == 0:
                     self.session.commit()
+                    print(f"  已提交 {new_count} 个新日期记录")
                     
             except Exception as e:
                 print(f"写入日期维度失败 {date_data.get('date', 'unknown')}: {e}")
@@ -926,14 +951,17 @@ class FantasyDatabaseWriter:
         
         # 最终提交
         try:
-            if count > 0:
+            if new_count > 0:
                 self.session.commit()
-                self.stats['date_dimension'] += count
+                self.stats['date_dimension'] += new_count
+                print(f"✓ 成功写入 {new_count} 个新日期维度记录（跳过 {len(dates_data) - new_count} 个已存在记录）")
+            else:
+                print(f"✓ 所有 {len(dates_data)} 个日期记录都已存在，无需写入")
         except Exception as e:
             print(f"批量提交日期维度失败: {e}")
             self.session.rollback()
         
-        return count
+        return new_count
     
     # ===== 批量写入方法 =====
     
@@ -1345,8 +1373,10 @@ class FantasyDatabaseWriter:
             'player_eligible_positions': PlayerEligiblePosition,
             'player_season_stats': PlayerSeasonStats,        # 更新为新的混合存储表
             'player_daily_stats': PlayerDailyStats,          # 更新为新的混合存储表
-            'team_stats': TeamStats,                         # 更新为新的混合存储表
-            'matchup_stat_winners': MatchupStatWinners,
+            'team_stats_weekly': TeamStatsWeekly,            # 更新为新的团队周统计表
+            'team_stats_season': TeamStatsSeason,             # 新的团队赛季统计表
+            'league_standings': LeagueStandings,
+            'team_matchups': TeamMatchups,
             'roster_daily': RosterDaily,
             'transactions': Transaction,
             'transaction_players': TransactionPlayer,
@@ -1362,24 +1392,6 @@ class FantasyDatabaseWriter:
                 summary[table_name] = -1  # 表示查询失败
         
         return summary
-    
-    # ===== 便捷方法（为向后兼容而保留的方法名） =====
-    
-    def write_player_season_stats(self, player_key: str, editorial_player_key: str,
-                                 league_key: str, stats_data: Dict, season: str) -> bool:
-        """写入球员赛季统计（便捷方法，调用混合存储方法）"""
-        result = self.write_player_season_stat_values(player_key, editorial_player_key, 
-                                                    league_key, season, stats_data)
-        return result > 0
-    
-    def write_player_daily_stats(self, player_key: str, editorial_player_key: str,
-                                league_key: str, stats_data: Dict, season: str,
-                                stats_date: date, week: Optional[int] = None) -> bool:
-        """写入球员日期统计（便捷方法，调用混合存储方法）"""
-        result = self.write_player_daily_stat_values(player_key, editorial_player_key,
-                                                   league_key, season, stats_date, 
-                                                   stats_data, week)
-        return result > 0
     
     # ===== 工具方法 =====
     
@@ -1423,4 +1435,76 @@ class FantasyDatabaseWriter:
             
         except Exception as e:
             print(f"重新创建数据库表失败: {e}")
-            return False 
+            return False
+    
+    def write_team_season_stats(self, team_key: str, league_key: str, season: str,
+                               stats_data: Dict) -> int:
+        """写入团队赛季统计值"""
+        try:
+            # 检查是否已存在
+            existing = self.session.query(TeamStatsSeason).filter_by(
+                team_key=team_key,
+                season=season
+            ).first()
+            
+            # 提取核心赛季统计项
+            core_stats = self._extract_core_season_stats(stats_data)
+            
+            if existing:
+                # 更新现有记录
+                existing.stats_data = stats_data
+                existing.total_points = core_stats.get('total_points')
+                existing.wins = core_stats.get('wins', 0)
+                existing.losses = core_stats.get('losses', 0)
+                existing.ties = core_stats.get('ties', 0)
+                existing.win_percentage = core_stats.get('win_percentage')
+                existing.updated_at = datetime.utcnow()
+                self.stats['team_stats_season_updated'] = self.stats.get('team_stats_season_updated', 0) + 1
+            else:
+                # 创建新记录
+                team_stats = TeamStatsSeason(
+                    team_key=team_key,
+                    league_key=league_key,
+                    season=season,
+                    stats_data=stats_data,
+                    total_points=core_stats.get('total_points'),
+                    wins=core_stats.get('wins', 0),
+                    losses=core_stats.get('losses', 0),
+                    ties=core_stats.get('ties', 0),
+                    win_percentage=core_stats.get('win_percentage')
+                )
+                self.session.add(team_stats)
+                self.stats['team_stats_season'] = self.stats.get('team_stats_season', 0) + 1
+            
+            self.session.commit()
+            return 1
+            
+        except Exception as e:
+            print(f"写入团队赛季统计失败: {e}")
+            self.session.rollback()
+            return 0
+    
+    def _extract_core_season_stats(self, stats_data: Dict) -> Dict:
+        """从赛季统计数据中提取核心统计项"""
+        core_stats = {}
+        
+        try:
+            # 团队核心赛季统计项
+            core_stats['total_points'] = self._safe_float(stats_data.get('9999'))  # Fantasy Points
+            core_stats['wins'] = self._safe_int(stats_data.get('60', '0'))  # 获胜数
+            core_stats['losses'] = self._safe_int(stats_data.get('61', '0'))  # 失败数  
+            core_stats['ties'] = self._safe_int(stats_data.get('62', '0'))  # 平局数
+            
+            # 计算胜率
+            wins = core_stats['wins'] or 0
+            losses = core_stats['losses'] or 0
+            ties = core_stats['ties'] or 0
+            total_games = wins + losses + ties
+            
+            if total_games > 0:
+                core_stats['win_percentage'] = round((wins + ties * 0.5) / total_games * 100, 1)
+            
+        except Exception as e:
+            print(f"提取核心赛季统计失败: {e}")
+        
+        return core_stats 

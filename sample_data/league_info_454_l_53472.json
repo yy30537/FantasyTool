@@ -1,0 +1,48 @@
+{
+  "metadata": {
+    "fetched_at": "2025-06-10T14:06:40.073082",
+    "description": "联盟 454.l.53472 基本信息",
+    "filename": "league_info_454_l_53472"
+  },
+  "data": {
+    "fantasy_content": {
+      "xml:lang": "en-US",
+      "yahoo:uri": "/fantasy/v2/league/454.l.53472",
+      "league": [
+        {
+          "league_key": "454.l.53472",
+          "league_id": "53472",
+          "name": "跳蚤市场 International (V4.0)",
+          "url": "https://basketball.fantasysports.yahoo.com/nba/53472",
+          "logo_url": "https://s.yimg.com/ep/cx/blendr/v2/image-basketball-player-emoji-png_1721253814729.png",
+          "draft_status": "postdraft",
+          "num_teams": 14,
+          "edit_key": "2025-04-06",
+          "weekly_deadline": "intraday",
+          "league_update_timestamp": "1744020338",
+          "scoring_type": "head",
+          "league_type": "private",
+          "renew": "428_1559",
+          "renewed": "",
+          "felo_tier": "gold",
+          "iris_group_chat_id": "",
+          "allow_add_to_dl_extra_pos": 1,
+          "is_pro_league": "0",
+          "is_cash_league": "0",
+          "current_week": "22",
+          "start_week": "1",
+          "start_date": "2024-10-22",
+          "end_week": "22",
+          "end_date": "2025-04-06",
+          "is_finished": 1,
+          "is_plus_league": "0",
+          "game_code": "nba",
+          "season": "2024"
+        }
+      ],
+      "time": "38.556098937988ms",
+      "copyright": "Certain Data by Sportradar, Stats Perform and Rotowire",
+      "refresh_rate": "60"
+    }
+  }
+}
