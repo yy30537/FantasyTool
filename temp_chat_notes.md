@@ -58,5 +58,88 @@
   Are you interested in multiple positions at Mploy Associates? Apply for one position and mention the other position(s) in your motivation message. Together we will find the best match for you.
 
 
+# hist
 
 
+请看终端输出，现在运行脚本后的数据库情况。
+
+让我们一步一步来修正现在的问题。
+
+我们已经获得的api数据样本：
+
+(venv) yy@yy-Swift-SFA16-41:~/Documents/GitHub/FantasyTool$ ls sample_data/
+league_info_454_l_53472.json                  
+
+player_season_stats_454_l_53472.json
+
+league_players_454_l_53472.json               
+
+team_matchups_454_l_53472_t_1.json
+
+league_settings_454_l_53472.json              
+
+team_matchups_454_l_53472_t_2.json
+
+league_standings_454_l_53472.json             
+
+team_roster_454_l_53472_t_1.json
+
+league_teams_454_l_53472.json                 
+
+team_roster_454_l_53472_t_2.json
+
+league_transactions_454_l_53472.json          
+
+user_games.json
+
+player_daily_stats_20240601_454_l_53472.json  
+
+user_leagues_364.json
+
+player_daily_stats_20240615_454_l_53472.json  
+
+user_leagues_375.json
+
+player_daily_stats_20240701_454_l_53472.json
+
+可供查询api返回的数据的结构；
+
+---
+
+首先，输出的数据库摘要不全，没有涵盖所有表格。然后，清理main，我们现在只focus在nba的fantasy。
+---
+
+我们现在定义的数据库表 @model.py ：
+
+
+现在运行脚本 @yahoo_api_data.py 后以下表格没有数据：
+
+- date_dimension
+- player_daily_stats
+- player_season_stats
+- roster_daily
+- team_stats_season
+- team_stats_weekly
+
+其余表格的数据正确的加载了。让我们一项一项来。首先，修复获取赛季日程数据的逻辑，我们之前有写的。
+
+
+
+相关脚本：
+- @model.py
+- @yahoo_api_data.py
+- @database_writer.py 
+- @yahoo_api_utils.py 
+
+
+
+这样我们能获得date_dimension，然后才能enable获得：
+
+- 每日阵容 (roster_daily)
+- 球员日统计 (player_daily_stats)
+
+在没有date_dimension我们也应该可以直接获取以下表：
+
+- 球员赛季统计 (player_season_stats)
+- 团队周统计 (team_stats_weekly)
+- 团队赛季统计 (team_stats_season)

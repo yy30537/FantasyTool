@@ -414,7 +414,7 @@ class FantasyDatabaseWriter:
     
     def write_player_season_stat_values(self, player_key: str, editorial_player_key: str,
                                        league_key: str, season: str, stats_data: Dict) -> int:
-        """写入球员赛季统计值（JSON存储 + 核心列）"""
+        """写入球员赛季统计值（只存储核心统计列）"""
         try:
             # 检查是否已存在
             existing = self.session.query(PlayerSeasonStats).filter_by(
@@ -427,17 +427,23 @@ class FantasyDatabaseWriter:
             
             if existing:
                 # 更新现有记录
-                existing.stats_data = stats_data
+                # 更新所有11个统计项
+                existing.field_goals_made = core_stats.get('field_goals_made')
+                existing.field_goals_attempted = core_stats.get('field_goals_attempted')
+                existing.field_goal_percentage = core_stats.get('field_goal_percentage')
+                existing.free_throws_made = core_stats.get('free_throws_made')
+                existing.free_throws_attempted = core_stats.get('free_throws_attempted')
+                existing.free_throw_percentage = core_stats.get('free_throw_percentage')
+                existing.three_pointers_made = core_stats.get('three_pointers_made')
                 existing.total_points = core_stats.get('total_points')
-                existing.games_played = core_stats.get('games_played')
-                existing.avg_points = core_stats.get('avg_points')
-                existing.total_assists = core_stats.get('total_assists')
                 existing.total_rebounds = core_stats.get('total_rebounds')
+                existing.total_assists = core_stats.get('total_assists')
                 existing.total_steals = core_stats.get('total_steals')
                 existing.total_blocks = core_stats.get('total_blocks')
-                existing.field_goal_percentage = core_stats.get('field_goal_percentage')
-                existing.free_throw_percentage = core_stats.get('free_throw_percentage')
-                existing.three_point_percentage = core_stats.get('three_point_percentage')
+                existing.total_turnovers = core_stats.get('total_turnovers')
+                # 派生统计项
+                existing.games_played = core_stats.get('games_played')
+                existing.avg_points = core_stats.get('avg_points')
                 existing.updated_at = datetime.utcnow()
                 self.stats['player_season_stats_updated'] = self.stats.get('player_season_stats_updated', 0) + 1
             else:
@@ -447,17 +453,23 @@ class FantasyDatabaseWriter:
                     editorial_player_key=editorial_player_key,
                     league_key=league_key,
                     season=season,
-                    stats_data=stats_data,
+                    # 所有11个统计项
+                    field_goals_made=core_stats.get('field_goals_made'),
+                    field_goals_attempted=core_stats.get('field_goals_attempted'),
+                    field_goal_percentage=core_stats.get('field_goal_percentage'),
+                    free_throws_made=core_stats.get('free_throws_made'),
+                    free_throws_attempted=core_stats.get('free_throws_attempted'),
+                    free_throw_percentage=core_stats.get('free_throw_percentage'),
+                    three_pointers_made=core_stats.get('three_pointers_made'),
                     total_points=core_stats.get('total_points'),
-                    games_played=core_stats.get('games_played'),
-                    avg_points=core_stats.get('avg_points'),
-                    total_assists=core_stats.get('total_assists'),
                     total_rebounds=core_stats.get('total_rebounds'),
+                    total_assists=core_stats.get('total_assists'),
                     total_steals=core_stats.get('total_steals'),
                     total_blocks=core_stats.get('total_blocks'),
-                    field_goal_percentage=core_stats.get('field_goal_percentage'),
-                    free_throw_percentage=core_stats.get('free_throw_percentage'),
-                    three_point_percentage=core_stats.get('three_point_percentage')
+                    total_turnovers=core_stats.get('total_turnovers'),
+                    # 派生统计项
+                    games_played=core_stats.get('games_played'),
+                    avg_points=core_stats.get('avg_points')
                 )
                 self.session.add(player_stats)
                 self.stats['player_season_stats'] = self.stats.get('player_season_stats', 0) + 1
@@ -470,34 +482,91 @@ class FantasyDatabaseWriter:
             return 0
     
     def _extract_core_player_season_stats(self, stats_data: Dict) -> Dict:
-        """从球员赛季统计数据中提取核心统计项"""
+        """从球员赛季统计数据中提取完整的11个统计项"""
         core_stats = {}
         
         try:
-            # 球员核心赛季统计项（根据NBA stat_id映射）
-            core_stats['total_points'] = self._safe_float(stats_data.get('9999'))  # Fantasy Points
-            core_stats['games_played'] = self._safe_int(stats_data.get('50'))  # Games Played
-            core_stats['total_assists'] = self._safe_int(stats_data.get('5'))  # Assists
-            core_stats['total_rebounds'] = self._safe_int(stats_data.get('8'))  # Rebounds
-            core_stats['total_steals'] = self._safe_int(stats_data.get('6'))  # Steals
-            core_stats['total_blocks'] = self._safe_int(stats_data.get('7'))  # Blocks
-            core_stats['field_goal_percentage'] = self._safe_float(stats_data.get('10'))  # FG%
-            core_stats['free_throw_percentage'] = self._safe_float(stats_data.get('11'))  # FT%
-            core_stats['three_point_percentage'] = self._safe_float(stats_data.get('12'))  # 3P%
+            # 完整的11个统计项（基于Yahoo stat_categories）
+            
+            # 1. stat_id: 9004003 - Field Goals Made / Attempted (FGM/A)
+            field_goals_data = stats_data.get('9004003', '')
+            if isinstance(field_goals_data, str) and '/' in field_goals_data:
+                try:
+                    made, attempted = field_goals_data.split('/')
+                    core_stats['field_goals_made'] = self._safe_int(made.strip())
+                    core_stats['field_goals_attempted'] = self._safe_int(attempted.strip())
+                except:
+                    core_stats['field_goals_made'] = None
+                    core_stats['field_goals_attempted'] = None
+            else:
+                core_stats['field_goals_made'] = None
+                core_stats['field_goals_attempted'] = None
+            
+            # 2. stat_id: 5 - Field Goal Percentage (FG%)
+            fg_pct_str = stats_data.get('5', '')
+            if fg_pct_str and fg_pct_str != '-':
+                core_stats['field_goal_percentage'] = self._parse_percentage(fg_pct_str)
+            else:
+                core_stats['field_goal_percentage'] = None
+            
+            # 3. stat_id: 9007006 - Free Throws Made / Attempted (FTM/A)
+            free_throws_data = stats_data.get('9007006', '')
+            if isinstance(free_throws_data, str) and '/' in free_throws_data:
+                try:
+                    made, attempted = free_throws_data.split('/')
+                    core_stats['free_throws_made'] = self._safe_int(made.strip())
+                    core_stats['free_throws_attempted'] = self._safe_int(attempted.strip())
+                except:
+                    core_stats['free_throws_made'] = None
+                    core_stats['free_throws_attempted'] = None
+            else:
+                core_stats['free_throws_made'] = None
+                core_stats['free_throws_attempted'] = None
+            
+            # 4. stat_id: 8 - Free Throw Percentage (FT%)
+            ft_pct_str = stats_data.get('8', '')
+            if ft_pct_str and ft_pct_str != '-':
+                core_stats['free_throw_percentage'] = self._parse_percentage(ft_pct_str)
+            else:
+                core_stats['free_throw_percentage'] = None
+            
+            # 5. stat_id: 10 - 3-point Shots Made (3PTM)
+            core_stats['three_pointers_made'] = self._safe_int(stats_data.get('10'))
+            
+            # 6. stat_id: 12 - Points Scored (PTS)
+            core_stats['total_points'] = self._safe_int(stats_data.get('12'))
+            
+            # 7. stat_id: 15 - Total Rebounds (REB)
+            core_stats['total_rebounds'] = self._safe_int(stats_data.get('15'))
+            
+            # 8. stat_id: 16 - Assists (AST)
+            core_stats['total_assists'] = self._safe_int(stats_data.get('16'))
+            
+            # 9. stat_id: 17 - Steals (ST)
+            core_stats['total_steals'] = self._safe_int(stats_data.get('17'))
+            
+            # 10. stat_id: 18 - Blocked Shots (BLK)
+            core_stats['total_blocks'] = self._safe_int(stats_data.get('18'))
+            
+            # 11. stat_id: 19 - Turnovers (TO)
+            core_stats['total_turnovers'] = self._safe_int(stats_data.get('19'))
+            
+            # 派生统计项
+            core_stats['games_played'] = self._safe_int(stats_data.get('50'))  # Games Played（如果有的话）
             
             # 计算平均分
-            if core_stats['total_points'] and core_stats['games_played'] and core_stats['games_played'] > 0:
-                core_stats['avg_points'] = round(core_stats['total_points'] / core_stats['games_played'], 2)
+            if core_stats.get('total_points') and core_stats.get('games_played') and core_stats['games_played'] > 0:
+                core_stats['avg_points'] = round(core_stats['total_points'] / core_stats['games_played'], 1)
             
         except Exception as e:
-            pass
+            print(f"提取核心赛季统计失败: {e}")
         
         return core_stats
     
     def write_player_daily_stat_values(self, player_key: str, editorial_player_key: str,
                                      league_key: str, season: str, date_obj: date,
                                      stats_data: Dict, week: Optional[int] = None) -> int:
-        """写入球员日期统计值（混合存储：JSON + 核心统计列）"""
+        """写入球员日期统计值（只存储核心统计列）"""
         try:
             # 检查是否已存在
             existing = self.session.query(PlayerDailyStats).filter_by(
@@ -510,19 +579,21 @@ class FantasyDatabaseWriter:
             
             if existing:
                 # 更新现有记录
-                existing.stats_data = stats_data
                 existing.week = week
+                # 更新所有11个统计项
+                existing.field_goals_made = core_stats.get('field_goals_made')
+                existing.field_goals_attempted = core_stats.get('field_goals_attempted')
+                existing.field_goal_percentage = core_stats.get('field_goal_percentage')
+                existing.free_throws_made = core_stats.get('free_throws_made')
+                existing.free_throws_attempted = core_stats.get('free_throws_attempted')
+                existing.free_throw_percentage = core_stats.get('free_throw_percentage')
+                existing.three_pointers_made = core_stats.get('three_pointers_made')
                 existing.points = core_stats.get('points')
-                existing.assists = core_stats.get('assists')
                 existing.rebounds = core_stats.get('rebounds')
+                existing.assists = core_stats.get('assists')
                 existing.steals = core_stats.get('steals')
                 existing.blocks = core_stats.get('blocks')
                 existing.turnovers = core_stats.get('turnovers')
-                existing.field_goals_made = core_stats.get('field_goals_made')
-                existing.field_goals_attempted = core_stats.get('field_goals_attempted')
-                existing.free_throws_made = core_stats.get('free_throws_made')
-                existing.free_throws_attempted = core_stats.get('free_throws_attempted')
-                existing.three_pointers_made = core_stats.get('three_pointers_made')
                 existing.updated_at = datetime.utcnow()
                 self.stats['player_daily_stats_updated'] = self.stats.get('player_daily_stats_updated', 0) + 1
             else:
@@ -534,18 +605,20 @@ class FantasyDatabaseWriter:
                     season=season,
                     date=date_obj,
                     week=week,
-                    stats_data=stats_data,
-                    points=core_stats.get('points'),
-                    assists=core_stats.get('assists'),
-                    rebounds=core_stats.get('rebounds'),
-                    steals=core_stats.get('steals'),
-                    blocks=core_stats.get('blocks'),
-                    turnovers=core_stats.get('turnovers'),
+                    # 所有11个统计项
                     field_goals_made=core_stats.get('field_goals_made'),
                     field_goals_attempted=core_stats.get('field_goals_attempted'),
+                    field_goal_percentage=core_stats.get('field_goal_percentage'),
                     free_throws_made=core_stats.get('free_throws_made'),
                     free_throws_attempted=core_stats.get('free_throws_attempted'),
-                    three_pointers_made=core_stats.get('three_pointers_made')
+                    free_throw_percentage=core_stats.get('free_throw_percentage'),
+                    three_pointers_made=core_stats.get('three_pointers_made'),
+                    points=core_stats.get('points'),
+                    rebounds=core_stats.get('rebounds'),
+                    assists=core_stats.get('assists'),
+                    steals=core_stats.get('steals'),
+                    blocks=core_stats.get('blocks'),
+                    turnovers=core_stats.get('turnovers')
                 )
                 self.session.add(daily_stats)
                 self.stats['player_daily_stats'] = self.stats.get('player_daily_stats', 0) + 1
@@ -559,22 +632,75 @@ class FantasyDatabaseWriter:
             return 0
     
     def _extract_core_daily_stats(self, stats_data: Dict) -> Dict:
-        """从统计数据中提取核心日期统计项"""
+        """从统计数据中提取完整的11个日期统计项"""
         core_stats = {}
         
         try:
-            # NBA统计项映射 (Yahoo stat_id -> 核心统计)
-            core_stats['points'] = self._safe_float(stats_data.get('9999'))  # Fantasy Points
-            core_stats['assists'] = self._safe_int(stats_data.get('5'))  # 助攻
-            core_stats['rebounds'] = self._safe_int(stats_data.get('8'))  # 篮板  
-            core_stats['steals'] = self._safe_int(stats_data.get('6'))  # 抢断
-            core_stats['blocks'] = self._safe_int(stats_data.get('7'))  # 盖帽
-            core_stats['turnovers'] = self._safe_int(stats_data.get('9'))  # 失误
-            core_stats['field_goals_made'] = self._safe_int(stats_data.get('0'))  # 投篮命中
-            core_stats['field_goals_attempted'] = self._safe_int(stats_data.get('1'))  # 投篮尝试
-            core_stats['free_throws_made'] = self._safe_int(stats_data.get('2'))  # 罚球命中
-            core_stats['free_throws_attempted'] = self._safe_int(stats_data.get('3'))  # 罚球尝试
-            core_stats['three_pointers_made'] = self._safe_int(stats_data.get('4'))  # 三分命中
+            # 完整的11个统计项（基于Yahoo stat_categories）
+            
+            # 1. stat_id: 9004003 - Field Goals Made / Attempted (FGM/A)
+            field_goals_data = stats_data.get('9004003', '')
+            if isinstance(field_goals_data, str) and '/' in field_goals_data:
+                try:
+                    made, attempted = field_goals_data.split('/')
+                    core_stats['field_goals_made'] = self._safe_int(made.strip())
+                    core_stats['field_goals_attempted'] = self._safe_int(attempted.strip())
+                except:
+                    core_stats['field_goals_made'] = None
+                    core_stats['field_goals_attempted'] = None
+            else:
+                core_stats['field_goals_made'] = None
+                core_stats['field_goals_attempted'] = None
+            
+            # 2. stat_id: 5 - Field Goal Percentage (FG%)
+            fg_pct_str = stats_data.get('5', '')
+            if fg_pct_str and fg_pct_str != '-':
+                # 处理百分比格式：.500 或 50.0% 或 0.500
+                core_stats['field_goal_percentage'] = self._parse_percentage(fg_pct_str)
+            else:
+                core_stats['field_goal_percentage'] = None
+            
+            # 3. stat_id: 9007006 - Free Throws Made / Attempted (FTM/A)
+            free_throws_data = stats_data.get('9007006', '')
+            if isinstance(free_throws_data, str) and '/' in free_throws_data:
+                try:
+                    made, attempted = free_throws_data.split('/')
+                    core_stats['free_throws_made'] = self._safe_int(made.strip())
+                    core_stats['free_throws_attempted'] = self._safe_int(attempted.strip())
+                except:
+                    core_stats['free_throws_made'] = None
+                    core_stats['free_throws_attempted'] = None
+            else:
+                core_stats['free_throws_made'] = None
+                core_stats['free_throws_attempted'] = None
+            
+            # 4. stat_id: 8 - Free Throw Percentage (FT%)
+            ft_pct_str = stats_data.get('8', '')
+            if ft_pct_str and ft_pct_str != '-':
+                core_stats['free_throw_percentage'] = self._parse_percentage(ft_pct_str)
+            else:
+                core_stats['free_throw_percentage'] = None
+            
+            # 5. stat_id: 10 - 3-point Shots Made (3PTM)
+            core_stats['three_pointers_made'] = self._safe_int(stats_data.get('10'))
+            
+            # 6. stat_id: 12 - Points Scored (PTS)
+            core_stats['points'] = self._safe_int(stats_data.get('12'))
+            
+            # 7. stat_id: 15 - Total Rebounds (REB)
+            core_stats['rebounds'] = self._safe_int(stats_data.get('15'))
+            
+            # 8. stat_id: 16 - Assists (AST)
+            core_stats['assists'] = self._safe_int(stats_data.get('16'))
+            
+            # 9. stat_id: 17 - Steals (ST)
+            core_stats['steals'] = self._safe_int(stats_data.get('17'))
+            
+            # 10. stat_id: 18 - Blocked Shots (BLK)
+            core_stats['blocks'] = self._safe_int(stats_data.get('18'))
+            
+            # 11. stat_id: 19 - Turnovers (TO)
+            core_stats['turnovers'] = self._safe_int(stats_data.get('19'))
             
         except Exception as e:
             print(f"提取核心日期统计失败: {e}")
@@ -600,16 +726,25 @@ class FantasyDatabaseWriter:
                 week=week
             ).first()
             
-            # 提取核心统计项
-            core_stats = self._extract_core_team_weekly_stats(categories_won, win)
+            # 提取完整的团队周统计项
+            core_stats = self._extract_team_weekly_stats(stats_data)
             
             if existing:
                 # 更新现有记录
-                existing.stats_data = stats_data
-                existing.categories_won = core_stats.get('categories_won', 0)
-                existing.opponent_team_key = opponent_team_key
-                existing.is_playoff = is_playoff
-                existing.win = win
+                # 更新所有11个统计项
+                existing.field_goals_made = core_stats.get('field_goals_made')
+                existing.field_goals_attempted = core_stats.get('field_goals_attempted')
+                existing.field_goal_percentage = core_stats.get('field_goal_percentage')
+                existing.free_throws_made = core_stats.get('free_throws_made')
+                existing.free_throws_attempted = core_stats.get('free_throws_attempted')
+                existing.free_throw_percentage = core_stats.get('free_throw_percentage')
+                existing.three_pointers_made = core_stats.get('three_pointers_made')
+                existing.points = core_stats.get('points')
+                existing.rebounds = core_stats.get('rebounds')
+                existing.assists = core_stats.get('assists')
+                existing.steals = core_stats.get('steals')
+                existing.blocks = core_stats.get('blocks')
+                existing.turnovers = core_stats.get('turnovers')
                 existing.updated_at = datetime.utcnow()
                 self.stats['team_stats_weekly_updated'] = self.stats.get('team_stats_weekly_updated', 0) + 1
             else:
@@ -619,11 +754,20 @@ class FantasyDatabaseWriter:
                     league_key=league_key,
                     season=season,
                     week=week,
-                    stats_data=stats_data,
-                    categories_won=core_stats.get('categories_won', 0),
-                    opponent_team_key=opponent_team_key,
-                    is_playoff=is_playoff,
-                    win=win
+                    # 所有11个统计项
+                    field_goals_made=core_stats.get('field_goals_made'),
+                    field_goals_attempted=core_stats.get('field_goals_attempted'),
+                    field_goal_percentage=core_stats.get('field_goal_percentage'),
+                    free_throws_made=core_stats.get('free_throws_made'),
+                    free_throws_attempted=core_stats.get('free_throws_attempted'),
+                    free_throw_percentage=core_stats.get('free_throw_percentage'),
+                    three_pointers_made=core_stats.get('three_pointers_made'),
+                    points=core_stats.get('points'),
+                    rebounds=core_stats.get('rebounds'),
+                    assists=core_stats.get('assists'),
+                    steals=core_stats.get('steals'),
+                    blocks=core_stats.get('blocks'),
+                    turnovers=core_stats.get('turnovers')
                 )
                 self.session.add(team_stats)
                 self.stats['team_stats_weekly'] = self.stats.get('team_stats_weekly', 0) + 1
@@ -968,16 +1112,24 @@ class FantasyDatabaseWriter:
     def write_players_batch(self, players_data: List[Dict], league_key: str) -> int:
         """批量写入球员数据"""
         count = 0
+        skipped_count = 0
         
-        for player_data in players_data:
+        print(f"开始批量写入 {len(players_data)} 个球员记录...")
+        
+        for i, player_data in enumerate(players_data):
             try:
                 player_key = player_data.get("player_key")
                 if not player_key:
+                    if i < 5:
+                        print(f"  跳过无player_key的记录")
                     continue
                 
                 # 检查是否已存在
                 existing = self.session.query(Player).filter_by(player_key=player_key).first()
                 if existing:
+                    skipped_count += 1
+                    if i < 5:
+                        print(f"  球员 {player_key} 已存在，跳过")
                     continue
                 
                 # 处理布尔值转换
@@ -1031,6 +1183,9 @@ class FantasyDatabaseWriter:
             if count > 0:
                 self.session.commit()
                 self.stats['players'] += count
+                print(f"✓ 成功写入 {count} 个新球员记录（跳过 {skipped_count} 个已存在记录）")
+            else:
+                print(f"✓ 所有 {len(players_data)} 个球员记录都已存在，无需写入")
         except Exception as e:
             print(f"批量提交失败: {e}")
             self.session.rollback()
@@ -1040,16 +1195,24 @@ class FantasyDatabaseWriter:
     def write_teams_batch(self, teams_data: List[Dict], league_key: str) -> int:
         """批量写入团队数据"""
         count = 0
+        skipped_count = 0
         
-        for team_data in teams_data:
+        print(f"开始批量写入 {len(teams_data)} 个团队记录...")
+        
+        for i, team_data in enumerate(teams_data):
             try:
                 team_key = team_data.get("team_key")
                 if not team_key:
+                    if i < 5:
+                        print(f"  跳过无team_key的记录")
                     continue
                 
                 # 检查是否已存在
                 existing = self.session.query(Team).filter_by(team_key=team_key).first()
                 if existing:
+                    skipped_count += 1
+                    if i < 5:
+                        print(f"  团队 {team_key} 已存在，跳过")
                     continue
                 
                 # 处理布尔值转换
@@ -1138,6 +1301,9 @@ class FantasyDatabaseWriter:
             if count > 0:
                 self.session.commit()
                 self.stats['teams'] += count
+                print(f"✓ 成功写入 {count} 个新团队记录（跳过 {skipped_count} 个已存在记录）")
+            else:
+                print(f"✓ 所有 {len(teams_data)} 个团队记录都已存在，无需写入")
         except Exception as e:
             print(f"批量提交团队失败: {e}")
             self.session.rollback()
@@ -1147,16 +1313,24 @@ class FantasyDatabaseWriter:
     def write_transactions_batch(self, transactions_data: List[Dict], league_key: str) -> int:
         """批量写入交易数据"""
         count = 0
+        skipped_count = 0
         
-        for transaction_data in transactions_data:
+        print(f"开始批量写入 {len(transactions_data)} 个交易记录...")
+        
+        for i, transaction_data in enumerate(transactions_data):
             try:
                 transaction_key = transaction_data.get("transaction_key")
                 if not transaction_key:
+                    if i < 5:  # 只显示前几个错误
+                        print(f"  跳过无transaction_key的记录")
                     continue
                 
                 # 检查是否已存在
                 existing = self.session.query(Transaction).filter_by(transaction_key=transaction_key).first()
                 if existing:
+                    skipped_count += 1
+                    if i < 5:  # 只显示前几个重复记录
+                        print(f"  交易 {transaction_key} 已存在，跳过")
                     continue
                 
                 transaction_type = transaction_data.get("type", "unknown")
@@ -1297,6 +1471,9 @@ class FantasyDatabaseWriter:
             if count > 0:
                 self.session.commit()
                 self.stats['transactions'] += count
+                print(f"✓ 成功写入 {count} 个新交易记录（跳过 {skipped_count} 个已存在记录）")
+            else:
+                print(f"✓ 所有 {len(transactions_data)} 个交易记录都已存在，无需写入")
         except Exception as e:
             print(f"批量提交交易失败: {e}")
             self.session.rollback()
@@ -1413,6 +1590,33 @@ class FantasyDatabaseWriter:
         except (ValueError, TypeError):
             return None
     
+    def _parse_percentage(self, pct_str) -> Optional[float]:
+        """解析百分比字符串，返回百分比值（0-100）"""
+        try:
+            if not pct_str or pct_str == '-':
+                return None
+            
+            pct_str = str(pct_str).strip()
+            
+            # 移除%符号
+            if '%' in pct_str:
+                clean_value = pct_str.replace('%', '')
+                return self._safe_float(clean_value)
+            
+            # 处理小数形式（如 .500 或 0.500）
+            clean_value = self._safe_float(pct_str)
+            if clean_value is not None:
+                # 如果是小数形式（0-1），转换为百分比（0-100）
+                if 0 <= clean_value <= 1:
+                    return clean_value * 100
+                # 如果已经是百分比形式（0-100），直接返回
+                elif 0 <= clean_value <= 100:
+                    return clean_value
+            
+            return None
+        except (ValueError, TypeError):
+            return None
+    
     def recreate_database_tables(self) -> bool:
         """强制重新创建数据库表结构"""
         try:
@@ -1453,7 +1657,6 @@ class FantasyDatabaseWriter:
             if existing:
                 # 更新现有记录
                 existing.stats_data = stats_data
-                existing.total_points = core_stats.get('total_points')
                 existing.wins = core_stats.get('wins', 0)
                 existing.losses = core_stats.get('losses', 0)
                 existing.ties = core_stats.get('ties', 0)
@@ -1467,7 +1670,6 @@ class FantasyDatabaseWriter:
                     league_key=league_key,
                     season=season,
                     stats_data=stats_data,
-                    total_points=core_stats.get('total_points'),
                     wins=core_stats.get('wins', 0),
                     losses=core_stats.get('losses', 0),
                     ties=core_stats.get('ties', 0),
@@ -1507,4 +1709,259 @@ class FantasyDatabaseWriter:
         except Exception as e:
             print(f"提取核心赛季统计失败: {e}")
         
+        return core_stats
+    
+    def _extract_team_season_stats(self, stats_data: Dict) -> Dict:
+        """从团队赛季统计数据中提取完整统计项"""
+        core_stats = {}
+        
+        try:
+            # 从 team_standings 中提取排名和战绩信息
+            team_standings = stats_data.get('team_standings', {})
+            if isinstance(team_standings, dict):
+                core_stats['rank'] = self._safe_int(team_standings.get('rank'))
+                core_stats['playoff_seed'] = team_standings.get('playoff_seed')
+                core_stats['games_back'] = team_standings.get('games_back')
+                
+                # 从 outcome_totals 中提取战绩
+                outcome_totals = team_standings.get('outcome_totals', {})
+                if isinstance(outcome_totals, dict):
+                    core_stats['wins'] = self._safe_int(outcome_totals.get('wins'))
+                    core_stats['losses'] = self._safe_int(outcome_totals.get('losses'))
+                    core_stats['ties'] = self._safe_int(outcome_totals.get('ties'))
+                    core_stats['win_percentage'] = self._safe_float(outcome_totals.get('percentage'))
+                
+                # 从 divisional_outcome_totals 中提取分区战绩
+                divisional_totals = team_standings.get('divisional_outcome_totals', {})
+                if isinstance(divisional_totals, dict):
+                    core_stats['divisional_wins'] = self._safe_int(divisional_totals.get('wins'))
+                    core_stats['divisional_losses'] = self._safe_int(divisional_totals.get('losses'))
+                    core_stats['divisional_ties'] = self._safe_int(divisional_totals.get('ties'))
+            
+            # 从 team_points 中提取总积分
+            team_points = stats_data.get('team_points', {})
+            if isinstance(team_points, dict):
+                core_stats['team_points_total'] = team_points.get('total')
+                
+        except Exception as e:
+            print(f"提取团队赛季统计失败: {e}")
+        
+        return core_stats
+    
+    def _extract_team_weekly_stats(self, stats_data: Dict) -> Dict:
+        """从团队周统计数据中提取完整的11个统计项"""
+        core_stats = {}
+        
+        try:
+            # 从 stats 数组中提取统计数据
+            stats_list = stats_data.get('stats', [])
+            if not isinstance(stats_list, list):
+                return core_stats
+            
+            # 构建 stat_id 到 value 的映射
+            stats_dict = {}
+            for stat_item in stats_list:
+                if isinstance(stat_item, dict) and 'stat' in stat_item:
+                    stat_info = stat_item['stat']
+                    stat_id = stat_info.get('stat_id')
+                    value = stat_info.get('value')
+                    if stat_id is not None:
+                        stats_dict[str(stat_id)] = value
+            
+            # 完整的11个统计项（基于Yahoo stat_categories）
+            
+            # 1. stat_id: 9004003 - Field Goals Made / Attempted (FGM/A)
+            field_goals_data = stats_dict.get('9004003', '')
+            if isinstance(field_goals_data, str) and '/' in field_goals_data:
+                try:
+                    made, attempted = field_goals_data.split('/')
+                    core_stats['field_goals_made'] = self._safe_int(made.strip())
+                    core_stats['field_goals_attempted'] = self._safe_int(attempted.strip())
+                except:
+                    core_stats['field_goals_made'] = None
+                    core_stats['field_goals_attempted'] = None
+            else:
+                core_stats['field_goals_made'] = None
+                core_stats['field_goals_attempted'] = None
+            
+            # 2. stat_id: 5 - Field Goal Percentage (FG%)
+            fg_pct_str = stats_dict.get('5', '')
+            if fg_pct_str and fg_pct_str != '-':
+                core_stats['field_goal_percentage'] = self._parse_percentage(fg_pct_str)
+            else:
+                core_stats['field_goal_percentage'] = None
+            
+            # 3. stat_id: 9007006 - Free Throws Made / Attempted (FTM/A)
+            free_throws_data = stats_dict.get('9007006', '')
+            if isinstance(free_throws_data, str) and '/' in free_throws_data:
+                try:
+                    made, attempted = free_throws_data.split('/')
+                    core_stats['free_throws_made'] = self._safe_int(made.strip())
+                    core_stats['free_throws_attempted'] = self._safe_int(attempted.strip())
+                except:
+                    core_stats['free_throws_made'] = None
+                    core_stats['free_throws_attempted'] = None
+            else:
+                core_stats['free_throws_made'] = None
+                core_stats['free_throws_attempted'] = None
+            
+            # 4. stat_id: 8 - Free Throw Percentage (FT%)
+            ft_pct_str = stats_dict.get('8', '')
+            if ft_pct_str and ft_pct_str != '-':
+                core_stats['free_throw_percentage'] = self._parse_percentage(ft_pct_str)
+            else:
+                core_stats['free_throw_percentage'] = None
+            
+            # 5. stat_id: 10 - 3-point Shots Made (3PTM)
+            core_stats['three_pointers_made'] = self._safe_int(stats_dict.get('10'))
+            
+            # 6. stat_id: 12 - Points Scored (PTS)
+            core_stats['points'] = self._safe_int(stats_dict.get('12'))
+            
+            # 7. stat_id: 15 - Total Rebounds (REB)
+            core_stats['rebounds'] = self._safe_int(stats_dict.get('15'))
+            
+            # 8. stat_id: 16 - Assists (AST)
+            core_stats['assists'] = self._safe_int(stats_dict.get('16'))
+            
+            # 9. stat_id: 17 - Steals (ST)
+            core_stats['steals'] = self._safe_int(stats_dict.get('17'))
+            
+            # 10. stat_id: 18 - Blocked Shots (BLK)
+            core_stats['blocks'] = self._safe_int(stats_dict.get('18'))
+            
+            # 11. stat_id: 19 - Turnovers (TO)
+            core_stats['turnovers'] = self._safe_int(stats_dict.get('19'))
+            
+        except Exception as e:
+            print(f"提取团队周统计失败: {e}")
+        
         return core_stats 
+
+    def write_team_weekly_stats_from_matchup(self, team_key: str, league_key: str, season: str,
+                                           week: int, team_stats_data: Dict) -> bool:
+        """从 matchup 数据写入团队周统计（专门用于从 team_matchups 生成数据）"""
+        try:
+            # 检查是否已存在
+            existing = self.session.query(TeamStatsWeekly).filter_by(
+                team_key=team_key,
+                season=season,
+                week=week
+            ).first()
+            
+            # 提取完整的团队周统计项
+            core_stats = self._extract_team_weekly_stats(team_stats_data)
+            
+            if existing:
+                # 更新现有记录
+                # 更新所有11个统计项
+                existing.field_goals_made = core_stats.get('field_goals_made')
+                existing.field_goals_attempted = core_stats.get('field_goals_attempted')
+                existing.field_goal_percentage = core_stats.get('field_goal_percentage')
+                existing.free_throws_made = core_stats.get('free_throws_made')
+                existing.free_throws_attempted = core_stats.get('free_throws_attempted')
+                existing.free_throw_percentage = core_stats.get('free_throw_percentage')
+                existing.three_pointers_made = core_stats.get('three_pointers_made')
+                existing.points = core_stats.get('points')
+                existing.rebounds = core_stats.get('rebounds')
+                existing.assists = core_stats.get('assists')
+                existing.steals = core_stats.get('steals')
+                existing.blocks = core_stats.get('blocks')
+                existing.turnovers = core_stats.get('turnovers')
+                existing.updated_at = datetime.utcnow()
+                self.stats['team_stats_weekly_updated'] = self.stats.get('team_stats_weekly_updated', 0) + 1
+            else:
+                # 创建新记录
+                team_stats = TeamStatsWeekly(
+                    team_key=team_key,
+                    league_key=league_key,
+                    season=season,
+                    week=week,
+                    # 所有11个统计项
+                    field_goals_made=core_stats.get('field_goals_made'),
+                    field_goals_attempted=core_stats.get('field_goals_attempted'),
+                    field_goal_percentage=core_stats.get('field_goal_percentage'),
+                    free_throws_made=core_stats.get('free_throws_made'),
+                    free_throws_attempted=core_stats.get('free_throws_attempted'),
+                    free_throw_percentage=core_stats.get('free_throw_percentage'),
+                    three_pointers_made=core_stats.get('three_pointers_made'),
+                    points=core_stats.get('points'),
+                    rebounds=core_stats.get('rebounds'),
+                    assists=core_stats.get('assists'),
+                    steals=core_stats.get('steals'),
+                    blocks=core_stats.get('blocks'),
+                    turnovers=core_stats.get('turnovers')
+                )
+                self.session.add(team_stats)
+                self.stats['team_stats_weekly'] = self.stats.get('team_stats_weekly', 0) + 1
+            
+            self.session.commit()
+            return True
+            
+        except Exception as e:
+            print(f"写入团队周统计失败 {team_key}: {e}")
+            self.session.rollback()
+            return False
+
+    def write_team_season_stats_from_standings(self, team_key: str, league_key: str, season: str,
+                                             stats_data: Dict, wins: int = 0, losses: int = 0, ties: int = 0,
+                                             win_percentage: Optional[float] = None) -> bool:
+        """从 league_standings 数据写入团队赛季统计"""
+        try:
+            # 检查是否已存在
+            existing = self.session.query(TeamStatsSeason).filter_by(
+                team_key=team_key,
+                season=season
+            ).first()
+            
+            # 提取完整的团队赛季统计项
+            core_stats = self._extract_team_season_stats(stats_data)
+            
+            if existing:
+                # 更新现有记录
+                existing.league_key = league_key
+                existing.stats_data = stats_data
+                # 更新所有统计项
+                existing.rank = core_stats.get('rank')
+                existing.playoff_seed = core_stats.get('playoff_seed')
+                existing.wins = core_stats.get('wins', wins)
+                existing.losses = core_stats.get('losses', losses)
+                existing.ties = core_stats.get('ties', ties)
+                existing.win_percentage = core_stats.get('win_percentage', win_percentage)
+                existing.divisional_wins = core_stats.get('divisional_wins')
+                existing.divisional_losses = core_stats.get('divisional_losses')
+                existing.divisional_ties = core_stats.get('divisional_ties')
+                existing.games_back = core_stats.get('games_back')
+                existing.team_points_total = core_stats.get('team_points_total')
+                existing.updated_at = datetime.utcnow()
+                self.stats['team_stats_season_updated'] = self.stats.get('team_stats_season_updated', 0) + 1
+            else:
+                # 创建新记录
+                team_stats = TeamStatsSeason(
+                    team_key=team_key,
+                    league_key=league_key,
+                    season=season,
+                    stats_data=stats_data,
+                    # 所有统计项
+                    rank=core_stats.get('rank'),
+                    playoff_seed=core_stats.get('playoff_seed'),
+                    wins=core_stats.get('wins', wins),
+                    losses=core_stats.get('losses', losses),
+                    ties=core_stats.get('ties', ties),
+                    win_percentage=core_stats.get('win_percentage', win_percentage),
+                    divisional_wins=core_stats.get('divisional_wins'),
+                    divisional_losses=core_stats.get('divisional_losses'),
+                    divisional_ties=core_stats.get('divisional_ties'),
+                    games_back=core_stats.get('games_back'),
+                    team_points_total=core_stats.get('team_points_total')
+                )
+                self.session.add(team_stats)
+                self.stats['team_stats_season'] = self.stats.get('team_stats_season', 0) + 1
+            
+            self.session.commit()
+            return True
+            
+        except Exception as e:
+            print(f"写入团队赛季统计失败 {team_key}: {e}")
+            self.session.rollback()
+            return False 

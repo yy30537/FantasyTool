@@ -403,7 +403,7 @@ class DateDimension(Base):
     )
 
 class PlayerDailyStats(Base):
-    """球员日统计表 - 恢复JSON存储，只标准化核心统计"""
+    """球员日统计表 - 只存储标准化核心统计数据"""
     __tablename__ = 'player_daily_stats'
     
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -414,21 +414,41 @@ class PlayerDailyStats(Base):
     date = Column(Date, nullable=False)
     week = Column(Integer)
     
-    # 完整统计数据JSON存储
-    stats_data = Column(JSON, nullable=False)
+    # 完整的11个统计项为独立列（基于Yahoo stat_categories）
+    # stat_id: 9004003 - Field Goals Made / Attempted (FGM/A)
+    field_goals_made = Column(Integer)      # 从 "9004003" 中提取的made部分
+    field_goals_attempted = Column(Integer) # 从 "9004003" 中提取的attempted部分
     
-    # 只提取核心统计项为独立列（便于快速查询和排序）
-    points = Column(Float)          # Fantasy Points (总分)
-    assists = Column(Integer)       # 助攻 (NBA: stat_id=5)
-    rebounds = Column(Integer)      # 篮板 (NBA: stat_id=8)
-    steals = Column(Integer)        # 抢断 (NBA: stat_id=6)
-    blocks = Column(Integer)        # 盖帽 (NBA: stat_id=7)
-    turnovers = Column(Integer)     # 失误 (NBA: stat_id=9)
-    field_goals_made = Column(Integer)      # 投篮命中 (NBA: stat_id=0)
-    field_goals_attempted = Column(Integer) # 投篮尝试 (NBA: stat_id=1)
-    free_throws_made = Column(Integer)      # 罚球命中 (NBA: stat_id=2)
-    free_throws_attempted = Column(Integer) # 罚球尝试 (NBA: stat_id=3)
-    three_pointers_made = Column(Integer)   # 三分命中 (NBA: stat_id=4)
+    # stat_id: 5 - Field Goal Percentage (FG%)
+    field_goal_percentage = Column(Float)   # stat_id=5
+    
+    # stat_id: 9007006 - Free Throws Made / Attempted (FTM/A)
+    free_throws_made = Column(Integer)      # 从 "9007006" 中提取的made部分
+    free_throws_attempted = Column(Integer) # 从 "9007006" 中提取的attempted部分
+    
+    # stat_id: 8 - Free Throw Percentage (FT%)
+    free_throw_percentage = Column(Float)   # stat_id=8
+    
+    # stat_id: 10 - 3-point Shots Made (3PTM)
+    three_pointers_made = Column(Integer)   # stat_id=10
+    
+    # stat_id: 12 - Points Scored (PTS)
+    points = Column(Integer)                # stat_id=12
+    
+    # stat_id: 15 - Total Rebounds (REB)
+    rebounds = Column(Integer)              # stat_id=15
+    
+    # stat_id: 16 - Assists (AST)
+    assists = Column(Integer)               # stat_id=16
+    
+    # stat_id: 17 - Steals (ST)
+    steals = Column(Integer)                # stat_id=17
+    
+    # stat_id: 18 - Blocked Shots (BLK)
+    blocks = Column(Integer)                # stat_id=18
+    
+    # stat_id: 19 - Turnovers (TO)
+    turnovers = Column(Integer)             # stat_id=19
     
     # 元数据
     fetched_at = Column(DateTime, default=datetime.utcnow)
@@ -455,17 +475,45 @@ class PlayerSeasonStats(Base):
     # 完整统计数据JSON存储
     stats_data = Column(JSON, nullable=False)
     
-    # 核心统计项（用于快速查询排序）
-    total_points = Column(Float)           # 总Fantasy Points
-    games_played = Column(Integer)         # 比赛场次
-    avg_points = Column(Float)             # 平均分
-    total_assists = Column(Integer)        # 总助攻
-    total_rebounds = Column(Integer)       # 总篮板
-    total_steals = Column(Integer)         # 总抢断
-    total_blocks = Column(Integer)         # 总盖帽
-    field_goal_percentage = Column(Float)  # 投篮命中率
-    free_throw_percentage = Column(Float)  # 罚球命中率
-    three_point_percentage = Column(Float) # 三分命中率
+    # 完整的11个统计项为独立列（基于Yahoo stat_categories）
+    # stat_id: 9004003 - Field Goals Made / Attempted (FGM/A)
+    field_goals_made = Column(Integer)      # 从 "9004003" 中提取的made部分
+    field_goals_attempted = Column(Integer) # 从 "9004003" 中提取的attempted部分
+    
+    # stat_id: 5 - Field Goal Percentage (FG%)
+    field_goal_percentage = Column(Float)   # stat_id=5
+    
+    # stat_id: 9007006 - Free Throws Made / Attempted (FTM/A)
+    free_throws_made = Column(Integer)      # 从 "9007006" 中提取的made部分
+    free_throws_attempted = Column(Integer) # 从 "9007006" 中提取的attempted部分
+    
+    # stat_id: 8 - Free Throw Percentage (FT%)
+    free_throw_percentage = Column(Float)   # stat_id=8
+    
+    # stat_id: 10 - 3-point Shots Made (3PTM)
+    three_pointers_made = Column(Integer)   # stat_id=10
+    
+    # stat_id: 12 - Points Scored (PTS)
+    total_points = Column(Integer)          # stat_id=12 (赛季累计)
+    
+    # stat_id: 15 - Total Rebounds (REB)
+    total_rebounds = Column(Integer)        # stat_id=15
+    
+    # stat_id: 16 - Assists (AST)
+    total_assists = Column(Integer)         # stat_id=16
+    
+    # stat_id: 17 - Steals (ST)
+    total_steals = Column(Integer)          # stat_id=17
+    
+    # stat_id: 18 - Blocked Shots (BLK)
+    total_blocks = Column(Integer)          # stat_id=18
+    
+    # stat_id: 19 - Turnovers (TO)
+    total_turnovers = Column(Integer)       # stat_id=19
+    
+    # 派生统计项
+    games_played = Column(Integer)          # 比赛场次
+    avg_points = Column(Float)              # 平均分
     
     # 元数据
     fetched_at = Column(DateTime, default=datetime.utcnow)
@@ -480,7 +528,7 @@ class PlayerSeasonStats(Base):
     )
 
 class TeamStatsWeekly(Base):
-    """团队周统计表 - 存储每周matchup对决数据"""
+    """团队周统计表 - 存储每周统计数据"""
     __tablename__ = 'team_stats_weekly'
     
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -489,16 +537,41 @@ class TeamStatsWeekly(Base):
     season = Column(String(10), nullable=False)
     week = Column(Integer, nullable=False)  # 只存储周数据
     
-    # JSON存储完整统计数据和matchup信息
-    stats_data = Column(JSON, nullable=False)
+    # 完整的11个团队周统计项（基于Yahoo stat_categories）
+    # stat_id: 9004003 - Field Goals Made / Attempted (FGM/A)
+    field_goals_made = Column(Integer)      # 从 "9004003" 中提取的made部分
+    field_goals_attempted = Column(Integer) # 从 "9004003" 中提取的attempted部分
     
-    # Matchup核心结果
-    categories_won = Column(Integer)     # 该队在matchup中获胜的类别数量(0-9分)
+    # stat_id: 5 - Field Goal Percentage (FG%)
+    field_goal_percentage = Column(Float)   # stat_id=5
     
-    # Matchup相关信息
-    opponent_team_key = Column(String(50), ForeignKey('teams.team_key'))
-    is_playoff = Column(Boolean, default=False)
-    win = Column(Boolean)  # 该周是否获胜（categories_won > categories_total/2）
+    # stat_id: 9007006 - Free Throws Made / Attempted (FTM/A)
+    free_throws_made = Column(Integer)      # 从 "9007006" 中提取的made部分
+    free_throws_attempted = Column(Integer) # 从 "9007006" 中提取的attempted部分
+    
+    # stat_id: 8 - Free Throw Percentage (FT%)
+    free_throw_percentage = Column(Float)   # stat_id=8
+    
+    # stat_id: 10 - 3-point Shots Made (3PTM)
+    three_pointers_made = Column(Integer)   # stat_id=10
+    
+    # stat_id: 12 - Points Scored (PTS)
+    points = Column(Integer)                # stat_id=12
+    
+    # stat_id: 15 - Total Rebounds (REB)
+    rebounds = Column(Integer)              # stat_id=15
+    
+    # stat_id: 16 - Assists (AST)
+    assists = Column(Integer)               # stat_id=16
+    
+    # stat_id: 17 - Steals (ST)
+    steals = Column(Integer)                # stat_id=17
+    
+    # stat_id: 18 - Blocked Shots (BLK)
+    blocks = Column(Integer)                # stat_id=18
+    
+    # stat_id: 19 - Turnovers (TO)
+    turnovers = Column(Integer)             # stat_id=19
     
     # 元数据
     fetched_at = Column(DateTime, default=datetime.utcnow)
@@ -508,7 +581,6 @@ class TeamStatsWeekly(Base):
     __table_args__ = (
         Index('idx_team_stat_weekly_unique', 'team_key', 'season', 'week', unique=True),
         Index('idx_team_stat_weekly_league', 'league_key', 'season', 'week'),
-        Index('idx_team_stat_weekly_categories', 'categories_won', 'season'),
     )
 
 class TeamStatsSeason(Base):
@@ -523,12 +595,20 @@ class TeamStatsSeason(Base):
     # JSON存储完整赛季统计数据
     stats_data = Column(JSON, nullable=False)
     
-    # 核心赛季统计项（便于快速查询）
-    total_points = Column(Float)     # 赛季总fantasy points
-    wins = Column(Integer)           # 赛季获胜数
-    losses = Column(Integer)         # 赛季失败数
-    ties = Column(Integer)           # 赛季平局数
-    win_percentage = Column(Float)   # 胜率
+    # 团队排名和战绩统计项（从 team_standings 中提取）
+    rank = Column(Integer)                    # 排名
+    playoff_seed = Column(String(10))         # 季后赛种子
+    wins = Column(Integer)                    # 获胜数
+    losses = Column(Integer)                  # 失败数
+    ties = Column(Integer)                    # 平局数
+    win_percentage = Column(Float)            # 胜率
+    divisional_wins = Column(Integer)         # 分区获胜数
+    divisional_losses = Column(Integer)       # 分区失败数
+    divisional_ties = Column(Integer)         # 分区平局数
+    games_back = Column(String(10))           # 落后场次
+    
+    # 团队总积分（从 team_points 中提取）
+    team_points_total = Column(String(20))    # 团队总积分
     
     # 元数据
     fetched_at = Column(DateTime, default=datetime.utcnow)
@@ -538,7 +618,6 @@ class TeamStatsSeason(Base):
     __table_args__ = (
         Index('idx_team_stat_season_unique', 'team_key', 'season', unique=True),
         Index('idx_team_stat_season_league', 'league_key', 'season'),
-        Index('idx_team_stat_season_points', 'total_points', 'season'),
     )
 
 class LeagueStandings(Base):
