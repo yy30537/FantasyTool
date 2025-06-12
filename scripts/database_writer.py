@@ -478,6 +478,7 @@ class FantasyDatabaseWriter:
             return 1
             
         except Exception as e:
+            print(f"写入球员赛季统计失败 {player_key}: {e}")
             self.session.rollback()
             return 0
     

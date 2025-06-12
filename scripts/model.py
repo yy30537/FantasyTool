@@ -463,7 +463,7 @@ class PlayerDailyStats(Base):
     )
 
 class PlayerSeasonStats(Base):
-    """球员赛季统计表 - 恢复JSON存储，只标准化核心统计"""
+    """球员赛季统计表 - 只存储标准化核心统计数据"""
     __tablename__ = 'player_season_stats'
     
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -471,9 +471,6 @@ class PlayerSeasonStats(Base):
     editorial_player_key = Column(String(50), nullable=False)
     league_key = Column(String(50), ForeignKey('leagues.league_key'), nullable=False)
     season = Column(String(10), nullable=False)
-    
-    # 完整统计数据JSON存储
-    stats_data = Column(JSON, nullable=False)
     
     # 完整的11个统计项为独立列（基于Yahoo stat_categories）
     # stat_id: 9004003 - Field Goals Made / Attempted (FGM/A)
