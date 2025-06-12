@@ -580,42 +580,7 @@ class TeamStatsWeekly(Base):
         Index('idx_team_stat_weekly_league', 'league_key', 'season', 'week'),
     )
 
-class TeamStatsSeason(Base):
-    """团队赛季统计表 - 存储赛季总计数据"""
-    __tablename__ = 'team_stats_season'
-    
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    team_key = Column(String(50), ForeignKey('teams.team_key'), nullable=False)
-    league_key = Column(String(50), ForeignKey('leagues.league_key'), nullable=False)
-    season = Column(String(10), nullable=False)
-    
-    # JSON存储完整赛季统计数据
-    stats_data = Column(JSON, nullable=False)
-    
-    # 团队排名和战绩统计项（从 team_standings 中提取）
-    rank = Column(Integer)                    # 排名
-    playoff_seed = Column(String(10))         # 季后赛种子
-    wins = Column(Integer)                    # 获胜数
-    losses = Column(Integer)                  # 失败数
-    ties = Column(Integer)                    # 平局数
-    win_percentage = Column(Float)            # 胜率
-    divisional_wins = Column(Integer)         # 分区获胜数
-    divisional_losses = Column(Integer)       # 分区失败数
-    divisional_ties = Column(Integer)         # 分区平局数
-    games_back = Column(String(10))           # 落后场次
-    
-    # 团队总积分（从 team_points 中提取）
-    team_points_total = Column(String(20))    # 团队总积分
-    
-    # 元数据
-    fetched_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
-    # 索引
-    __table_args__ = (
-        Index('idx_team_stat_season_unique', 'team_key', 'season', unique=True),
-        Index('idx_team_stat_season_league', 'league_key', 'season'),
-    )
+
 
 class LeagueStandings(Base):
     """联盟排名表 - 存储联盟排名和团队总体表现"""
@@ -642,9 +607,6 @@ class LeagueStandings(Base):
     divisional_losses = Column(Integer, default=0)
     divisional_ties = Column(Integer, default=0)
     
-    # 赛季统计数据JSON存储
-    season_stats_data = Column(JSON)
-    
     # 元数据
     fetched_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -661,7 +623,7 @@ class LeagueStandings(Base):
     )
 
 class TeamMatchups(Base):
-    """团队对战表 - 存储每周的对战信息和结果"""
+    """团队对战表 - 存储每周的对战信息和结果（移除JSON，使用结构化字段）"""
     __tablename__ = 'team_matchups'
     
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -680,20 +642,40 @@ class TeamMatchups(Base):
     is_winner = Column(Boolean)      # 该团队是否获胜
     is_tied = Column(Boolean, default=False)
     team_points = Column(Integer)    # 该团队获得的点数(类别获胜数)
+    opponent_points = Column(Integer)  # 对手获得的点数
+    winner_team_key = Column(String(50))  # 获胜团队key（冗余但便于查询）
     
     # 特殊标记
     is_playoffs = Column(Boolean, default=False)
     is_consolation = Column(Boolean, default=False)
     is_matchup_of_week = Column(Boolean, default=False)
     
-    # JSON存储完整对战数据
-    matchup_data = Column(JSON, nullable=False)  # 包含stat_winners、team_stats等
+    # 统计类别获胜详情（结构化存储，替代JSON）
+    wins_field_goal_pct = Column(Boolean, default=False)      # stat_id: 5 - FG%
+    wins_free_throw_pct = Column(Boolean, default=False)      # stat_id: 8 - FT%
+    wins_three_pointers = Column(Boolean, default=False)      # stat_id: 10 - 3PTM
+    wins_points = Column(Boolean, default=False)              # stat_id: 12 - PTS
+    wins_rebounds = Column(Boolean, default=False)            # stat_id: 15 - REB
+    wins_assists = Column(Boolean, default=False)             # stat_id: 16 - AST
+    wins_steals = Column(Boolean, default=False)              # stat_id: 17 - ST
+    wins_blocks = Column(Boolean, default=False)              # stat_id: 18 - BLK
+    wins_turnovers = Column(Boolean, default=False)           # stat_id: 19 - TO
+    
+    # 团队比赛场次信息
+    completed_games = Column(Integer)     # 已完成比赛数
+    remaining_games = Column(Integer)     # 剩余比赛数
+    live_games = Column(Integer)          # 进行中比赛数
+    
+    # 对手比赛场次信息
+    opponent_completed_games = Column(Integer)
+    opponent_remaining_games = Column(Integer)
+    opponent_live_games = Column(Integer)
     
     # 元数据
     fetched_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
-    # 关系
+    # 关系 - 通过外键关联到 TeamStatsWeekly
     team = relationship("Team", back_populates="team_matchups", foreign_keys=[team_key])
     league = relationship("League", back_populates="team_matchups")
     
@@ -703,6 +685,8 @@ class TeamMatchups(Base):
         Index('idx_team_matchup_league', 'league_key', 'season', 'week'),
         Index('idx_team_matchup_opponent', 'opponent_team_key', 'week'),
         Index('idx_team_matchup_playoffs', 'is_playoffs', 'season'),
+        Index('idx_team_matchup_winner', 'winner_team_key', 'week'),
+        Index('idx_team_matchup_stats_reference', 'team_key', 'season', 'week'),  # 关联TeamStatsWeekly的索引
     )
 
 # 数据库连接配置

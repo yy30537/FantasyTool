@@ -294,7 +294,7 @@ class YahooFantasyDataFetcher:
         print(f"\n=== 获取联盟数据: {league_key} ===")
         
         success_count = 0
-        total_steps = 7
+        total_steps = 6
         
         # 0. 确保联盟基本信息存在于数据库中
         if self._ensure_league_exists_in_db():
@@ -321,14 +321,10 @@ class YahooFantasyDataFetcher:
         if self.fetch_complete_transactions_data(teams_data):
             success_count += 1
         
-        # 6. 获取球员赛季统计数据（不依赖日期维度）
-        if self._fetch_player_season_stats_direct():
-            success_count += 1
-        
-        # 7. 获取团队统计数据（包括联盟排名、团队对战等）
+        # 6. 获取团队统计数据（包括联盟排名、团队对战等）
         if self.fetch_team_stats_data(teams_data):
             success_count += 1
-        
+            
         print(f"\n✓ 联盟数据获取完成: {success_count}/{total_steps} 成功")
         return success_count > 0
     
@@ -1158,13 +1154,7 @@ class YahooFantasyDataFetcher:
                 divisional_losses = 0
                 divisional_ties = 0
             
-            # 构建赛季统计数据
-            season_stats_data = {
-                "team_points": team_points,
-                "team_standings": team_standings
-            }
-            
-            # 写入数据库
+            # 写入数据库（不再需要存储 JSON 数据，所有字段已结构化）
             return self.db_writer.write_league_standings(
                 league_key=league_key,
                 team_key=team_key,
@@ -1178,8 +1168,7 @@ class YahooFantasyDataFetcher:
                 games_back=games_back,
                 divisional_wins=divisional_wins,
                 divisional_losses=divisional_losses,
-                divisional_ties=divisional_ties,
-                season_stats_data=season_stats_data
+                divisional_ties=divisional_ties
             )
             
         except Exception as e:
@@ -1469,7 +1458,7 @@ class YahooFantasyDataFetcher:
         """显示数据库摘要"""
         try:
             from model import (League, Team, Player, Game, Transaction, 
-                             RosterDaily, TeamStatsWeekly, TeamStatsSeason,
+                             RosterDaily, TeamStatsWeekly,
                              LeagueStandings, TeamMatchups, LeagueSettings, Manager,
                              PlayerSeasonStats, PlayerDailyStats, StatCategory,
                              PlayerEligiblePosition, TransactionPlayer, DateDimension)
@@ -1493,7 +1482,6 @@ class YahooFantasyDataFetcher:
                 ("球员赛季统计", PlayerSeasonStats),
                 ("球员日统计", PlayerDailyStats),
                 ("团队周统计", TeamStatsWeekly),
-                ("团队赛季统计", TeamStatsSeason),
                 ("联盟排名", LeagueStandings),
                 ("团队对战", TeamMatchups),
                 ("日期维度", DateDimension)
@@ -1547,7 +1535,7 @@ class YahooFantasyDataFetcher:
     
     def _process_team_matchups_to_db(self, matchups_data: Dict, team_key: str, 
                                    league_key: str, season: str) -> bool:
-        """处理团队matchups数据并写入数据库"""
+        """处理团队matchups数据并写入数据库（使用新的结构化字段）"""
         try:
             fantasy_content = matchups_data["fantasy_content"]
             team_data = fantasy_content["team"]
@@ -1577,19 +1565,83 @@ class YahooFantasyDataFetcher:
                 
                 matchup_info = matchup_data["matchup"]
                 
-                # 提取matchup信息
-                matchup_details = self._extract_matchup_info(matchup_info, team_key)
-                if not matchup_details:
-                    continue
-                
-                # 写入数据库
-                if self._write_team_matchup_to_db(matchup_details, team_key, league_key, season):
+                # 使用新的方法直接从matchup数据写入数据库
+                if self.db_writer.write_team_matchup_from_data(matchup_info, team_key, league_key, season):
                     success_count += 1
+                    
+                    # 同时写入TeamStatsWeekly数据
+                    self._extract_and_write_team_weekly_stats(matchup_info, team_key, league_key, season)
             
             return success_count > 0
             
         except Exception as e:
+            print(f"处理团队matchups失败 {team_key}: {e}")
             return False
+    
+    def _extract_and_write_team_weekly_stats(self, matchup_info: Dict, team_key: str, 
+                                           league_key: str, season: str) -> bool:
+        """从matchup数据中提取并写入团队周统计数据"""
+        try:
+            week = matchup_info.get("week")
+            if week is None:
+                return False
+            
+            # 从matchup中的teams数据提取统计数据
+            teams_data = matchup_info.get("0", {}).get("teams", {})
+            team_stats_data = self._extract_team_stats_from_matchup_data(teams_data, team_key)
+            
+            if team_stats_data:
+                return self.db_writer.write_team_weekly_stats_from_matchup(
+                    team_key=team_key,
+                    league_key=league_key,
+                    season=season,
+                    week=week,
+                    team_stats_data=team_stats_data
+                )
+            
+            return False
+            
+        except Exception as e:
+            print(f"提取团队周统计失败 {team_key}: {e}")
+            return False
+    
+    def _extract_team_stats_from_matchup_data(self, teams_data: Dict, target_team_key: str) -> Optional[Dict]:
+        """从teams数据中提取目标团队的统计数据"""
+        try:
+            teams_count = int(teams_data.get("count", 0))
+            
+            for i in range(teams_count):
+                str_index = str(i)
+                if str_index not in teams_data:
+                    continue
+                
+                team_container = teams_data[str_index]
+                if "team" not in team_container:
+                    continue
+                
+                team_info = team_container["team"]
+                
+                # 提取team_key
+                current_team_key = None
+                if isinstance(team_info, list) and len(team_info) >= 1:
+                    team_basic_info = team_info[0]
+                    if isinstance(team_basic_info, list):
+                        for info_item in team_basic_info:
+                            if isinstance(info_item, dict) and "team_key" in info_item:
+                                current_team_key = info_item["team_key"]
+                                break
+                
+                # 如果找到目标团队，提取统计数据
+                if current_team_key == target_team_key and len(team_info) > 1:
+                    team_stats_container = team_info[1]
+                    if "team_stats" in team_stats_container:
+                        return team_stats_container["team_stats"]
+            
+            return None
+            
+        except Exception as e:
+            print(f"提取团队统计数据失败: {e}")
+            return None
     
     def _extract_matchup_info(self, matchup_info, team_key: str) -> Optional[Dict]:
         """从matchup数据中提取对战信息"""
@@ -1688,8 +1740,7 @@ class YahooFantasyDataFetcher:
                 "team_points": team_points,
                 "is_playoffs": is_playoffs,
                 "is_consolation": is_consolation,
-                "is_matchup_of_week": is_matchup_of_week,
-                "matchup_data": matchup_info  # json存储完整数据
+                "is_matchup_of_week": is_matchup_of_week
             }
             
         except Exception as e:
@@ -1786,30 +1837,7 @@ class YahooFantasyDataFetcher:
         except Exception as e:
             return None
     
-    def _write_team_matchup_to_db(self, matchup_details: Dict, team_key: str, 
-                                league_key: str, season: str) -> bool:
-            """将team matchup数据写入数据库"""
-            try:
-                return self.db_writer.write_team_matchup(
-                    league_key=league_key,
-                    team_key=team_key,
-                    season=season,
-                    week=matchup_details["week"],
-                    week_start=matchup_details.get("week_start"),
-                    week_end=matchup_details.get("week_end"),
-                    status=matchup_details.get("status"),
-                    opponent_team_key=matchup_details.get("opponent_team_key"),
-                    is_winner=matchup_details.get("is_winner"),
-                    is_tied=matchup_details.get("is_tied", False),
-                    team_points=matchup_details.get("team_points", 0),
-                    is_playoffs=matchup_details.get("is_playoffs", False),
-                    is_consolation=matchup_details.get("is_consolation", False),
-                    is_matchup_of_week=matchup_details.get("is_matchup_of_week", False),
-                    matchup_data=matchup_details.get("matchup_data", {})
-                )
-            
-            except Exception as e:
-                return False
+    # 旧的_write_team_matchup_to_db方法已被移除，现在直接使用 db_writer.write_team_matchup_from_data
     
     def _fetch_player_season_stats_direct(self) -> bool:
         """直接获取球员赛季统计数据（不依赖日期维度）"""
@@ -2161,13 +2189,13 @@ class YahooFantasyDataFetcher:
         
         print(f"📋 获取阵容历史数据: {start_date} 到 {end_date}")
         
-        # 确保有赛季日程数据
-        self.fetch_season_schedule_data()
+        league_key = self.selected_league['league_key']
         
-        # 获取团队数据
-        teams_data = self.fetch_teams_data()
+        # 从数据库获取团队数据，避免重复写入
+        teams_data = self._get_teams_data_from_db(league_key)
+        
         if not teams_data:
-            print("❌ 获取团队数据失败")
+            print("❌ 数据库中没有团队数据，请先执行'获取联盟数据'")
             return False
         
         # 获取指定时间范围内的roster数据
@@ -2484,9 +2512,9 @@ class YahooFantasyDataFetcher:
     # ===== 团队每周统计数据获取方法 =====
 
     def run_team_weekly_stats_fetch(self) -> bool:
-        """运行团队每周统计数据获取"""
-        print("🚀 团队每周统计数据获取")
-        print("基于现有的 team_matchups 数据生成团队每周统计")
+        """检查团队每周统计数据"""
+        print("🚀 团队每周统计数据检查")
+        print("团队每周统计数据现在在获取联盟数据时自动生成")
         
         return self.fetch_team_weekly_stats_from_matchups()
     
@@ -2517,26 +2545,21 @@ class YahooFantasyDataFetcher:
             success_count = 0
             processed_weeks = set()
             
-            for matchup in matchups:
-                try:
-                    # 从 matchup_data 中提取团队统计数据
-                    if self._process_matchup_to_weekly_stats(
-                        matchup.team_key,
-                        matchup.week,
-                        matchup.opponent_team_key,
-                        matchup.is_playoffs,
-                        matchup.is_winner,
-                        matchup.team_points,
-                        matchup.matchup_data,
-                        league_key,
-                        season
-                    ):
-                        success_count += 1
-                        processed_weeks.add(matchup.week)
-                        
-                except Exception as e:
-                    print(f"处理对战记录失败 {matchup.team_key}/周{matchup.week}: {e}")
-                    continue
+            # 检查团队每周统计数据是否已存在
+            from model import TeamStatsWeekly
+            stats = self.db_writer.session.query(TeamStatsWeekly).filter_by(
+                league_key=league_key,
+                season=season
+            ).all()
+            
+            if stats:
+                print(f"✅ 团队每周统计数据已存在: {len(stats)} 条记录")
+                print("💡 这些数据在获取联盟数据时已自动生成，无需重新处理")
+                success_count = len(stats)
+                processed_weeks = set(stat.week for stat in stats)
+            else:
+                print("❌ 未找到团队每周统计数据")
+                print("💡 请选择选项2 '获取联盟数据' 来获取完整数据")
             
             print(f"✓ 团队每周统计数据生成完成: {success_count}/{len(matchups)} 成功")
             print(f"  处理周数: {sorted(processed_weeks)}")
@@ -2685,30 +2708,72 @@ class YahooFantasyDataFetcher:
     def _process_standing_to_season_stats(self, standing, league_key: str, season: str) -> bool:
         """处理单个排名记录并生成团队赛季统计数据"""
         try:
-            # 提取团队赛季统计数据
-            stats_data = standing.season_stats_data or {}
-            
-            # 计算胜率
-            win_percentage = None
-            total_games = standing.wins + standing.losses + standing.ties
-            if total_games > 0:
-                win_percentage = standing.wins / total_games
-            
-            # 写入团队赛季统计
-            return self.db_writer.write_team_season_stats_from_standings(
-                team_key=standing.team_key,
-                league_key=league_key,
-                season=season,
-                stats_data=stats_data,
-                wins=standing.wins,
-                losses=standing.losses,
-                ties=standing.ties,
-                win_percentage=win_percentage
-            )
+            # 团队赛季数据现在直接存储在 league_standings 表中，无需额外处理
+            print(f"✓ 团队 {standing.team_key} 的赛季数据已存储在 league_standings 表中")
+            print(f"  排名: {standing.rank}, 胜场: {standing.wins}, 负场: {standing.losses}")
+            return True
             
         except Exception as e:
             print(f"处理团队赛季统计失败 {standing.team_key}: {e}")
             return False
+
+    def _get_teams_data_from_db(self, league_key: str) -> Optional[Dict]:
+        """从数据库获取团队数据，转换为API格式以供后续方法使用"""
+        try:
+            from model import Team
+            
+            teams = self.db_writer.session.query(Team).filter_by(
+                league_key=league_key
+            ).all()
+            
+            if not teams:
+                return None
+            
+            # 模拟API返回的团队数据格式
+            teams_data = {
+                "fantasy_content": {
+                    "league": [
+                        {},  # 其他联盟信息
+                        {
+                            "teams": {
+                                "count": len(teams)
+                            }
+                        }
+                    ]
+                }
+            }
+            
+            # 添加团队数据
+            teams_container = teams_data["fantasy_content"]["league"][1]["teams"]
+            for i, team in enumerate(teams):
+                teams_container[str(i)] = {
+                    "team": [
+                        [
+                            {
+                                "team_key": team.team_key,
+                                "team_id": team.team_id,
+                                "name": team.name,
+                                "url": team.url,
+                                "team_logo_url": team.team_logo_url,
+                                "waiver_priority": team.waiver_priority,
+                                "number_of_moves": team.number_of_moves,
+                                "number_of_trades": team.number_of_trades,
+                                "roster_adds": {
+                                    "coverage_value": team.roster_adds_week,
+                                    "value": team.roster_adds_value
+                                },
+                                "clinched_playoffs": team.clinched_playoffs,
+                                "has_draft_grade": team.has_draft_grade,
+                                "managers": []  # 管理员数据需要时可以从Manager表获取
+                            }
+                        ]
+                    ]
+                }
+            
+            return teams_data
+            
+        except Exception as e:
+            return None
 
 
 def main():

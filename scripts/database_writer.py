@@ -17,7 +17,7 @@ from model import (
     create_database_engine, create_tables, recreate_tables, get_session,
     Game, League, LeagueSettings, Team, Manager, Player, StatCategory,
     PlayerEligiblePosition, PlayerSeasonStats, PlayerDailyStats,
-    TeamStatsWeekly, TeamStatsSeason, LeagueStandings, TeamMatchups,
+    TeamStatsWeekly, LeagueStandings, TeamMatchups,
     RosterDaily, Transaction, TransactionPlayer, DateDimension
 )
 
@@ -90,8 +90,7 @@ class FantasyDatabaseWriter:
                 print("🔍 检查 TeamStatsWeekly 表结构...")
                 result = temp_session.query(TeamStatsWeekly).first()
                 
-                print("🔍 检查 TeamStatsSeason 表结构...")
-                result = temp_session.query(TeamStatsSeason).first()
+
                 
                 # 测试 DateDimension 表的新字段
                 print("🔍 检查 DateDimension 表结构...")
@@ -798,7 +797,7 @@ class FantasyDatabaseWriter:
                              wins: int = 0, losses: int = 0, ties: int = 0,
                              win_percentage: float = 0.0, games_back: str = "-",
                              divisional_wins: int = 0, divisional_losses: int = 0,
-                             divisional_ties: int = 0, season_stats_data: Optional[Dict] = None) -> bool:
+                             divisional_ties: int = 0) -> bool:
         """写入联盟排名数据"""
         try:
             # 检查是否已存在
@@ -820,7 +819,6 @@ class FantasyDatabaseWriter:
                 existing.divisional_wins = divisional_wins
                 existing.divisional_losses = divisional_losses
                 existing.divisional_ties = divisional_ties
-                existing.season_stats_data = season_stats_data
                 existing.updated_at = datetime.utcnow()
             else:
                 # 创建新记录
@@ -837,8 +835,7 @@ class FantasyDatabaseWriter:
                     games_back=games_back,
                     divisional_wins=divisional_wins,
                     divisional_losses=divisional_losses,
-                    divisional_ties=divisional_ties,
-                    season_stats_data=season_stats_data
+                    divisional_ties=divisional_ties
                 )
                 self.session.add(standings)
                 self.stats['league_standings'] += 1
@@ -855,10 +852,21 @@ class FantasyDatabaseWriter:
                           week_start: Optional[str] = None, week_end: Optional[str] = None,
                           status: Optional[str] = None, opponent_team_key: Optional[str] = None,
                           is_winner: Optional[bool] = None, is_tied: bool = False,
-                          team_points: int = 0, is_playoffs: bool = False,
-                          is_consolation: bool = False, is_matchup_of_week: bool = False,
-                          matchup_data: Optional[Dict] = None) -> bool:
-        """写入团队对战数据"""
+                          team_points: int = 0, opponent_points: int = 0, 
+                          winner_team_key: Optional[str] = None,
+                          is_playoffs: bool = False, is_consolation: bool = False, 
+                          is_matchup_of_week: bool = False,
+                          # 统计类别获胜情况
+                          wins_field_goal_pct: bool = False, wins_free_throw_pct: bool = False,
+                          wins_three_pointers: bool = False, wins_points: bool = False,
+                          wins_rebounds: bool = False, wins_assists: bool = False,
+                          wins_steals: bool = False, wins_blocks: bool = False,
+                          wins_turnovers: bool = False,
+                          # 比赛场次信息
+                          completed_games: int = 0, remaining_games: int = 0, live_games: int = 0,
+                          opponent_completed_games: int = 0, opponent_remaining_games: int = 0,
+                          opponent_live_games: int = 0) -> bool:
+        """写入团队对战数据（使用结构化字段替代JSON）"""
         try:
             # 检查是否已存在
             existing = self.session.query(TeamMatchups).filter_by(
@@ -877,10 +885,31 @@ class FantasyDatabaseWriter:
                 existing.is_winner = is_winner
                 existing.is_tied = is_tied
                 existing.team_points = team_points
+                existing.opponent_points = opponent_points
+                existing.winner_team_key = winner_team_key
                 existing.is_playoffs = is_playoffs
                 existing.is_consolation = is_consolation
                 existing.is_matchup_of_week = is_matchup_of_week
-                existing.matchup_data = matchup_data
+                
+                # 更新统计类别获胜情况
+                existing.wins_field_goal_pct = wins_field_goal_pct
+                existing.wins_free_throw_pct = wins_free_throw_pct
+                existing.wins_three_pointers = wins_three_pointers
+                existing.wins_points = wins_points
+                existing.wins_rebounds = wins_rebounds
+                existing.wins_assists = wins_assists
+                existing.wins_steals = wins_steals
+                existing.wins_blocks = wins_blocks
+                existing.wins_turnovers = wins_turnovers
+                
+                # 更新比赛场次信息
+                existing.completed_games = completed_games
+                existing.remaining_games = remaining_games
+                existing.live_games = live_games
+                existing.opponent_completed_games = opponent_completed_games
+                existing.opponent_remaining_games = opponent_remaining_games
+                existing.opponent_live_games = opponent_live_games
+                
                 existing.updated_at = datetime.utcnow()
             else:
                 # 创建新记录
@@ -896,10 +925,30 @@ class FantasyDatabaseWriter:
                     is_winner=is_winner,
                     is_tied=is_tied,
                     team_points=team_points,
+                    opponent_points=opponent_points,
+                    winner_team_key=winner_team_key,
                     is_playoffs=is_playoffs,
                     is_consolation=is_consolation,
                     is_matchup_of_week=is_matchup_of_week,
-                    matchup_data=matchup_data
+                    
+                    # 统计类别获胜情况
+                    wins_field_goal_pct=wins_field_goal_pct,
+                    wins_free_throw_pct=wins_free_throw_pct,
+                    wins_three_pointers=wins_three_pointers,
+                    wins_points=wins_points,
+                    wins_rebounds=wins_rebounds,
+                    wins_assists=wins_assists,
+                    wins_steals=wins_steals,
+                    wins_blocks=wins_blocks,
+                    wins_turnovers=wins_turnovers,
+                    
+                    # 比赛场次信息
+                    completed_games=completed_games,
+                    remaining_games=remaining_games,
+                    live_games=live_games,
+                    opponent_completed_games=opponent_completed_games,
+                    opponent_remaining_games=opponent_remaining_games,
+                    opponent_live_games=opponent_live_games
                 )
                 self.session.add(matchup)
                 self.stats['team_matchups'] += 1
@@ -911,6 +960,208 @@ class FantasyDatabaseWriter:
             print(f"写入团队对战失败 {team_key}/{week}: {e}")
             self.session.rollback()
             return False
+    
+    def write_team_matchup_from_data(self, matchup_data: Dict, team_key: str, 
+                                   league_key: str, season: str) -> bool:
+        """从API返回的matchup数据中解析并写入团队对战记录"""
+        try:
+            # 提取基本信息
+            week = matchup_data.get("week")
+            if week is None:
+                return False
+                
+            week_start = matchup_data.get("week_start")
+            week_end = matchup_data.get("week_end") 
+            status = matchup_data.get("status")
+            is_playoffs = self._safe_bool(matchup_data.get("is_playoffs", False))
+            is_consolation = self._safe_bool(matchup_data.get("is_consolation", False))
+            is_matchup_of_week = self._safe_bool(matchup_data.get("is_matchup_of_week", False))
+            is_tied = self._safe_bool(matchup_data.get("is_tied", False))
+            winner_team_key = matchup_data.get("winner_team_key")
+            
+            # 解析stat_winners获取各统计类别获胜情况
+            stat_wins = self._parse_stat_winners(matchup_data.get("stat_winners", []), team_key)
+            
+            # 解析teams数据获取对战详情
+            teams_data = matchup_data.get("0", {}).get("teams", {})
+            matchup_details = self._parse_teams_matchup_data(teams_data, team_key)
+            
+            # 调用写入方法
+            return self.write_team_matchup(
+                league_key=league_key,
+                team_key=team_key,
+                season=season,
+                week=week,
+                week_start=week_start,
+                week_end=week_end,
+                status=status,
+                opponent_team_key=matchup_details.get("opponent_team_key"),
+                is_winner=matchup_details.get("is_winner"),
+                is_tied=is_tied,
+                team_points=matchup_details.get("team_points", 0),
+                opponent_points=matchup_details.get("opponent_points", 0),
+                winner_team_key=winner_team_key,
+                is_playoffs=is_playoffs,
+                is_consolation=is_consolation,
+                is_matchup_of_week=is_matchup_of_week,
+                
+                # 统计类别获胜情况
+                wins_field_goal_pct=stat_wins.get("5", False),      # FG%
+                wins_free_throw_pct=stat_wins.get("8", False),      # FT%
+                wins_three_pointers=stat_wins.get("10", False),     # 3PTM
+                wins_points=stat_wins.get("12", False),             # PTS
+                wins_rebounds=stat_wins.get("15", False),           # REB
+                wins_assists=stat_wins.get("16", False),            # AST
+                wins_steals=stat_wins.get("17", False),             # ST
+                wins_blocks=stat_wins.get("18", False),             # BLK
+                wins_turnovers=stat_wins.get("19", False),          # TO
+                
+                # 比赛场次信息
+                completed_games=matchup_details.get("completed_games", 0),
+                remaining_games=matchup_details.get("remaining_games", 0),
+                live_games=matchup_details.get("live_games", 0),
+                opponent_completed_games=matchup_details.get("opponent_completed_games", 0),
+                opponent_remaining_games=matchup_details.get("opponent_remaining_games", 0),
+                opponent_live_games=matchup_details.get("opponent_live_games", 0)
+            )
+            
+        except Exception as e:
+            print(f"从数据写入团队对战失败 {team_key}: {e}")
+            return False
+    
+    def _parse_stat_winners(self, stat_winners: List, team_key: str) -> Dict[str, bool]:
+        """解析stat_winners，返回该团队在各统计类别中的获胜情况"""
+        wins = {}
+        
+        try:
+            for stat_winner in stat_winners:
+                if "stat_winner" in stat_winner:
+                    stat_info = stat_winner["stat_winner"]
+                    stat_id = str(stat_info.get("stat_id", ""))
+                    winner_key = stat_info.get("winner_team_key", "")
+                    
+                    # 如果该团队是这个统计类别的获胜者
+                    wins[stat_id] = (winner_key == team_key)
+        
+        except Exception as e:
+            print(f"解析stat_winners失败: {e}")
+        
+        return wins
+    
+    def _parse_teams_matchup_data(self, teams_data: Dict, target_team_key: str) -> Dict:
+        """解析teams数据，提取对战详情"""
+        details = {
+            "opponent_team_key": None,
+            "is_winner": None,
+            "team_points": 0,
+            "opponent_points": 0,
+            "completed_games": 0,
+            "remaining_games": 0,
+            "live_games": 0,
+            "opponent_completed_games": 0,
+            "opponent_remaining_games": 0,
+            "opponent_live_games": 0
+        }
+        
+        try:
+            teams_count = int(teams_data.get("count", 0))
+            
+            target_team_data = None
+            opponent_team_data = None
+            
+            # 遍历所有团队，找到目标团队和对手团队
+            for i in range(teams_count):
+                str_index = str(i)
+                if str_index not in teams_data:
+                    continue
+                
+                team_container = teams_data[str_index]
+                if "team" not in team_container:
+                    continue
+                
+                team_info = team_container["team"]
+                
+                # 提取team_key
+                current_team_key = None
+                if isinstance(team_info, list) and len(team_info) >= 1:
+                    team_basic_info = team_info[0]
+                    if isinstance(team_basic_info, list):
+                        for info_item in team_basic_info:
+                            if isinstance(info_item, dict) and "team_key" in info_item:
+                                current_team_key = info_item["team_key"]
+                                break
+                
+                # 根据team_key分类
+                if current_team_key == target_team_key:
+                    target_team_data = team_info
+                elif current_team_key:
+                    details["opponent_team_key"] = current_team_key
+                    opponent_team_data = team_info
+            
+            # 提取目标团队数据
+            if target_team_data and len(target_team_data) > 1:
+                team_stats_container = target_team_data[1]
+                
+                # 提取team_points
+                if "team_points" in team_stats_container:
+                    team_points_data = team_stats_container["team_points"]
+                    if isinstance(team_points_data, dict) and "total" in team_points_data:
+                        details["team_points"] = self._safe_int(team_points_data["total"]) or 0
+                
+                # 提取remaining_games
+                if "team_remaining_games" in team_stats_container:
+                    remaining_games_data = team_stats_container["team_remaining_games"]
+                    if isinstance(remaining_games_data, dict) and "total" in remaining_games_data:
+                        total_data = remaining_games_data["total"]
+                        if isinstance(total_data, dict):
+                            details["completed_games"] = self._safe_int(total_data.get("completed_games", 0)) or 0
+                            details["remaining_games"] = self._safe_int(total_data.get("remaining_games", 0)) or 0
+                            details["live_games"] = self._safe_int(total_data.get("live_games", 0)) or 0
+            
+            # 提取对手团队数据
+            if opponent_team_data and len(opponent_team_data) > 1:
+                opponent_stats_container = opponent_team_data[1]
+                
+                # 提取opponent_points
+                if "team_points" in opponent_stats_container:
+                    opponent_points_data = opponent_stats_container["team_points"]
+                    if isinstance(opponent_points_data, dict) and "total" in opponent_points_data:
+                        details["opponent_points"] = self._safe_int(opponent_points_data["total"]) or 0
+                
+                # 提取opponent remaining_games
+                if "team_remaining_games" in opponent_stats_container:
+                    opponent_remaining_data = opponent_stats_container["team_remaining_games"]
+                    if isinstance(opponent_remaining_data, dict) and "total" in opponent_remaining_data:
+                        total_data = opponent_remaining_data["total"]
+                        if isinstance(total_data, dict):
+                            details["opponent_completed_games"] = self._safe_int(total_data.get("completed_games", 0)) or 0
+                            details["opponent_remaining_games"] = self._safe_int(total_data.get("remaining_games", 0)) or 0
+                            details["opponent_live_games"] = self._safe_int(total_data.get("live_games", 0)) or 0
+            
+            # 判断胜负
+            if details["team_points"] > details["opponent_points"]:
+                details["is_winner"] = True
+            elif details["team_points"] < details["opponent_points"]:
+                details["is_winner"] = False
+            else:
+                details["is_winner"] = None  # 平局
+            
+        except Exception as e:
+            print(f"解析teams对战数据失败: {e}")
+        
+        return details
+    
+    def _safe_bool(self, value) -> bool:
+        """安全转换为布尔值"""
+        if value is None:
+            return False
+        if isinstance(value, bool):
+            return value
+        if isinstance(value, str):
+            return value.strip().lower() in ('1', 'true', 'yes')
+        if isinstance(value, (int, float)):
+            return value != 0
+        return False
     
     def write_player_eligible_positions(self, player_key: str, positions: List) -> int:
         """写入球员合适位置"""
@@ -1552,7 +1803,7 @@ class FantasyDatabaseWriter:
             'player_season_stats': PlayerSeasonStats,        # 更新为新的混合存储表
             'player_daily_stats': PlayerDailyStats,          # 更新为新的混合存储表
             'team_stats_weekly': TeamStatsWeekly,            # 更新为新的团队周统计表
-            'team_stats_season': TeamStatsSeason,             # 新的团队赛季统计表
+
             'league_standings': LeagueStandings,
             'team_matchups': TeamMatchups,
             'roster_daily': RosterDaily,
@@ -1642,75 +1893,7 @@ class FantasyDatabaseWriter:
             print(f"重新创建数据库表失败: {e}")
             return False
     
-    def write_team_season_stats(self, team_key: str, league_key: str, season: str,
-                               stats_data: Dict) -> int:
-        """写入团队赛季统计值"""
-        try:
-            # 检查是否已存在
-            existing = self.session.query(TeamStatsSeason).filter_by(
-                team_key=team_key,
-                season=season
-            ).first()
-            
-            # 提取核心赛季统计项
-            core_stats = self._extract_core_season_stats(stats_data)
-            
-            if existing:
-                # 更新现有记录
-                existing.stats_data = stats_data
-                existing.wins = core_stats.get('wins', 0)
-                existing.losses = core_stats.get('losses', 0)
-                existing.ties = core_stats.get('ties', 0)
-                existing.win_percentage = core_stats.get('win_percentage')
-                existing.updated_at = datetime.utcnow()
-                self.stats['team_stats_season_updated'] = self.stats.get('team_stats_season_updated', 0) + 1
-            else:
-                # 创建新记录
-                team_stats = TeamStatsSeason(
-                    team_key=team_key,
-                    league_key=league_key,
-                    season=season,
-                    stats_data=stats_data,
-                    wins=core_stats.get('wins', 0),
-                    losses=core_stats.get('losses', 0),
-                    ties=core_stats.get('ties', 0),
-                    win_percentage=core_stats.get('win_percentage')
-                )
-                self.session.add(team_stats)
-                self.stats['team_stats_season'] = self.stats.get('team_stats_season', 0) + 1
-            
-            self.session.commit()
-            return 1
-            
-        except Exception as e:
-            print(f"写入团队赛季统计失败: {e}")
-            self.session.rollback()
-            return 0
-    
-    def _extract_core_season_stats(self, stats_data: Dict) -> Dict:
-        """从赛季统计数据中提取核心统计项"""
-        core_stats = {}
-        
-        try:
-            # 团队核心赛季统计项
-            core_stats['total_points'] = self._safe_float(stats_data.get('9999'))  # Fantasy Points
-            core_stats['wins'] = self._safe_int(stats_data.get('60', '0'))  # 获胜数
-            core_stats['losses'] = self._safe_int(stats_data.get('61', '0'))  # 失败数  
-            core_stats['ties'] = self._safe_int(stats_data.get('62', '0'))  # 平局数
-            
-            # 计算胜率
-            wins = core_stats['wins'] or 0
-            losses = core_stats['losses'] or 0
-            ties = core_stats['ties'] or 0
-            total_games = wins + losses + ties
-            
-            if total_games > 0:
-                core_stats['win_percentage'] = round((wins + ties * 0.5) / total_games * 100, 1)
-            
-        except Exception as e:
-            print(f"提取核心赛季统计失败: {e}")
-        
-        return core_stats
+
     
     def _extract_team_season_stats(self, stats_data: Dict) -> Dict:
         """从团队赛季统计数据中提取完整统计项"""
@@ -1904,65 +2087,3 @@ class FantasyDatabaseWriter:
             self.session.rollback()
             return False
 
-    def write_team_season_stats_from_standings(self, team_key: str, league_key: str, season: str,
-                                             stats_data: Dict, wins: int = 0, losses: int = 0, ties: int = 0,
-                                             win_percentage: Optional[float] = None) -> bool:
-        """从 league_standings 数据写入团队赛季统计"""
-        try:
-            # 检查是否已存在
-            existing = self.session.query(TeamStatsSeason).filter_by(
-                team_key=team_key,
-                season=season
-            ).first()
-            
-            # 提取完整的团队赛季统计项
-            core_stats = self._extract_team_season_stats(stats_data)
-            
-            if existing:
-                # 更新现有记录
-                existing.league_key = league_key
-                existing.stats_data = stats_data
-                # 更新所有统计项
-                existing.rank = core_stats.get('rank')
-                existing.playoff_seed = core_stats.get('playoff_seed')
-                existing.wins = core_stats.get('wins', wins)
-                existing.losses = core_stats.get('losses', losses)
-                existing.ties = core_stats.get('ties', ties)
-                existing.win_percentage = core_stats.get('win_percentage', win_percentage)
-                existing.divisional_wins = core_stats.get('divisional_wins')
-                existing.divisional_losses = core_stats.get('divisional_losses')
-                existing.divisional_ties = core_stats.get('divisional_ties')
-                existing.games_back = core_stats.get('games_back')
-                existing.team_points_total = core_stats.get('team_points_total')
-                existing.updated_at = datetime.utcnow()
-                self.stats['team_stats_season_updated'] = self.stats.get('team_stats_season_updated', 0) + 1
-            else:
-                # 创建新记录
-                team_stats = TeamStatsSeason(
-                    team_key=team_key,
-                    league_key=league_key,
-                    season=season,
-                    stats_data=stats_data,
-                    # 所有统计项
-                    rank=core_stats.get('rank'),
-                    playoff_seed=core_stats.get('playoff_seed'),
-                    wins=core_stats.get('wins', wins),
-                    losses=core_stats.get('losses', losses),
-                    ties=core_stats.get('ties', ties),
-                    win_percentage=core_stats.get('win_percentage', win_percentage),
-                    divisional_wins=core_stats.get('divisional_wins'),
-                    divisional_losses=core_stats.get('divisional_losses'),
-                    divisional_ties=core_stats.get('divisional_ties'),
-                    games_back=core_stats.get('games_back'),
-                    team_points_total=core_stats.get('team_points_total')
-                )
-                self.session.add(team_stats)
-                self.stats['team_stats_season'] = self.stats.get('team_stats_season', 0) + 1
-            
-            self.session.commit()
-            return True
-            
-        except Exception as e:
-            print(f"写入团队赛季统计失败 {team_key}: {e}")
-            self.session.rollback()
-            return False 
