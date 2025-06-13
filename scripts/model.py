@@ -509,10 +509,6 @@ class PlayerSeasonStats(Base):
     # stat_id: 19 - Turnovers (TO)
     total_turnovers = Column(Integer)       # stat_id=19
     
-    # 派生统计项
-    games_played = Column(Integer)          # 比赛场次
-    avg_points = Column(Float)              # 平均分
-    
     # 元数据
     fetched_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -522,7 +518,6 @@ class PlayerSeasonStats(Base):
         Index('idx_player_season_unique', 'player_key', 'season', unique=True),
         Index('idx_player_season_league', 'league_key', 'season'),
         Index('idx_player_season_points', 'total_points', 'season'),
-        Index('idx_player_season_avg', 'avg_points', 'season'),
     )
 
 class TeamStatsWeekly(Base):

@@ -1,14 +1,11 @@
-# Yahoo Fantasy Sports 数据获取工具
+# Yahoo Fantasy Sports 工具
 
-一个完整的Yahoo Fantasy Sports数据获取系统，支持获取联盟、团队、球员和交易等数据，并将数据存储到结构化的数据库中。
-
-Implementing:
-    - team analysis 
-    - matchup analysis
-    - trade analysis 
-    - trade target suggestion (based on team analysis)
-    - add/drop suggestion (based on matchup analysis)
-    - streaming plan (based on matchup analysis)
+- team analysis 
+- matchup analysis
+- trade analysis 
+- trade target suggestion (based on team analysis)
+- add/drop suggestion (based on matchup analysis)
+- streaming plan (based on matchup analysis)
 
 ## 🚀 快速开始
 

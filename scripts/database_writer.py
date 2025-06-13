@@ -449,9 +449,6 @@ class FantasyDatabaseWriter:
                 existing.total_steals = core_stats.get('total_steals')
                 existing.total_blocks = core_stats.get('total_blocks')
                 existing.total_turnovers = core_stats.get('total_turnovers')
-                # 派生统计项
-                existing.games_played = core_stats.get('games_played')
-                existing.avg_points = core_stats.get('avg_points')
                 existing.updated_at = datetime.utcnow()
                 self.stats['player_season_stats_updated'] = self.stats.get('player_season_stats_updated', 0) + 1
             else:
@@ -474,10 +471,7 @@ class FantasyDatabaseWriter:
                     total_assists=core_stats.get('total_assists'),
                     total_steals=core_stats.get('total_steals'),
                     total_blocks=core_stats.get('total_blocks'),
-                    total_turnovers=core_stats.get('total_turnovers'),
-                    # 派生统计项
-                    games_played=core_stats.get('games_played'),
-                    avg_points=core_stats.get('avg_points')
+                    total_turnovers=core_stats.get('total_turnovers')
                 )
                 self.session.add(player_stats)
                 self.stats['player_season_stats'] = self.stats.get('player_season_stats', 0) + 1
@@ -559,13 +553,6 @@ class FantasyDatabaseWriter:
             
             # 11. stat_id: 19 - Turnovers (TO)
             core_stats['total_turnovers'] = self._safe_int(stats_data.get('19'))
-            
-            # 派生统计项
-            core_stats['games_played'] = self._safe_int(stats_data.get('50'))  # Games Played（如果有的话）
-            
-            # 计算平均分
-            if core_stats.get('total_points') and core_stats.get('games_played') and core_stats['games_played'] > 0:
-                core_stats['avg_points'] = round(core_stats['total_points'] / core_stats['games_played'], 1)
             
         except Exception as e:
             print(f"提取核心赛季统计失败: {e}")
@@ -1347,7 +1334,6 @@ class FantasyDatabaseWriter:
                 # 批量提交
                 if new_count % self.batch_size == 0:
                     self.session.commit()
-                    print(f"  已提交 {new_count} 个新日期记录")
                     
             except Exception as e:
                 print(f"写入日期维度失败 {date_data.get('date', 'unknown')}: {e}")
