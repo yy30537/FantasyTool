@@ -18,7 +18,8 @@ from model import (
     Game, League, LeagueSettings, Team, Manager, Player, StatCategory,
     PlayerEligiblePosition, PlayerSeasonStats, PlayerDailyStats,
     TeamStatsWeekly, LeagueStandings, TeamMatchups,
-    RosterDaily, Transaction, TransactionPlayer, DateDimension
+    RosterDaily, Transaction, TransactionPlayer, DateDimension,
+    LeagueRosterPosition
 )
 
 class FantasyDatabaseWriter:
@@ -61,7 +62,8 @@ class FantasyDatabaseWriter:
             'transactions': 0,
             'transaction_players': 0,
             'league_settings': 0,
-            'date_dimension': 0
+            'date_dimension': 0,
+            'league_roster_positions': 0
         }
     
     def close(self):
@@ -315,6 +317,13 @@ class FantasyDatabaseWriter:
             if stat_categories:
                 categories_count = self.write_stat_categories(league_key, stat_categories)
                 print(f"✓ 提取并写入 {categories_count} 个统计类别定义")
+            
+            # 解析并写入 roster_positions
+            roster_positions_data = settings_info.get("roster_positions")
+            if roster_positions_data:
+                roster_count = self.write_league_roster_positions(league_key, roster_positions_data)
+                if roster_count > 0:
+                    print(f"✓ 写入 {roster_count} 个 roster_position 记录")
             
             return True
             
@@ -1853,17 +1862,18 @@ class FantasyDatabaseWriter:
             # 移除%符号
             if '%' in pct_str:
                 clean_value = pct_str.replace('%', '')
-                return self._safe_float(clean_value)
+                val = self._safe_float(clean_value)
+                return round(val, 3) if val is not None else None
             
             # 处理小数形式（如 .500 或 0.500）
             clean_value = self._safe_float(pct_str)
             if clean_value is not None:
                 # 如果是小数形式（0-1），转换为百分比（0-100）
                 if 0 <= clean_value <= 1:
-                    return clean_value * 100
+                    return round(clean_value * 100, 3)
                 # 如果已经是百分比形式（0-100），直接返回
                 elif 0 <= clean_value <= 100:
-                    return clean_value
+                    return round(clean_value, 3)
             
             return None
         except (ValueError, TypeError):
@@ -2086,4 +2096,54 @@ class FantasyDatabaseWriter:
             print(f"写入团队周统计失败 {team_key}: {e}")
             self.session.rollback()
             return False
+
+    # ===== 新增：写入联盟 roster_positions =====
+    def write_league_roster_positions(self, league_key: str, roster_positions_data) -> int:
+        """写入联盟 roster_positions 到新表"""
+        count = 0
+        try:
+            # 如果是字符串，尝试 json 解析
+            if isinstance(roster_positions_data, str):
+                import json
+                roster_positions_list = json.loads(roster_positions_data)
+            else:
+                roster_positions_list = roster_positions_data
+
+            if not isinstance(roster_positions_list, list):
+                return 0
+
+            # 先删除旧记录，保持同步
+            self.session.query(LeagueRosterPosition).filter_by(league_key=league_key).delete()
+
+            for rp_item in roster_positions_list:
+                # 每个 item 结构可能是 {"roster_position": {...}}
+                if isinstance(rp_item, dict) and "roster_position" in rp_item:
+                    rp_info = rp_item["roster_position"]
+                elif isinstance(rp_item, dict):
+                    rp_info = rp_item
+                else:
+                    continue
+
+                position = rp_info.get("position")
+                if not position:
+                    continue
+
+                lr = LeagueRosterPosition(
+                    league_key=league_key,
+                    position=position,
+                    position_type=rp_info.get("position_type"),
+                    count=self._safe_int(rp_info.get("count")) or 0,
+                    is_starting_position=self._safe_bool(rp_info.get("is_starting_position", False))
+                )
+                self.session.add(lr)
+                count += 1
+
+            if count > 0:
+                self.session.commit()
+                self.stats['league_roster_positions'] += count
+            return count
+        except Exception as e:
+            print(f"写入 roster_positions 失败: {e}")
+            self.session.rollback()
+            return 0
 

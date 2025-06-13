@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, Column, Integer, String, Boolean, DateTime, JSON, ForeignKey, Index, Date, text, Float, ForeignKeyConstraint
+from sqlalchemy import create_engine, Column, Integer, String, Boolean, DateTime, JSON, ForeignKey, Index, Date, text, Float, ForeignKeyConstraint, Numeric
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 from datetime import datetime
@@ -84,6 +84,7 @@ class League(Base):
     stat_categories = relationship("StatCategory", back_populates="league")
     league_standings = relationship("LeagueStandings", back_populates="league")
     team_matchups = relationship("TeamMatchups", back_populates="league")
+    roster_positions = relationship("LeagueRosterPosition", back_populates="league")
     
     # 索引
     __table_args__ = (
@@ -420,14 +421,14 @@ class PlayerDailyStats(Base):
     field_goals_attempted = Column(Integer) # 从 "9004003" 中提取的attempted部分
     
     # stat_id: 5 - Field Goal Percentage (FG%)
-    field_goal_percentage = Column(Float)   # stat_id=5
+    field_goal_percentage = Column(Numeric(6, 3))   # stat_id=5, 保留三位小数
     
     # stat_id: 9007006 - Free Throws Made / Attempted (FTM/A)
     free_throws_made = Column(Integer)      # 从 "9007006" 中提取的made部分
     free_throws_attempted = Column(Integer) # 从 "9007006" 中提取的attempted部分
     
     # stat_id: 8 - Free Throw Percentage (FT%)
-    free_throw_percentage = Column(Float)   # stat_id=8
+    free_throw_percentage = Column(Numeric(6, 3))   # stat_id=8, 保留三位小数
     
     # stat_id: 10 - 3-point Shots Made (3PTM)
     three_pointers_made = Column(Integer)   # stat_id=10
@@ -478,14 +479,14 @@ class PlayerSeasonStats(Base):
     field_goals_attempted = Column(Integer) # 从 "9004003" 中提取的attempted部分
     
     # stat_id: 5 - Field Goal Percentage (FG%)
-    field_goal_percentage = Column(Float)   # stat_id=5
+    field_goal_percentage = Column(Numeric(6, 3))   # stat_id=5
     
     # stat_id: 9007006 - Free Throws Made / Attempted (FTM/A)
     free_throws_made = Column(Integer)      # 从 "9007006" 中提取的made部分
     free_throws_attempted = Column(Integer) # 从 "9007006" 中提取的attempted部分
     
     # stat_id: 8 - Free Throw Percentage (FT%)
-    free_throw_percentage = Column(Float)   # stat_id=8
+    free_throw_percentage = Column(Numeric(6, 3))   # stat_id=8
     
     # stat_id: 10 - 3-point Shots Made (3PTM)
     three_pointers_made = Column(Integer)   # stat_id=10
@@ -540,14 +541,14 @@ class TeamStatsWeekly(Base):
     field_goals_attempted = Column(Integer) # 从 "9004003" 中提取的attempted部分
     
     # stat_id: 5 - Field Goal Percentage (FG%)
-    field_goal_percentage = Column(Float)   # stat_id=5
+    field_goal_percentage = Column(Numeric(6, 3))   # stat_id=5
     
     # stat_id: 9007006 - Free Throws Made / Attempted (FTM/A)
     free_throws_made = Column(Integer)      # 从 "9007006" 中提取的made部分
     free_throws_attempted = Column(Integer) # 从 "9007006" 中提取的attempted部分
     
     # stat_id: 8 - Free Throw Percentage (FT%)
-    free_throw_percentage = Column(Float)   # stat_id=8
+    free_throw_percentage = Column(Numeric(6, 3))   # stat_id=8
     
     # stat_id: 10 - 3-point Shots Made (3PTM)
     three_pointers_made = Column(Integer)   # stat_id=10
@@ -579,8 +580,6 @@ class TeamStatsWeekly(Base):
         Index('idx_team_stat_weekly_unique', 'team_key', 'season', 'week', unique=True),
         Index('idx_team_stat_weekly_league', 'league_key', 'season', 'week'),
     )
-
-
 
 class LeagueStandings(Base):
     """联盟排名表 - 存储联盟排名和团队总体表现"""
@@ -687,6 +686,26 @@ class TeamMatchups(Base):
         Index('idx_team_matchup_playoffs', 'is_playoffs', 'season'),
         Index('idx_team_matchup_winner', 'winner_team_key', 'week'),
         Index('idx_team_matchup_stats_reference', 'team_key', 'season', 'week'),  # 关联TeamStatsWeekly的索引
+    )
+
+class LeagueRosterPosition(Base):
+    """联盟阵容位置表（解析 league_settings.roster_positions）"""
+    __tablename__ = 'league_roster_positions'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    league_key = Column(String(50), ForeignKey('leagues.league_key'), nullable=False)
+    position = Column(String(20), nullable=False)
+    position_type = Column(String(10))
+    count = Column(Integer, default=0)
+    is_starting_position = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    league = relationship("League", back_populates="roster_positions")
+
+    __table_args__ = (
+        Index('idx_roster_position_league', 'league_key'),
+        Index('idx_roster_position_unique', 'league_key', 'position', unique=True),
     )
 
 # 数据库连接配置
