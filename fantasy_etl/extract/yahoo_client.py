@@ -9,7 +9,7 @@ import pickle
 import pathlib
 import requests
 from datetime import datetime
-from typing import Dict, Optional, Any
+from typing import Dict, Optional, Any, List
 from dotenv import load_dotenv
 import logging
 
@@ -294,4 +294,302 @@ class YahooFantasyClient:
         if format and not url.endswith(f"?format={format}"):
             separator = "&" if "?" in url else "?"
             url = f"{url}{separator}format={format}"
-        return url 
+        return url
+    
+    # ===== 业务API方法 =====
+    
+    def fetch_user_games(self) -> Optional[Dict[str, Any]]:
+        """获取用户的games数据"""
+        endpoint = "users;use_login=1/games"
+        return self.get(endpoint)
+    
+    def fetch_user_leagues(self, game_key: str) -> Optional[Dict[str, Any]]:
+        """获取指定game下用户的leagues数据"""
+        endpoint = f"users;use_login=1/games;game_keys={game_key}/leagues"
+        return self.get(endpoint)
+    
+    def fetch_league_info(self, league_key: str) -> Optional[Dict[str, Any]]:
+        """获取联盟基本信息"""
+        endpoint = f"league/{league_key}"
+        return self.get(endpoint)
+    
+    def fetch_league_settings(self, league_key: str) -> Optional[Dict[str, Any]]:
+        """获取联盟设置"""
+        endpoint = f"league/{league_key}/settings"
+        return self.get(endpoint)
+    
+    def fetch_league_standings(self, league_key: str) -> Optional[Dict[str, Any]]:
+        """获取联盟排名"""
+        endpoint = f"league/{league_key}/standings"
+        return self.get(endpoint)
+    
+    def fetch_league_teams(self, league_key: str) -> Optional[Dict[str, Any]]:
+        """获取联盟团队数据"""
+        endpoint = f"league/{league_key}/teams"
+        return self.get(endpoint)
+    
+    def fetch_league_players(self, league_key: str, start: int = 0, count: int = 25) -> Optional[Dict[str, Any]]:
+        """获取联盟球员数据"""
+        endpoint = f"league/{league_key}/players"
+        if start > 0:
+            endpoint += f";start={start}"
+        if count != 25:
+            endpoint += f";count={count}"
+        return self.get(endpoint)
+    
+    def fetch_league_transactions(self, league_key: str, start: int = 0, count: int = 25) -> Optional[Dict[str, Any]]:
+        """获取联盟交易数据"""
+        endpoint = f"league/{league_key}/transactions"
+        params = []
+        if start > 0:
+            params.append(f"start={start}")
+        if count != 25:
+            params.append(f"count={count}")
+        if params:
+            endpoint += f";{';'.join(params)}"
+        return self.get(endpoint)
+    
+    def fetch_team_roster(self, team_key: str, date_str: Optional[str] = None) -> Optional[Dict[str, Any]]:
+        """获取团队阵容"""
+        endpoint = f"team/{team_key}/roster"
+        if date_str:
+            endpoint += f";date={date_str}"
+        return self.get(endpoint)
+    
+    def fetch_team_matchups(self, team_key: str) -> Optional[Dict[str, Any]]:
+        """获取团队对战数据"""
+        endpoint = f"team/{team_key}/matchups"
+        return self.get(endpoint)
+    
+    def fetch_player_season_stats(self, league_key: str, player_keys: List[str]) -> Optional[Dict[str, Any]]:
+        """获取球员赛季统计"""
+        player_keys_str = ",".join(player_keys)
+        endpoint = f"league/{league_key}/players;player_keys={player_keys_str}/stats;type=season"
+        return self.get(endpoint)
+    
+    def fetch_player_daily_stats(self, league_key: str, player_keys: List[str], date_str: str) -> Optional[Dict[str, Any]]:
+        """获取球员日统计"""
+        player_keys_str = ",".join(player_keys)
+        endpoint = f"league/{league_key}/players;player_keys={player_keys_str}/stats;type=date;date={date_str}"
+        return self.get(endpoint) 
+
+# ===== 工具函数 =====
+
+def parse_yahoo_date(date_str: str) -> Optional[datetime]:
+    """解析Yahoo日期格式"""
+    if not date_str:
+        return None
+    try:
+        return datetime.strptime(date_str, "%Y-%m-%d")
+    except Exception:
+        return None
+
+
+def format_league_selection_info(leagues_data: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """格式化联盟信息用于选择界面
+    
+    Args:
+        leagues_data: 按game_key分组的联盟数据
+        
+    Returns:
+        格式化后的联盟列表，每个联盟包含选择所需的信息
+    """
+    all_leagues = []
+    league_counter = 1
+    
+    for game_key, leagues in leagues_data.items():
+        for league in leagues:
+            league_info = {
+                'index': league_counter,
+                'league_key': league.get('league_key'),
+                'name': league.get('name', '未知联盟'),
+                'season': league.get('season', '未知赛季'),
+                'num_teams': league.get('num_teams', 0),
+                'game_code': league.get('game_code', '未知运动'),
+                'scoring_type': league.get('scoring_type', '未知'),
+                'is_finished': league.get('is_finished', 0) == 1,
+                'draft_status': league.get('draft_status', '未知'),
+                'league_type': league.get('league_type', '未知')
+            }
+            all_leagues.append(league_info)
+            league_counter += 1
+    
+    return all_leagues
+
+
+def print_league_selection_info(leagues_data: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """打印联盟选择信息到控制台
+    
+    Args:
+        leagues_data: 按game_key分组的联盟数据
+        
+    Returns:
+        格式化后的联盟列表
+    """
+    print("\n" + "="*80)
+    print("可选择的Fantasy联盟")
+    print("="*80)
+    
+    all_leagues = format_league_selection_info(leagues_data)
+    
+    if not all_leagues:
+        print("没有找到任何联盟")
+        return []
+    
+    for league_info in all_leagues:
+        # 打印联盟信息
+        status = "已结束" if league_info['is_finished'] else "进行中"
+        print(f"{league_info['index']:2d}. {league_info['name']}")
+        print(f"    联盟ID: {league_info['league_key']}")
+        print(f"    运动类型: {league_info['game_code'].upper()} | 赛季: {league_info['season']} | 状态: {status}")
+        print(f"    球队数量: {league_info['num_teams']} | 计分方式: {league_info['scoring_type']}")
+        print(f"    选秀状态: {league_info['draft_status']} | 联盟类型: {league_info['league_type']}")
+        print()
+    
+    print("="*80)
+    return all_leagues
+
+
+def select_league_interactively(leagues_data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    """交互式选择联盟
+    
+    Args:
+        leagues_data: 按game_key分组的联盟数据
+        
+    Returns:
+        选中的联盟信息，如果取消选择则返回None
+    """
+    all_leagues = print_league_selection_info(leagues_data)
+    
+    if not all_leagues:
+        print("没有找到任何联盟")
+        return None
+    
+    while True:
+        try:
+            choice = input(f"请选择联盟 (1-{len(all_leagues)}, 输入 'q' 退出): ").strip()
+            
+            if choice.lower() == 'q':
+                print("取消选择")
+                return None
+            
+            if not choice:
+                continue
+                
+            choice_num = int(choice)
+            
+            if 1 <= choice_num <= len(all_leagues):
+                selected_league = all_leagues[choice_num - 1]
+                print(f"\n✓ 已选择联盟: {selected_league['name']} ({selected_league['league_key']})")
+                return selected_league
+            else:
+                print(f"请输入1到{len(all_leagues)}之间的数字")
+                
+        except ValueError:
+            print("请输入有效的数字或 'q' 退出")
+        except KeyboardInterrupt:
+            print("\n用户取消选择")
+            return None
+
+
+def extract_game_keys_from_data(games_data: Dict[str, Any]) -> List[str]:
+    """从games数据中提取游戏键（只包含type='full'的游戏）
+    
+    Args:
+        games_data: Yahoo API返回的games数据
+        
+    Returns:
+        游戏键列表
+    """
+    game_keys = []
+    
+    try:
+        fantasy_content = games_data["fantasy_content"]
+        user_data = fantasy_content["users"]["0"]["user"]
+        games_container = user_data[1]["games"]
+        games_count = int(games_container.get("count", 0))
+        
+        for i in range(games_count):
+            str_index = str(i)
+            if str_index not in games_container:
+                continue
+                
+            game_container = games_container[str_index]
+            game_data = game_container["game"]
+            
+            if isinstance(game_data, list) and len(game_data) > 0:
+                game_info = game_data[0]
+                game_key = game_info.get("game_key")
+                game_type = game_info.get("type")
+                
+                if game_key and game_type == "full":
+                    game_keys.append(game_key)
+        
+    except Exception as e:
+        logger.error(f"提取游戏键失败: {str(e)}")
+    
+    return game_keys
+
+
+def extract_leagues_from_api_data(api_data: Dict[str, Any], game_key: str) -> List[Dict[str, Any]]:
+    """从API返回的数据中提取联盟信息
+    
+    Args:
+        api_data: Yahoo API返回的leagues数据
+        game_key: 游戏键
+        
+    Returns:
+        联盟信息列表
+    """
+    leagues = []
+    
+    try:
+        if "error" in api_data:
+            return leagues
+        
+        fantasy_content = api_data["fantasy_content"]
+        user_data = fantasy_content["users"]["0"]["user"]
+        games_container = user_data[1]["games"]
+        
+        for i in range(int(games_container.get("count", 0))):
+            str_index = str(i)
+            if str_index not in games_container:
+                continue
+            
+            game_container = games_container[str_index]
+            game_data = game_container["game"]
+            
+            current_game_key = None
+            if isinstance(game_data, list) and len(game_data) > 0:
+                current_game_key = game_data[0].get("game_key")
+            
+            if current_game_key != game_key:
+                continue
+            
+            if len(game_data) > 1 and "leagues" in game_data[1]:
+                leagues_container = game_data[1]["leagues"]
+                leagues_count = int(leagues_container.get("count", 0))
+                
+                for j in range(leagues_count):
+                    str_league_index = str(j)
+                    if str_league_index not in leagues_container:
+                        continue
+                    
+                    league_container = leagues_container[str_league_index]
+                    league_data = league_container["league"]
+                    
+                    league_info = {}
+                    if isinstance(league_data, list):
+                        for item in league_data:
+                            if isinstance(item, dict):
+                                league_info.update(item)
+                    
+                    # 确保联盟信息包含game_key
+                    league_info["game_key"] = game_key
+                    leagues.append(league_info)
+            break
+    
+    except Exception as e:
+        logger.error(f"提取联盟信息失败: {str(e)}")
+    
+    return leagues
