@@ -16,7 +16,7 @@ from .extract.yahoo_client import (
     extract_game_keys_from_data,
     extract_leagues_from_api_data
 )
-from .auth.oauth_helper import OAuthHelper
+from .auth.OAuthHelper import OAuthHelper
 
 # 配置日志
 logging.basicConfig(
