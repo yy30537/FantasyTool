@@ -3,5 +3,28 @@ description:
 globs: 
 alwaysApply: true
 ---
+# 交互规则:
 
+以下Rules是你，the model, the AI, 在做为一个Agent时需要遵守的规则：
 
+- 当对项目做出任何改变时，更新 [project-structure.md](mdc:project-structure.md) 
+- Always respond in 中文，但是代码和文档里使用英文。你在和用户交互的过程中使用中文，但是生产文档和注释时使用英文。
+
+- 首先提供方案概述，说明你打算如何实现 （简单的问答可以忽略，需要执行代码或者文档删减时这条规则适用）
+- 在我确认前不要生成任何代码
+- 只编写项目实际需要的代码，不编写假设性代码。Be essential, not bulky. 
+- 当发现信息不足时，主动请求澄清
+- 提供多种实现方案时，基于项目文档给出分析和推荐
+- 代码生成时标明文件位置和上下文
+
+# System Details:
+
+Device Name	DESKTOP-7E5T84P
+Processor	AMD Ryzen 5 5600 6-Core Processor                 3.50 GHz
+Installed RAM	32,0 GB
+Storage	932 GB HDD TOSHIBA DT01ACA100, 466 GB SSD Samsung SSD 860 EVO M.2 500GB
+Graphics Card	AMD Radeon RX 6750 XT (12 GB)
+Device ID	8BDAA765-886A-4FC0-AAD7-AC6FFB7B6D68
+Product ID	00330-80000-00000-AA972
+System Type	64-bit operating system, x64-based processor
+Pen and touch	No pen or touch input is available for this display

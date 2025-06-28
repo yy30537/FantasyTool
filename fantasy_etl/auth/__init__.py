@@ -1,30 +1,42 @@
 """
-认证模块 (Auth Module)
-===================
+Fantasy ETL Authentication Module
+================================
 
-迁移设计说明：
-- 从 scripts/yahoo_api_utils.py 和 scripts/app.py 迁移认证相关功能
-- 统一管理Yahoo OAuth认证流程
-- 保持与现有脚本的兼容性
+提供Yahoo Fantasy API的OAuth2.0认证管理功能
 
-模块组织：
-- oauth_manager.py: 核心OAuth管理功能
-- token_storage.py: 令牌存储管理
-- web_auth_server.py: Web授权服务器
+主要组件：
+- OAuthManager: OAuth认证管理器
+- TokenStorage: 令牌存储管理器
+- WebAuthServer: Web授权服务器
 
-向后兼容性：
-- 保留scripts/yahoo_api_utils.py中的所有公共函数接口
-- 保留scripts/app.py中的Flask OAuth流程
+使用示例：
+```python
+from fantasy_etl.auth import OAuthManager, TokenStorage, WebAuthServer
+
+# OAuth管理
+oauth_manager = OAuthManager()
+token = oauth_manager.load_token()
+
+# 令牌存储
+token_storage = TokenStorage()
+token_storage.save_token(token)
+
+# Web授权服务器
+server = WebAuthServer()
+server.start()
+```
 """
 
-# 主要认证组件导入
-# 迁移完成后将启用以下导入
-# from .oauth_manager import OAuthManager
-# from .token_storage import TokenStorage
-# from .web_auth_server import WebAuthServer
+from .oauth_manager import OAuthManager, MultiUserOAuthManager, OAuthTokenCache
+from .token_storage import TokenStorage, TokenStorageInterface, FileTokenStorage
+from .web_auth_server import WebAuthServer
 
-# TODO: 迁移阶段 - 保持对旧脚本的引用
-# 确保ETL系统可以无缝切换到新的认证模块
-
-__version__ = "1.0.0"
-__author__ = "Fantasy ETL Team" 
+__all__ = [
+    'OAuthManager',
+    'MultiUserOAuthManager', 
+    'OAuthTokenCache',
+    'TokenStorage',
+    'TokenStorageInterface',
+    'FileTokenStorage',
+    'WebAuthServer'
+] 

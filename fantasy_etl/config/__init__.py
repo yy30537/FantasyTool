@@ -1,31 +1,56 @@
 """
-配置模块 (Configuration Module)
-=============================
+Fantasy ETL Configuration Module
+==============================
 
-迁移设计说明：
-- 从 scripts/model.py, scripts/yahoo_api_utils.py 迁移配置相关功能
-- 统一管理所有配置项和环境变量
-- 提供配置验证和默认值管理
+提供统一的配置管理接口，整合了API、数据库和应用配置
 
-模块组织：
-- settings.py: 主配置管理
-- database_config.py: 数据库连接配置
-- api_config.py: API和OAuth配置
+主要组件：
+- APIConfig: Yahoo Fantasy API配置管理
+- DatabaseConfig: PostgreSQL数据库配置管理  
+- Settings: 统一配置管理器
 
-向后兼容性：
-- 保留所有现有环境变量
-- 保留所有现有配置路径
-- 支持gradual migration
+使用示例：
+```python
+from fantasy_etl.config import Settings, APIConfig, DatabaseConfig
+
+# 使用统一配置
+settings = Settings()
+print(settings.get_summary())
+
+# 或使用独立配置
+api_config = APIConfig()
+db_config = DatabaseConfig()
+```
 """
 
-# 主要配置组件导入
-# 迁移完成后将启用以下导入
-# from .settings import Settings
-# from .database_config import DatabaseConfig
-# from .api_config import APIConfig
+# 导入配置类
+from .api_config import APIConfig, OAuthConfig, EndpointManager
+from .settings import Settings, PathConfig, WebConfig, ETLConfig, LoggingConfig
 
-# TODO: 迁移阶段 - 保持对旧脚本的配置引用
-# 确保ETL系统可以无缝切换到新的配置管理
+# 可选导入database_config，如果SQLAlchemy未安装则跳过
+try:
+    from .database_config import DatabaseConfig, ConnectionManager, DatabaseMigrator
+    HAS_DATABASE_CONFIG = True
+except ImportError:
+    # 创建占位符类
+    class DatabaseConfig:
+        def __init__(self):
+            raise ImportError("数据库配置需要安装SQLAlchemy: pip install sqlalchemy psycopg2-binary")
+    
+    ConnectionManager = DatabaseMigrator = DatabaseConfig
+    HAS_DATABASE_CONFIG = False
 
-__version__ = "1.0.0"
-__author__ = "Fantasy ETL Team" 
+__all__ = [
+    'Settings',
+    'APIConfig',
+    'DatabaseConfig',
+    'OAuthConfig',
+    'EndpointManager',
+    'PathConfig',
+    'WebConfig', 
+    'ETLConfig',
+    'LoggingConfig',
+    'ConnectionManager',
+    'DatabaseMigrator',
+    'HAS_DATABASE_CONFIG'
+] 
