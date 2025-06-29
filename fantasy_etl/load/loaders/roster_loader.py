@@ -60,3 +60,145 @@
 #
 # 输入: 标准化的阵容数据 (Dict或List[Dict])
 # 输出: 阵容数据加载结果和统计信息 
+
+"""
+Roster Data Loader - Handles daily roster information
+"""
+
+from typing import Dict, List, Optional, Any
+from datetime import datetime, date
+
+from .base_loader import BaseLoader, LoadResult
+from ..database.models import RosterDaily
+
+
+class RosterDailyLoader(BaseLoader):
+    """Loader for daily roster information"""
+    
+    def _validate_record(self, record: Dict[str, Any]) -> bool:
+        """Validate roster record"""
+        required_fields = ['team_key', 'player_key', 'league_key', 'date', 'season']
+        return all(field in record and record[field] is not None for field in required_fields)
+    
+    def _create_model_instance(self, record: Dict[str, Any]) -> RosterDaily:
+        """Create RosterDaily model instance"""
+        return RosterDaily(
+            team_key=record['team_key'],
+            player_key=record['player_key'],
+            league_key=record['league_key'],
+            date=record['date'],
+            season=record['season'],
+            week=self._safe_int(record.get('week')),
+            selected_position=record.get('selected_position'),
+            is_starting=self._safe_bool(record.get('is_starting', False)),
+            is_bench=self._safe_bool(record.get('is_bench', False)),
+            is_injured_reserve=self._safe_bool(record.get('is_injured_reserve', False)),
+            player_status=record.get('player_status'),
+            status_full=record.get('status_full'),
+            injury_note=record.get('injury_note'),
+            is_keeper=self._safe_bool(record.get('is_keeper', False)),
+            keeper_cost=record.get('keeper_cost'),
+            is_prescoring=self._safe_bool(record.get('is_prescoring', False)),
+            is_editable=self._safe_bool(record.get('is_editable', False))
+        )
+    
+    def _get_unique_key(self, record: Dict[str, Any]) -> str:
+        """Get unique identifier for roster record"""
+        date_str = record['date'].strftime('%Y-%m-%d') if isinstance(record['date'], date) else str(record['date'])
+        return f"{record['team_key']}_{record['player_key']}_{date_str}"
+    
+    def _preprocess_record(self, record: Dict[str, Any]) -> Dict[str, Any]:
+        """Preprocess roster record"""
+        # Handle date field
+        if 'date' in record and record['date']:
+            if isinstance(record['date'], str):
+                try:
+                    record['date'] = datetime.strptime(record['date'], '%Y-%m-%d').date()
+                except ValueError:
+                    print(f"Invalid date format: {record['date']}")
+                    return record
+        
+        # Handle boolean fields
+        bool_fields = ['is_starting', 'is_bench', 'is_injured_reserve', 
+                      'is_keeper', 'is_prescoring', 'is_editable']
+        
+        for field in bool_fields:
+            if field in record:
+                record[field] = self._safe_bool(record[field])
+        
+        # Handle integer fields
+        if 'week' in record:
+            record['week'] = self._safe_int(record['week'])
+        
+        # Determine position-based booleans if not explicitly set
+        if 'selected_position' in record:
+            selected_pos = record['selected_position']
+            if selected_pos:
+                if 'is_starting' not in record:
+                    record['is_starting'] = selected_pos not in ['BN', 'IL', 'IR']
+                if 'is_bench' not in record:
+                    record['is_bench'] = selected_pos == 'BN'
+                if 'is_injured_reserve' not in record:
+                    record['is_injured_reserve'] = selected_pos in ['IL', 'IR']
+        
+        return record
+
+
+class CompleteRosterLoader:
+    """Complete roster data loader that handles daily roster information"""
+    
+    def __init__(self, connection_manager, batch_size: int = 100):
+        self.connection_manager = connection_manager
+        self.batch_size = batch_size
+        
+        # Initialize sub-loader
+        self.roster_loader = RosterDailyLoader(connection_manager, batch_size)
+    
+    def load_roster_data(self, roster_data: List[Dict[str, Any]]) -> LoadResult:
+        """Load roster data for a specific date"""
+        return self.roster_loader.load(roster_data)
+    
+    def load_team_roster_for_date(self, team_key: str, league_key: str, 
+                                 roster_date: date, season: str,
+                                 roster_entries: List[Dict[str, Any]]) -> LoadResult:
+        """Load complete roster for a team on a specific date"""
+        processed_entries = []
+        
+        for entry in roster_entries:
+            processed_entry = entry.copy()
+            processed_entry.update({
+                'team_key': team_key,
+                'league_key': league_key,
+                'date': roster_date,
+                'season': season
+            })
+            processed_entries.append(processed_entry)
+        
+        return self.roster_loader.load(processed_entries)
+    
+    def load_multi_team_roster_for_date(self, roster_data_by_team: Dict[str, List[Dict[str, Any]]], 
+                                       league_key: str, roster_date: date, 
+                                       season: str) -> LoadResult:
+        """Load roster data for multiple teams on a specific date"""
+        total_result = LoadResult()
+        
+        for team_key, roster_entries in roster_data_by_team.items():
+            team_result = self.load_team_roster_for_date(
+                team_key, league_key, roster_date, season, roster_entries
+            )
+            total_result.combine(team_result)
+        
+        return total_result
+    
+    def load_date_range_roster(self, team_key: str, league_key: str, 
+                              season: str, roster_data_by_date: Dict[date, List[Dict[str, Any]]]) -> LoadResult:
+        """Load roster data for a team across multiple dates"""
+        total_result = LoadResult()
+        
+        for roster_date, roster_entries in roster_data_by_date.items():
+            date_result = self.load_team_roster_for_date(
+                team_key, league_key, roster_date, season, roster_entries
+            )
+            total_result.combine(date_result)
+        
+        return total_result 

@@ -1,52 +1,175 @@
-# 团队数据加载器
-#
-# 迁移来源: @database_writer.py 中的团队相关写入逻辑
-# 主要映射:
-#   - write_teams_batch() -> TeamLoader.load_teams()
-#   - Team和Manager模型写入逻辑 -> 团队数据加载功能
-#   - _write_teams_to_db() -> 批量团队处理逻辑
-#
-# 职责:
-#   - 团队数据加载：
-#     * Team模型数据写入：team_key、name、league_key等
-#     * 团队基本信息：url、team_logo_url、division_id等
-#     * 团队状态信息：waiver_priority、number_of_moves等
-#     * 团队成就标记：clinched_playoffs、has_draft_grade等
-#   - 管理员数据加载：
-#     * Manager模型数据写入：manager_id、team_key、nickname等
-#     * 管理员角色信息：is_commissioner、email等
-#     * 管理员元数据：guid、image_url、felo_score等
-#     * 团队-管理员关系：一对多关系维护
-#   - 数据验证和清洗：
-#     * 必需字段验证：team_key、team_id、name、league_key
-#     * 布尔值标准化：clinched_playoffs、has_draft_grade等
-#     * 数值字段处理：number_of_moves、number_of_trades等
-#     * Logo URL验证：team_logo_url格式检查
-#   - 关联数据处理：
-#     * 外键约束：league_key到League表的引用
-#     * 管理员关联：team_key到Team表的引用
-#     * 数据完整性：团队-管理员关系的一致性
-#   - 去重和冲突处理：
-#     * 团队主键冲突：team_key唯一性检查
-#     * 管理员冲突处理：manager_id + team_key的唯一性
-#     * 更新vs插入：已存在团队和管理员的处理
-#   - 批量处理优化：
-#     * 团队批量插入：高效的多团队写入
-#     * 管理员批量处理：团队关联的管理员数据
-#     * 分层提交：先团队后管理员的依赖处理
-#     * 错误隔离：单个团队失败不影响整批
-#   - 业务规则验证：
-#     * 团队数量限制：联盟team数量的合理性检查
-#     * 管理员数量：每个团队管理员数量的验证
-#     * 专员唯一性：每个联盟只能有一个专员
-#   - 嵌套数据处理：
-#     * roster_adds信息：coverage_value、value字段解析
-#     * managers数组：管理员信息的批量处理
-#     * team_logos数组：Logo信息的提取和验证
-#   - 统计和报告：
-#     * 处理统计：新增团队数量、管理员数量
-#     * 团队分布：各联盟的团队统计
-#     * 加载性能：批量处理的效率指标
-#
-# 输入: 标准化的团队数据列表 (List[Dict])，包含managers信息
-# 输出: 团队和管理员数据加载结果和统计信息 
+"""
+Team Data Loader - Handles teams and managers
+"""
+
+from typing import Dict, List, Optional, Any
+from datetime import datetime
+
+from .base_loader import BaseLoader, LoadResult
+from ..database.models import Team, Manager
+
+
+class TeamLoader(BaseLoader):
+    """Loader for team information"""
+    
+    def _validate_record(self, record: Dict[str, Any]) -> bool:
+        """Validate team record"""
+        required_fields = ['team_key', 'team_id', 'league_key', 'name']
+        return all(field in record and record[field] for field in required_fields)
+    
+    def _create_model_instance(self, record: Dict[str, Any]) -> Team:
+        """Create Team model instance"""
+        return Team(
+            team_key=record['team_key'],
+            team_id=record['team_id'],
+            league_key=record['league_key'],
+            name=record['name'],
+            url=record.get('url'),
+            team_logo_url=record.get('team_logo_url'),
+            division_id=record.get('division_id'),
+            waiver_priority=self._safe_int(record.get('waiver_priority')),
+            faab_balance=record.get('faab_balance'),
+            number_of_moves=self._safe_int(record.get('number_of_moves', 0)),
+            number_of_trades=self._safe_int(record.get('number_of_trades', 0)),
+            roster_adds_week=str(record.get('roster_adds_week', '')),
+            roster_adds_value=record.get('roster_adds_value'),
+            clinched_playoffs=self._safe_bool(record.get('clinched_playoffs', False)),
+            has_draft_grade=self._safe_bool(record.get('has_draft_grade', False))
+        )
+    
+    def _get_unique_key(self, record: Dict[str, Any]) -> str:
+        """Get unique identifier for team"""
+        return record['team_key']
+    
+    def _preprocess_record(self, record: Dict[str, Any]) -> Dict[str, Any]:
+        """Preprocess team record"""
+        # Handle boolean fields that might come as strings or integers
+        bool_fields = ['clinched_playoffs', 'has_draft_grade']
+        
+        for field in bool_fields:
+            if field in record:
+                record[field] = self._safe_bool(record[field])
+        
+        # Handle integer fields
+        int_fields = ['waiver_priority', 'number_of_moves', 'number_of_trades']
+        
+        for field in int_fields:
+            if field in record:
+                record[field] = self._safe_int(record[field])
+        
+        # Ensure roster_adds_week is string
+        if 'roster_adds_week' in record:
+            record['roster_adds_week'] = str(record['roster_adds_week'])
+        
+        return record
+
+
+class ManagerLoader(BaseLoader):
+    """Loader for manager information"""
+    
+    def _validate_record(self, record: Dict[str, Any]) -> bool:
+        """Validate manager record"""
+        required_fields = ['manager_id', 'team_key', 'nickname', 'guid']
+        return all(field in record and record[field] for field in required_fields)
+    
+    def _create_model_instance(self, record: Dict[str, Any]) -> Manager:
+        """Create Manager model instance"""
+        return Manager(
+            manager_id=record['manager_id'],
+            team_key=record['team_key'],
+            nickname=record['nickname'],
+            guid=record['guid'],
+            is_commissioner=self._safe_bool(record.get('is_commissioner', False)),
+            email=record.get('email'),
+            image_url=record.get('image_url'),
+            felo_score=record.get('felo_score'),
+            felo_tier=record.get('felo_tier')
+        )
+    
+    def _get_unique_key(self, record: Dict[str, Any]) -> str:
+        """Get unique identifier for manager"""
+        return f"{record['manager_id']}_{record['team_key']}"
+    
+    def _preprocess_record(self, record: Dict[str, Any]) -> Dict[str, Any]:
+        """Preprocess manager record"""
+        # Handle boolean fields
+        if 'is_commissioner' in record:
+            record['is_commissioner'] = self._safe_bool(record['is_commissioner'])
+        
+        return record
+
+
+class CompleteTeamLoader:
+    """Complete team data loader that handles teams and their managers"""
+    
+    def __init__(self, connection_manager, batch_size: int = 100):
+        self.connection_manager = connection_manager
+        self.batch_size = batch_size
+        
+        # Initialize sub-loaders
+        self.team_loader = TeamLoader(connection_manager, batch_size)
+        self.manager_loader = ManagerLoader(connection_manager, batch_size)
+    
+    def load_team_data(self, team_data: Dict[str, Any]) -> LoadResult:
+        """Load complete team data including managers"""
+        total_result = LoadResult()
+        
+        # Load basic team info
+        team_result = self.team_loader.load([team_data])
+        total_result.combine(team_result)
+        
+        # Load managers if present
+        if 'managers' in team_data:
+            managers = self._extract_managers(team_data['team_key'], team_data['managers'])
+            if managers:
+                manager_result = self.manager_loader.load(managers)
+                total_result.combine(manager_result)
+        
+        return total_result
+    
+    def load_teams_batch(self, teams_data: List[Dict[str, Any]]) -> LoadResult:
+        """Load multiple teams with their managers"""
+        total_result = LoadResult()
+        
+        for team_data in teams_data:
+            team_result = self.load_team_data(team_data)
+            total_result.combine(team_result)
+        
+        return total_result
+    
+    def _extract_managers(self, team_key: str, managers_data: List[Any]) -> List[Dict[str, Any]]:
+        """Extract managers from team data"""
+        managers = []
+        
+        try:
+            for manager_data in managers_data:
+                # Handle nested structure - managers might be wrapped in 'manager' key
+                if isinstance(manager_data, dict):
+                    if 'manager' in manager_data:
+                        manager_info = manager_data['manager']
+                    else:
+                        manager_info = manager_data
+                else:
+                    continue
+                
+                if not manager_info.get('manager_id'):
+                    continue
+                
+                manager_record = {
+                    'manager_id': manager_info['manager_id'],
+                    'team_key': team_key,
+                    'nickname': manager_info.get('nickname', ''),
+                    'guid': manager_info.get('guid', ''),
+                    'is_commissioner': manager_info.get('is_commissioner', False),
+                    'email': manager_info.get('email'),
+                    'image_url': manager_info.get('image_url'),
+                    'felo_score': manager_info.get('felo_score'),
+                    'felo_tier': manager_info.get('felo_tier')
+                }
+                
+                managers.append(manager_record)
+        
+        except Exception as e:
+            print(f"Error extracting managers for team {team_key}: {e}")
+        
+        return managers 

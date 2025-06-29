@@ -58,3 +58,218 @@
 #
 # 输入: 标准化的排名数据 (Dict或List[Dict])
 # 输出: 排名数据加载结果和统计信息 
+
+"""
+Standings Data Loader - Handles league standings information
+"""
+
+from typing import Dict, List, Optional, Any
+from datetime import datetime
+
+from .base_loader import BaseLoader, LoadResult
+from ..database.models import LeagueStandings
+
+
+class LeagueStandingsLoader(BaseLoader):
+    """Loader for league standings information"""
+    
+    def _validate_record(self, record: Dict[str, Any]) -> bool:
+        """Validate league standings record"""
+        required_fields = ['league_key', 'team_key', 'season', 'rank']
+        return all(field in record and record[field] is not None for field in required_fields)
+    
+    def _create_model_instance(self, record: Dict[str, Any]) -> LeagueStandings:
+        """Create LeagueStandings model instance"""
+        return LeagueStandings(
+            league_key=record['league_key'],
+            team_key=record['team_key'],
+            season=record['season'],
+            rank=record['rank'],
+            playoff_seed=record.get('playoff_seed'),
+            wins=self._safe_int(record.get('wins', 0)),
+            losses=self._safe_int(record.get('losses', 0)),
+            ties=self._safe_int(record.get('ties', 0)),
+            win_percentage=self._safe_float(record.get('win_percentage')),
+            games_back=record.get('games_back', '-'),
+            divisional_wins=self._safe_int(record.get('divisional_wins', 0)),
+            divisional_losses=self._safe_int(record.get('divisional_losses', 0)),
+            divisional_ties=self._safe_int(record.get('divisional_ties', 0))
+        )
+    
+    def _get_unique_key(self, record: Dict[str, Any]) -> str:
+        """Get unique identifier for league standings record"""
+        return f"{record['league_key']}_{record['team_key']}_{record['season']}"
+    
+    def _preprocess_record(self, record: Dict[str, Any]) -> Dict[str, Any]:
+        """Preprocess league standings record"""
+        # Handle integer fields
+        int_fields = ['rank', 'wins', 'losses', 'ties', 'divisional_wins', 'divisional_losses', 'divisional_ties']
+        for field in int_fields:
+            if field in record:
+                record[field] = self._safe_int(record[field])
+        
+        # Handle float fields
+        if 'win_percentage' in record:
+            record['win_percentage'] = self._safe_float(record['win_percentage'])
+        
+        # Handle games_back - ensure it's a string
+        if 'games_back' in record:
+            record['games_back'] = str(record['games_back']) if record['games_back'] is not None else '-'
+        
+        # Extract standings data from team_standings if present
+        if 'team_standings' in record:
+            standings_data = record['team_standings']
+            extracted_data = self._extract_standings_data(standings_data)
+            record.update(extracted_data)
+        
+        return record
+    
+    def _extract_standings_data(self, team_standings: Dict[str, Any]) -> Dict[str, Any]:
+        """Extract standings data from Yahoo API team_standings format"""
+        extracted = {}
+        
+        try:
+            if isinstance(team_standings, dict):
+                # Extract basic standings info
+                extracted['rank'] = self._safe_int(team_standings.get('rank'))
+                extracted['playoff_seed'] = team_standings.get('playoff_seed')
+                extracted['games_back'] = team_standings.get('games_back', '-')
+                
+                # Extract outcome totals (wins/losses/ties)
+                outcome_totals = team_standings.get('outcome_totals', {})
+                if isinstance(outcome_totals, dict):
+                    extracted['wins'] = self._safe_int(outcome_totals.get('wins', 0))
+                    extracted['losses'] = self._safe_int(outcome_totals.get('losses', 0))
+                    extracted['ties'] = self._safe_int(outcome_totals.get('ties', 0))
+                    extracted['win_percentage'] = self._safe_float(outcome_totals.get('percentage'))
+                
+                # Extract divisional outcome totals
+                divisional_totals = team_standings.get('divisional_outcome_totals', {})
+                if isinstance(divisional_totals, dict):
+                    extracted['divisional_wins'] = self._safe_int(divisional_totals.get('wins', 0))
+                    extracted['divisional_losses'] = self._safe_int(divisional_totals.get('losses', 0))
+                    extracted['divisional_ties'] = self._safe_int(divisional_totals.get('ties', 0))
+        
+        except Exception as e:
+            print(f"Error extracting standings data: {e}")
+        
+        return extracted
+
+
+class CompleteStandingsLoader:
+    """Complete standings data loader that handles league standings"""
+    
+    def __init__(self, connection_manager, batch_size: int = 100):
+        self.connection_manager = connection_manager
+        self.batch_size = batch_size
+        
+        # Initialize sub-loader
+        self.standings_loader = LeagueStandingsLoader(connection_manager, batch_size)
+    
+    def load_standings_data(self, standings_data: List[Dict[str, Any]]) -> LoadResult:
+        """Load league standings data"""
+        return self.standings_loader.load(standings_data)
+    
+    def load_league_standings_from_api(self, league_key: str, season: str, 
+                                      standings_api_data: Dict[str, Any]) -> LoadResult:
+        """Load league standings from Yahoo API standings response"""
+        processed_standings = []
+        
+        try:
+            # Extract teams from the API response
+            fantasy_content = standings_api_data.get("fantasy_content", {})
+            league_data = fantasy_content.get("league", [])
+            
+            # Find standings container
+            standings_container = None
+            if isinstance(league_data, list):
+                for item in league_data:
+                    if isinstance(item, dict) and "standings" in item:
+                        standings_container = item["standings"]
+                        break
+            elif isinstance(league_data, dict) and "standings" in league_data:
+                standings_container = league_data["standings"]
+            
+            if not standings_container:
+                print("No standings container found in API data")
+                return LoadResult()
+            
+            # Find teams container within standings
+            teams_container = None
+            if isinstance(standings_container, list):
+                for item in standings_container:
+                    if isinstance(item, dict) and "teams" in item:
+                        teams_container = item["teams"]
+                        break
+            elif isinstance(standings_container, dict) and "teams" in standings_container:
+                teams_container = standings_container["teams"]
+            
+            if not teams_container:
+                print("No teams container found in standings data")
+                return LoadResult()
+            
+            teams_count = int(teams_container.get("count", 0))
+            
+            for i in range(teams_count):
+                str_index = str(i)
+                if str_index not in teams_container:
+                    continue
+                
+                team_container = teams_container[str_index]
+                if "team" not in team_container:
+                    continue
+                
+                team_data = team_container["team"]
+                
+                # Extract team information and standings
+                team_info = self._extract_team_standings_info(team_data)
+                if team_info:
+                    team_info.update({
+                        'league_key': league_key,
+                        'season': season
+                    })
+                    processed_standings.append(team_info)
+        
+        except Exception as e:
+            print(f"Error processing league standings API data: {e}")
+        
+        return self.standings_loader.load(processed_standings)
+    
+    def _extract_team_standings_info(self, team_data: Any) -> Optional[Dict[str, Any]]:
+        """Extract team standings information from complex nested team data"""
+        try:
+            team_key = None
+            team_standings = None
+            
+            # Recursively extract team_key and team_standings
+            def extract_from_data(data, target_key):
+                if isinstance(data, dict):
+                    if target_key in data:
+                        return data[target_key]
+                    for value in data.values():
+                        result = extract_from_data(value, target_key)
+                        if result is not None:
+                            return result
+                elif isinstance(data, list):
+                    for item in data:
+                        result = extract_from_data(item, target_key)
+                        if result is not None:
+                            return result
+                return None
+            
+            team_key = extract_from_data(team_data, "team_key")
+            team_standings = extract_from_data(team_data, "team_standings")
+            
+            if not team_key or not team_standings:
+                return None
+            
+            standings_info = {
+                'team_key': team_key,
+                'team_standings': team_standings
+            }
+            
+            return standings_info
+            
+        except Exception as e:
+            print(f"Error extracting team standings info: {e}")
+            return None 

@@ -102,6 +102,10 @@ class GameData:
     is_registration_over: bool = False
     is_game_over: bool = False
     is_offseason: bool = False
+    editorial_season: Optional[str] = None
+    picks_status: Optional[str] = None
+    contest_group_id: Optional[str] = None
+    scenario_generator: Optional[bool] = None
     
     @classmethod
     def from_api_response(cls, data: Dict[str, Any]) -> 'GameData':
@@ -116,7 +120,11 @@ class GameData:
             season=data.get('season', ''),
             is_registration_over=bool(data.get('is_registration_over', False)),
             is_game_over=bool(data.get('is_game_over', False)),
-            is_offseason=bool(data.get('is_offseason', False))
+            is_offseason=bool(data.get('is_offseason', False)),
+            editorial_season=data.get('editorial_season'),
+            picks_status=data.get('picks_status'),
+            contest_group_id=data.get('contest_group_id'),
+            scenario_generator=bool(data.get('scenario_generator', False)) if data.get('scenario_generator') is not None else None
         )
 
 

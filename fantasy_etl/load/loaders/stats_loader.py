@@ -1,78 +1,407 @@
-# 统计数据加载器
-#
-# 迁移来源: @database_writer.py 中的统计相关写入逻辑
-# 主要映射:
-#   - write_player_season_stat_values() -> StatsLoader.load_player_season_stats()
-#   - write_player_daily_stat_values() -> StatsLoader.load_player_daily_stats()
-#   - write_team_stat_values() -> StatsLoader.load_team_weekly_stats()
-#   - write_team_weekly_stats_from_matchup() -> StatsLoader.load_team_stats_from_matchup()
-#   - 各种统计数据模型的写入逻辑
-#
-# 职责:
-#   - 球员赛季统计加载：
-#     * PlayerSeasonStats模型写入：11个核心统计项
-#     * 复合统计处理：FGM/A、FTM/A的拆分存储
-#     * 百分比统计：FG%、FT%的标准化处理
-#     * 累计统计：total_points、total_rebounds等字段
-#     * 赛季级别聚合：整个赛季的统计汇总
-#   - 球员日统计加载：
-#     * PlayerDailyStats模型写入：相同的11个核心统计项
-#     * 日期维度：date、week字段的处理
-#     * 单日统计：points、rebounds（非total_前缀）
-#     * 时间序列：按日期排序的统计历史
-#   - 团队周统计加载：
-#     * TeamStatsWeekly模型写入：团队级别的11个统计项
-#     * 周度聚合：team在特定week的统计数据
-#     * 从matchup提取：从对战数据中提取团队统计
-#     * 团队表现：团队整体的统计表现
-#   - 统计数据验证：
-#     * 核心统计完整性：11个统计项的存在性检查
-#     * 数值合理性：投篮命中不超过尝试等逻辑验证
-#     * 百分比一致性：计算百分比与API百分比的对比
-#     * 时间一致性：统计日期与赛季的匹配
-#   - 数据类型转换：
-#     * 安全整数转换：字符串数字的处理
-#     * 百分比标准化：统一为0-100范围的decimal值
-#     * 复合统计解析：'made/attempted'格式的拆分
-#     * NULL值处理：缺失统计项的默认值设置
-#   - 关联数据处理：
-#     * 外键约束：player_key、team_key、league_key的引用
-#     * 时间关联：date与DateDimension的关系
-#     * 球员团队一致性：统计数据与球员归属的验证
-#   - 去重和更新策略：
-#     * 球员赛季统计：(player_key, season)唯一性
-#     * 球员日统计：(player_key, date)唯一性
-#     * 团队周统计：(team_key, season, week)唯一性
-#     * 增量更新：新统计数据vs已有数据的更新
-#   - 批量处理优化：
-#     * 按类型分批：赛季统计、日统计、团队统计分别处理
-#     * 按时间分组：同一时间段的统计数据聚合
-#     * 内存管理：大量统计数据的内存优化
-#     * 事务边界：统计数据的一致性保证
-#   - 业务规则验证：
-#     * 统计逻辑：made <= attempted等基本逻辑
-#     * 累计一致性：赛季统计与日统计的累计关系
-#     * 团队统计：团队统计与球员统计的聚合关系
-#   - 11个核心统计项处理：
-#     * FGM/FGA：投篮命中/尝试
-#     * FG%：投篮命中率
-#     * FTM/FTA：罚球命中/尝试
-#     * FT%：罚球命中率
-#     * 3PTM：三分球命中
-#     * PTS：得分
-#     * REB：篮板
-#     * AST：助攻
-#     * ST：抢断
-#     * BLK：盖帽
-#     * TO：失误
-#   - 性能优化：
-#     * 批量插入：SQLAlchemy bulk operations
-#     * 索引利用：基于时间和球员的查询优化
-#     * 缓存策略：频繁访问统计的缓存
-#   - 统计和报告：
-#     * 处理统计：各类统计数据的加载数量
-#     * 时间覆盖：统计数据的时间范围
-#     * 完整性报告：缺失统计的识别和报告
-#
-# 输入: 标准化的统计数据对象 (Dict)，包含11个核心统计项
-# 输出: 统计数据加载结果和处理报告 
+"""
+Stats Data Loader - Handles player and team statistics
+"""
+
+from typing import Dict, List, Optional, Any
+from datetime import datetime, date
+from decimal import Decimal
+
+from .base_loader import BaseLoader, LoadResult
+from ..database.models import PlayerDailyStats, PlayerSeasonStats, TeamStatsWeekly
+
+
+class PlayerDailyStatsLoader(BaseLoader):
+    """Loader for player daily statistics"""
+    
+    def _validate_record(self, record: Dict[str, Any]) -> bool:
+        """Validate player daily stats record"""
+        required_fields = ['player_key', 'editorial_player_key', 'league_key', 'season', 'date']
+        return all(field in record and record[field] is not None for field in required_fields)
+    
+    def _create_model_instance(self, record: Dict[str, Any]) -> PlayerDailyStats:
+        """Create PlayerDailyStats model instance"""
+        return PlayerDailyStats(
+            player_key=record['player_key'],
+            editorial_player_key=record['editorial_player_key'],
+            league_key=record['league_key'],
+            season=record['season'],
+            date=record['date'],
+            week=self._safe_int(record.get('week')),
+            # Core NBA stats
+            field_goals_made=self._safe_int(record.get('field_goals_made')),
+            field_goals_attempted=self._safe_int(record.get('field_goals_attempted')),
+            field_goal_percentage=self._safe_decimal(record.get('field_goal_percentage')),
+            free_throws_made=self._safe_int(record.get('free_throws_made')),
+            free_throws_attempted=self._safe_int(record.get('free_throws_attempted')),
+            free_throw_percentage=self._safe_decimal(record.get('free_throw_percentage')),
+            three_pointers_made=self._safe_int(record.get('three_pointers_made')),
+            points=self._safe_int(record.get('points')),
+            rebounds=self._safe_int(record.get('rebounds')),
+            assists=self._safe_int(record.get('assists')),
+            steals=self._safe_int(record.get('steals')),
+            blocks=self._safe_int(record.get('blocks')),
+            turnovers=self._safe_int(record.get('turnovers'))
+        )
+    
+    def _get_unique_key(self, record: Dict[str, Any]) -> str:
+        """Get unique identifier for player daily stats"""
+        date_str = record['date'].strftime('%Y-%m-%d') if isinstance(record['date'], date) else str(record['date'])
+        return f"{record['player_key']}_{date_str}"
+    
+    def _preprocess_record(self, record: Dict[str, Any]) -> Dict[str, Any]:
+        """Preprocess player daily stats record"""
+        # Handle date field
+        if 'date' in record and record['date']:
+            if isinstance(record['date'], str):
+                try:
+                    record['date'] = datetime.strptime(record['date'], '%Y-%m-%d').date()
+                except ValueError:
+                    print(f"Invalid date format: {record['date']}")
+                    return record
+        
+        # Extract stats from stats_data if present
+        if 'stats_data' in record:
+            stats_data = record['stats_data']
+            core_stats = self._extract_core_daily_stats(stats_data)
+            record.update(core_stats)
+        
+        return record
+    
+    def _extract_core_daily_stats(self, stats_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Extract core NBA stats from Yahoo API stats format"""
+        core_stats = {}
+        
+        try:
+            # stat_id: 9004003 - Field Goals Made/Attempted (FGM/A)
+            field_goals_data = stats_data.get('9004003', '')
+            if isinstance(field_goals_data, str) and '/' in field_goals_data:
+                try:
+                    made, attempted = field_goals_data.split('/')
+                    core_stats['field_goals_made'] = self._safe_int(made.strip())
+                    core_stats['field_goals_attempted'] = self._safe_int(attempted.strip())
+                except:
+                    pass
+            
+            # stat_id: 5 - Field Goal Percentage (FG%)
+            core_stats['field_goal_percentage'] = self._parse_percentage(stats_data.get('5'))
+            
+            # stat_id: 9007006 - Free Throws Made/Attempted (FTM/A)
+            free_throws_data = stats_data.get('9007006', '')
+            if isinstance(free_throws_data, str) and '/' in free_throws_data:
+                try:
+                    made, attempted = free_throws_data.split('/')
+                    core_stats['free_throws_made'] = self._safe_int(made.strip())
+                    core_stats['free_throws_attempted'] = self._safe_int(attempted.strip())
+                except:
+                    pass
+            
+            # stat_id: 8 - Free Throw Percentage (FT%)
+            core_stats['free_throw_percentage'] = self._parse_percentage(stats_data.get('8'))
+            
+            # stat_id: 10 - 3-point Shots Made (3PTM)
+            core_stats['three_pointers_made'] = self._safe_int(stats_data.get('10'))
+            
+            # stat_id: 12 - Points Scored (PTS)
+            core_stats['points'] = self._safe_int(stats_data.get('12'))
+            
+            # stat_id: 15 - Total Rebounds (REB)
+            core_stats['rebounds'] = self._safe_int(stats_data.get('15'))
+            
+            # stat_id: 16 - Assists (AST)
+            core_stats['assists'] = self._safe_int(stats_data.get('16'))
+            
+            # stat_id: 17 - Steals (ST)
+            core_stats['steals'] = self._safe_int(stats_data.get('17'))
+            
+            # stat_id: 18 - Blocked Shots (BLK)
+            core_stats['blocks'] = self._safe_int(stats_data.get('18'))
+            
+            # stat_id: 19 - Turnovers (TO)
+            core_stats['turnovers'] = self._safe_int(stats_data.get('19'))
+            
+        except Exception as e:
+            print(f"Error extracting core daily stats: {e}")
+        
+        return core_stats
+
+
+class PlayerSeasonStatsLoader(BaseLoader):
+    """Loader for player season statistics"""
+    
+    def _validate_record(self, record: Dict[str, Any]) -> bool:
+        """Validate player season stats record"""
+        required_fields = ['player_key', 'editorial_player_key', 'league_key', 'season']
+        return all(field in record and record[field] is not None for field in required_fields)
+    
+    def _create_model_instance(self, record: Dict[str, Any]) -> PlayerSeasonStats:
+        """Create PlayerSeasonStats model instance"""
+        return PlayerSeasonStats(
+            player_key=record['player_key'],
+            editorial_player_key=record['editorial_player_key'],
+            league_key=record['league_key'],
+            season=record['season'],
+            # Core NBA stats (season totals)
+            field_goals_made=self._safe_int(record.get('field_goals_made')),
+            field_goals_attempted=self._safe_int(record.get('field_goals_attempted')),
+            field_goal_percentage=self._safe_decimal(record.get('field_goal_percentage')),
+            free_throws_made=self._safe_int(record.get('free_throws_made')),
+            free_throws_attempted=self._safe_int(record.get('free_throws_attempted')),
+            free_throw_percentage=self._safe_decimal(record.get('free_throw_percentage')),
+            three_pointers_made=self._safe_int(record.get('three_pointers_made')),
+            total_points=self._safe_int(record.get('total_points')),
+            total_rebounds=self._safe_int(record.get('total_rebounds')),
+            total_assists=self._safe_int(record.get('total_assists')),
+            total_steals=self._safe_int(record.get('total_steals')),
+            total_blocks=self._safe_int(record.get('total_blocks')),
+            total_turnovers=self._safe_int(record.get('total_turnovers'))
+        )
+    
+    def _get_unique_key(self, record: Dict[str, Any]) -> str:
+        """Get unique identifier for player season stats"""
+        return f"{record['player_key']}_{record['season']}"
+    
+    def _preprocess_record(self, record: Dict[str, Any]) -> Dict[str, Any]:
+        """Preprocess player season stats record"""
+        # Extract stats from stats_data if present
+        if 'stats_data' in record:
+            stats_data = record['stats_data']
+            core_stats = self._extract_core_season_stats(stats_data)
+            record.update(core_stats)
+        
+        return record
+    
+    def _extract_core_season_stats(self, stats_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Extract core NBA season stats from Yahoo API stats format"""
+        core_stats = {}
+        
+        try:
+            # Same extraction logic as daily stats but for season totals
+            # stat_id: 9004003 - Field Goals Made/Attempted (FGM/A)
+            field_goals_data = stats_data.get('9004003', '')
+            if isinstance(field_goals_data, str) and '/' in field_goals_data:
+                try:
+                    made, attempted = field_goals_data.split('/')
+                    core_stats['field_goals_made'] = self._safe_int(made.strip())
+                    core_stats['field_goals_attempted'] = self._safe_int(attempted.strip())
+                except:
+                    pass
+            
+            # stat_id: 5 - Field Goal Percentage (FG%)
+            core_stats['field_goal_percentage'] = self._parse_percentage(stats_data.get('5'))
+            
+            # stat_id: 9007006 - Free Throws Made/Attempted (FTM/A)
+            free_throws_data = stats_data.get('9007006', '')
+            if isinstance(free_throws_data, str) and '/' in free_throws_data:
+                try:
+                    made, attempted = free_throws_data.split('/')
+                    core_stats['free_throws_made'] = self._safe_int(made.strip())
+                    core_stats['free_throws_attempted'] = self._safe_int(attempted.strip())
+                except:
+                    pass
+            
+            # stat_id: 8 - Free Throw Percentage (FT%)
+            core_stats['free_throw_percentage'] = self._parse_percentage(stats_data.get('8'))
+            
+            # stat_id: 10 - 3-point Shots Made (3PTM)
+            core_stats['three_pointers_made'] = self._safe_int(stats_data.get('10'))
+            
+            # stat_id: 12 - Points Scored (PTS) - season total
+            core_stats['total_points'] = self._safe_int(stats_data.get('12'))
+            
+            # stat_id: 15 - Total Rebounds (REB) - season total
+            core_stats['total_rebounds'] = self._safe_int(stats_data.get('15'))
+            
+            # stat_id: 16 - Assists (AST) - season total
+            core_stats['total_assists'] = self._safe_int(stats_data.get('16'))
+            
+            # stat_id: 17 - Steals (ST) - season total
+            core_stats['total_steals'] = self._safe_int(stats_data.get('17'))
+            
+            # stat_id: 18 - Blocked Shots (BLK) - season total
+            core_stats['total_blocks'] = self._safe_int(stats_data.get('18'))
+            
+            # stat_id: 19 - Turnovers (TO) - season total
+            core_stats['total_turnovers'] = self._safe_int(stats_data.get('19'))
+            
+        except Exception as e:
+            print(f"Error extracting core season stats: {e}")
+        
+        return core_stats
+
+
+class TeamStatsWeeklyLoader(BaseLoader):
+    """Loader for team weekly statistics"""
+    
+    def _validate_record(self, record: Dict[str, Any]) -> bool:
+        """Validate team weekly stats record"""
+        required_fields = ['team_key', 'league_key', 'season', 'week']
+        return all(field in record and record[field] is not None for field in required_fields)
+    
+    def _create_model_instance(self, record: Dict[str, Any]) -> TeamStatsWeekly:
+        """Create TeamStatsWeekly model instance"""
+        return TeamStatsWeekly(
+            team_key=record['team_key'],
+            league_key=record['league_key'],
+            season=record['season'],
+            week=record['week'],
+            # Core NBA stats for team
+            field_goals_made=self._safe_int(record.get('field_goals_made')),
+            field_goals_attempted=self._safe_int(record.get('field_goals_attempted')),
+            field_goal_percentage=self._safe_decimal(record.get('field_goal_percentage')),
+            free_throws_made=self._safe_int(record.get('free_throws_made')),
+            free_throws_attempted=self._safe_int(record.get('free_throws_attempted')),
+            free_throw_percentage=self._safe_decimal(record.get('free_throw_percentage')),
+            three_pointers_made=self._safe_int(record.get('three_pointers_made')),
+            points=self._safe_int(record.get('points')),
+            rebounds=self._safe_int(record.get('rebounds')),
+            assists=self._safe_int(record.get('assists')),
+            steals=self._safe_int(record.get('steals')),
+            blocks=self._safe_int(record.get('blocks')),
+            turnovers=self._safe_int(record.get('turnovers'))
+        )
+    
+    def _get_unique_key(self, record: Dict[str, Any]) -> str:
+        """Get unique identifier for team weekly stats"""
+        return f"{record['team_key']}_{record['season']}_{record['week']}"
+    
+    def _preprocess_record(self, record: Dict[str, Any]) -> Dict[str, Any]:
+        """Preprocess team weekly stats record"""
+        # Extract stats from team_stats_data if present
+        if 'team_stats_data' in record:
+            stats_data = record['team_stats_data']
+            core_stats = self._extract_core_team_stats(stats_data)
+            record.update(core_stats)
+        
+        return record
+    
+    def _extract_core_team_stats(self, stats_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Extract core NBA team stats from Yahoo API stats format"""
+        core_stats = {}
+        
+        try:
+            # Parse stats list from team data
+            stats_list = stats_data.get('stats', [])
+            if not isinstance(stats_list, list):
+                return core_stats
+            
+            # Build stat_id to value mapping
+            stats_dict = {}
+            for stat_item in stats_list:
+                if isinstance(stat_item, dict) and 'stat' in stat_item:
+                    stat_info = stat_item['stat']
+                    stat_id = stat_info.get('stat_id')
+                    value = stat_info.get('value')
+                    if stat_id is not None:
+                        stats_dict[str(stat_id)] = value
+            
+            # Extract same stats as individual players but for team
+            # stat_id: 9004003 - Field Goals Made/Attempted (FGM/A)
+            field_goals_data = stats_dict.get('9004003', '')
+            if isinstance(field_goals_data, str) and '/' in field_goals_data:
+                try:
+                    made, attempted = field_goals_data.split('/')
+                    core_stats['field_goals_made'] = self._safe_int(made.strip())
+                    core_stats['field_goals_attempted'] = self._safe_int(attempted.strip())
+                except:
+                    pass
+            
+            # stat_id: 5 - Field Goal Percentage (FG%)
+            core_stats['field_goal_percentage'] = self._parse_percentage(stats_dict.get('5'))
+            
+            # stat_id: 9007006 - Free Throws Made/Attempted (FTM/A)
+            free_throws_data = stats_dict.get('9007006', '')
+            if isinstance(free_throws_data, str) and '/' in free_throws_data:
+                try:
+                    made, attempted = free_throws_data.split('/')
+                    core_stats['free_throws_made'] = self._safe_int(made.strip())
+                    core_stats['free_throws_attempted'] = self._safe_int(attempted.strip())
+                except:
+                    pass
+            
+            # stat_id: 8 - Free Throw Percentage (FT%)
+            core_stats['free_throw_percentage'] = self._parse_percentage(stats_dict.get('8'))
+            
+            # stat_id: 10 - 3-point Shots Made (3PTM)
+            core_stats['three_pointers_made'] = self._safe_int(stats_dict.get('10'))
+            
+            # stat_id: 12 - Points Scored (PTS)
+            core_stats['points'] = self._safe_int(stats_dict.get('12'))
+            
+            # stat_id: 15 - Total Rebounds (REB)
+            core_stats['rebounds'] = self._safe_int(stats_dict.get('15'))
+            
+            # stat_id: 16 - Assists (AST)
+            core_stats['assists'] = self._safe_int(stats_dict.get('16'))
+            
+            # stat_id: 17 - Steals (ST)
+            core_stats['steals'] = self._safe_int(stats_dict.get('17'))
+            
+            # stat_id: 18 - Blocked Shots (BLK)
+            core_stats['blocks'] = self._safe_int(stats_dict.get('18'))
+            
+            # stat_id: 19 - Turnovers (TO)
+            core_stats['turnovers'] = self._safe_int(stats_dict.get('19'))
+            
+        except Exception as e:
+            print(f"Error extracting core team stats: {e}")
+        
+        return core_stats
+    
+    def _parse_percentage(self, pct_str: Any) -> Optional[Decimal]:
+        """Parse percentage string to decimal"""
+        try:
+            if not pct_str or pct_str == '-':
+                return None
+            
+            pct_str = str(pct_str).strip()
+            
+            # Remove % symbol if present
+            if '%' in pct_str:
+                clean_value = pct_str.replace('%', '')
+                val = float(clean_value)
+                return Decimal(str(round(val, 3)))
+            
+            # Handle decimal form (0-1) or percentage form (0-100)
+            val = float(pct_str)
+            if 0 <= val <= 1:
+                return Decimal(str(round(val * 100, 3)))
+            elif 0 <= val <= 100:
+                return Decimal(str(round(val, 3)))
+            
+            return None
+        except (ValueError, TypeError):
+            return None
+    
+    def _safe_decimal(self, value: Any) -> Optional[Decimal]:
+        """Safely convert value to Decimal"""
+        try:
+            if value is None or value == '':
+                return None
+            return Decimal(str(float(value)))
+        except (ValueError, TypeError):
+            return None
+
+
+class CompleteStatsLoader:
+    """Complete stats data loader that handles all statistics tables"""
+    
+    def __init__(self, connection_manager, batch_size: int = 100):
+        self.connection_manager = connection_manager
+        self.batch_size = batch_size
+        
+        # Initialize sub-loaders
+        self.player_daily_loader = PlayerDailyStatsLoader(connection_manager, batch_size)
+        self.player_season_loader = PlayerSeasonStatsLoader(connection_manager, batch_size)
+        self.team_weekly_loader = TeamStatsWeeklyLoader(connection_manager, batch_size)
+    
+    def load_player_daily_stats(self, stats_data: List[Dict[str, Any]]) -> LoadResult:
+        """Load player daily statistics"""
+        return self.player_daily_loader.load(stats_data)
+    
+    def load_player_season_stats(self, stats_data: List[Dict[str, Any]]) -> LoadResult:
+        """Load player season statistics"""
+        return self.player_season_loader.load(stats_data)
+    
+    def load_team_weekly_stats(self, stats_data: List[Dict[str, Any]]) -> LoadResult:
+        """Load team weekly statistics"""
+        return self.team_weekly_loader.load(stats_data) 

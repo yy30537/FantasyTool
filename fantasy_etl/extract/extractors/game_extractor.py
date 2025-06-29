@@ -49,11 +49,12 @@ class GameExtractor(BaseExtractor):
         try:
             logger.info("开始提取游戏数据...")
             
-            # 构建API URL
-            url = "https://fantasysports.yahooapis.com/fantasy/v2/users;use_login=1/games?format=json"
+            # 构建API endpoint
+            endpoint = "/users;use_login=1/games"
             
             # 调用API
-            response_data = self.client.get(url)
+            api_response = self.client.make_request(endpoint)
+            response_data = api_response.data if api_response.is_success else None
             if not response_data:
                 return ExtractionResult(
                     success=False,
@@ -224,11 +225,12 @@ class GameExtractor(BaseExtractor):
         Returns:
             List[Dict]: 提取的游戏数据
         """
-        # 构建API URL
-        url = "https://fantasysports.yahooapis.com/fantasy/v2/users;use_login=1/games?format=json"
+        # 构建API endpoint
+        endpoint = "/users;use_login=1/games"
         
         # 调用API
-        response_data = self.client.get(url)
+        api_response = self.client.make_request(endpoint)
+        response_data = api_response.data if api_response.is_success else None
         if not response_data:
             raise ValueError("Failed to retrieve games data from API")
         
@@ -252,3 +254,28 @@ class GameExtractor(BaseExtractor):
             bool: 游戏数据支持增量更新
         """
         return True
+    
+    async def get_user_games(self) -> Optional[List[Dict]]:
+        """
+        获取用户游戏数据的便捷方法
+        
+        Returns:
+            Optional[List[Dict]]: 游戏数据列表，失败时返回None
+        """
+        try:
+            result = self.extract()
+            if result.success and result.data:
+                # 将GameData模型转换为字典
+                games_list = []
+                for game_model in result.data:
+                    if hasattr(game_model, '__dict__'):
+                        games_list.append(game_model.__dict__)
+                    else:
+                        games_list.append(game_model)
+                return games_list
+            else:
+                logger.warning(f"游戏数据提取失败: {result.error_message}")
+                return None
+        except Exception as e:
+            logger.error(f"获取用户游戏数据失败: {e}")
+            return None
