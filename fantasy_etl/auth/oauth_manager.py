@@ -1,82 +1,145 @@
 """
-OAuth管理器 (OAuth Manager)
-========================
-
-统一的OAuth认证管理模块，负责Yahoo Fantasy API的OAuth2.0认证流程。
-
-【主要职责】
-1. Yahoo OAuth2.0认证流程管理
-2. 访问令牌的获取、刷新和验证
-3. API请求的统一认证处理
-4. 令牌生命周期管理
-
-【功能特性】
-- 强大的错误处理和重试机制
-- 支持多种令牌存储后端
-- 完整的日志记录和监控
-- 配置验证和环境检查
+OAuth认证管理器
+重构自archive/app.py，提供Yahoo Fantasy Sports OAuth认证功能
 """
-
-import requests
-import json
 import os
 import time
+import json
+import pickle
+import pathlib
+import requests
 from datetime import datetime
-from typing import Optional, Dict, Any
 from dotenv import load_dotenv
-
-# 导入令牌存储模块
-from .token_storage import TokenStorage
+from requests_oauthlib import OAuth2Session
+from typing import Optional, Dict, Any
 
 # 加载环境变量
 load_dotenv()
 
-# OAuth配置（从环境变量加载）
-CLIENT_ID = os.getenv("YAHOO_CLIENT_ID", "dj0yJmk9U0NqTDRYdXd0NW9yJmQ9WVdrOVRGaGhkRUZLTmxnbWNHbzlNQT09JnM9Y29uc3VtZXJzZWNyZXQmc3Y9MCZ4PTFk")
-CLIENT_SECRET = os.getenv("YAHOO_CLIENT_SECRET", "a5b3a6e1ff6a3e982036ec873a78f6fa46431508")
-TOKEN_URL = "https://api.login.yahoo.com/oauth2/get_token"
-
-
 class OAuthManager:
-    """OAuth认证管理器"""
+    """Yahoo Fantasy Sports OAuth认证管理器"""
     
-    def __init__(self, token_storage: Optional[TokenStorage] = None,
-                 client_id: Optional[str] = None,
-                 client_secret: Optional[str] = None,
-                 token_url: Optional[str] = None):
-        """
-        初始化OAuth管理器
+    def __init__(self):
+        # 项目根目录 (确保路径正确)
+        self.project_root = pathlib.Path(__file__).parent.parent.parent
         
-        Args:
-            token_storage: 令牌存储实例，默认使用文件存储
-            client_id: Yahoo客户端ID，默认从环境变量获取
-            client_secret: Yahoo客户端密钥，默认从环境变量获取
-            token_url: 令牌获取URL，默认Yahoo API URL
-        """
-        self.token_storage = token_storage or TokenStorage()
-        self.client_id = client_id or CLIENT_ID
-        self.client_secret = client_secret or CLIENT_SECRET
-        self.token_url = token_url or TOKEN_URL
+        # OAuth配置
+        self.client_id = os.getenv("YAHOO_CLIENT_ID")
+        self.client_secret = os.getenv("YAHOO_CLIENT_SECRET")
+        self.redirect_uri = os.getenv("YAHOO_REDIRECT_URI", "http://localhost:8000/auth/callback")
+        self.authorization_base_url = "https://api.login.yahoo.com/oauth2/request_auth"
+        self.token_url = "https://api.login.yahoo.com/oauth2/get_token"
+        self.scope = ["fspt-w"]  # Fantasy Sports读写权限
+        
+        # 令牌文件路径 (使用项目根目录下的tokens)
+        self.tokens_dir = self.project_root / "tokens"
+        self.tokens_dir.mkdir(exist_ok=True)
+        self.token_file = self.tokens_dir / "yahoo_token.token"
+        
+        # 验证配置
+        self._validate_config()
     
-    def load_token(self) -> Optional[Dict[str, Any]]:
-        """加载令牌"""
-        return self.token_storage.load_token()
+    def _validate_config(self) -> None:
+        """验证OAuth配置"""
+        if not self.client_id or not self.client_secret:
+            raise ValueError("缺少YAHOO_CLIENT_ID或YAHOO_CLIENT_SECRET环境变量")
+        
+        print(f"🔧 OAuth配置:")
+        print(f"   Client ID: {self.client_id[:10]}...")
+        print(f"   Redirect URI: {self.redirect_uri}")
+        print(f"   Token路径: {self.token_file}")
+    
+    def get_oauth_session(self) -> OAuth2Session:
+        """创建OAuth2Session"""
+        return OAuth2Session(
+            self.client_id, 
+            redirect_uri=self.redirect_uri, 
+            scope=self.scope
+        )
+    
+    def get_authorization_url(self) -> tuple[str, str]:
+        """获取授权URL"""
+        oauth = self.get_oauth_session()
+        authorization_url, state = oauth.authorization_url(self.authorization_base_url)
+        print(f"🔗 授权URL: {authorization_url}")
+        return authorization_url, state
+    
+    def fetch_token(self, authorization_response: str) -> Dict[str, Any]:
+        """获取访问令牌"""
+        try:
+            oauth = self.get_oauth_session()
+            
+            print(f"🔄 处理OAuth回调: {authorization_response}")
+            
+            token = oauth.fetch_token(
+                self.token_url,
+                client_secret=self.client_secret,
+                authorization_response=authorization_response
+            )
+            
+            # 设置令牌过期时间
+            expires_in = token.get('expires_in', 3600)
+            token['expires_at'] = time.time() + int(expires_in)
+            
+            print(f"✅ 获取token成功，有效期: {expires_in}秒")
+            
+            # 保存令牌
+            if self.save_token(token):
+                print("✅ Token已保存到文件")
+            else:
+                print("⚠️ Token保存失败")
+            
+            return token
+            
+        except Exception as e:
+            print(f"❌ 获取token失败: {str(e)}")
+            raise
     
     def save_token(self, token: Dict[str, Any]) -> bool:
-        """保存令牌"""
-        return self.token_storage.save_token(token)
-    
-    def refresh_token(self, token: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-        """
-        检查并刷新令牌（如果已过期）
-        
-        Args:
-            token: 当前令牌字典
+        """保存令牌到文件"""
+        try:
+            # 确保目录存在
+            self.tokens_dir.mkdir(exist_ok=True)
             
-        Returns:
-            Optional[Dict]: 刷新后的令牌或None（如果刷新失败）
-        """
+            with open(self.token_file, 'wb') as f:
+                pickle.dump(token, f)
+            
+            print(f"💾 令牌已保存到: {self.token_file}")
+            return True
+            
+        except Exception as e:
+            print(f"❌ 保存令牌时出错: {str(e)}")
+            return False
+    
+    def load_token(self) -> Optional[Dict[str, Any]]:
+        """从文件加载令牌"""
+        if self.token_file.exists():
+            try:
+                with open(self.token_file, 'rb') as f:
+                    token = pickle.load(f)
+                
+                # 检查token基本有效性
+                if 'access_token' in token:
+                    print(f"📖 从 {self.token_file} 加载令牌成功")
+                    return token
+                else:
+                    print("⚠️ 令牌文件格式无效")
+                    return None
+                    
+            except Exception as e:
+                print(f"❌ 加载令牌时出错: {str(e)}")
+                return None
+        else:
+            print(f"📁 令牌文件不存在: {self.token_file}")
+            return None
+    
+    def refresh_token_if_needed(self, token: Optional[Dict[str, Any]] = None) -> Optional[Dict[str, Any]]:
+        """检查并刷新令牌（如果已过期）"""
         if not token:
+            token = self.load_token()
+        
+        if not token:
+            print("❌ 无可用令牌")
             return None
         
         # 检查令牌是否过期
@@ -86,7 +149,12 @@ class OAuthManager:
         # 如果令牌已过期或即将过期（提前60秒刷新）
         if now >= (expires_at - 60):
             try:
+                print("🔄 令牌即将过期，尝试刷新...")
                 refresh_token = token.get('refresh_token')
+                
+                if not refresh_token:
+                    print("❌ 缺少refresh_token，需要重新认证")
+                    return None
                 
                 data = {
                     'client_id': self.client_id,
@@ -108,160 +176,42 @@ class OAuthManager:
                     
                     # 保存更新的令牌
                     self.save_token(new_token)
+                    
+                    print("✅ 令牌刷新成功")
                     return new_token
                 else:
-                    print(f"令牌刷新失败: {response.status_code} - {response.text}")
+                    print(f"❌ 令牌刷新失败: {response.status_code} - {response.text}")
                     return None
+                    
             except Exception as e:
-                print(f"刷新令牌时出错: {str(e)}")
+                print(f"❌ 刷新令牌时出错: {str(e)}")
                 return None
-        
-        return token
+        else:
+            remaining_time = expires_at - now
+            print(f"✅ 令牌有效，剩余时间: {int(remaining_time)}秒")
+            return token
     
-    def make_authenticated_request(self, url: str, max_retries: int = 3,
-                                 method: str = 'GET', **kwargs) -> Optional[Dict[str, Any]]:
-        """
-        发起认证的API请求
-        
-        Args:
-            url: API请求URL
-            max_retries: 最大重试次数
-            method: HTTP方法
-            **kwargs: 传递给requests的其他参数
-            
-        Returns:
-            Optional[Dict]: API响应JSON或None
-        """
-        # 加载令牌
-        token = self.load_token()
-        if not token:
-            print("未找到有效令牌")
-            return None
-        
-        # 刷新令牌（如果需要）
-        token = self.refresh_token(token)
-        if not token:
-            print("令牌刷新失败")
-            return None
-        
-        # 设置请求头
-        headers = kwargs.get('headers', {})
-        headers.update({
-            'Authorization': f"Bearer {token['access_token']}",
-            'Content-Type': 'application/json'
-        })
-        kwargs['headers'] = headers
-        
-        # 重试机制
-        for attempt in range(max_retries):
-            try:
-                response = requests.request(method, url, **kwargs)
-                
-                if response.status_code == 200:
-                    return response.json()
-                elif response.status_code == 401:
-                    # 授权问题，尝试刷新令牌
-                    token = self.refresh_token(token)
-                    if token:
-                        headers['Authorization'] = f"Bearer {token['access_token']}"
-                        continue
-                    else:
-                        print("令牌刷新失败，无法继续请求")
-                        return None
-                else:
-                    print(f"请求失败: {response.status_code} - {response.text}")
-                    # 如果不是最后一次尝试，等待后重试
-                    if attempt < max_retries - 1:
-                        wait_time = (attempt + 1) * 2  # 指数退避
-                        time.sleep(wait_time)
-                        continue
-                    return None
-            except Exception as e:
-                print(f"请求时出错: {str(e)}")
-                # 如果不是最后一次尝试，等待后重试
-                if attempt < max_retries - 1:
-                    wait_time = (attempt + 1) * 2  # 指数退避
-                    time.sleep(wait_time)
-                    continue
-                return None
-        
+    def get_access_token(self) -> Optional[str]:
+        """获取有效的访问令牌"""
+        token = self.refresh_token_if_needed()
+        if token:
+            return token.get('access_token')
         return None
     
-    def validate_token(self, token: Optional[Dict[str, Any]] = None) -> bool:
-        """
-        验证令牌是否有效
-        
-        Args:
-            token: 要验证的令牌，默认使用当前存储的令牌
-            
-        Returns:
-            bool: 令牌是否有效
-        """
-        if not token:
-            token = self.load_token()
-        
-        if not token:
+    def is_authenticated(self) -> bool:
+        """检查是否已认证"""
+        access_token = self.get_access_token()
+        is_auth = access_token is not None
+        print(f"🔐 认证状态: {'✅ 已认证' if is_auth else '❌ 未认证'}")
+        return is_auth
+    
+    def clear_token(self) -> bool:
+        """清除保存的令牌"""
+        try:
+            if self.token_file.exists():
+                self.token_file.unlink()
+                print(f"🗑️ 已删除令牌文件: {self.token_file}")
+            return True
+        except Exception as e:
+            print(f"❌ 删除令牌文件时出错: {str(e)}")
             return False
-        
-        # 检查必要字段
-        required_fields = ['access_token', 'expires_at']
-        if not all(field in token for field in required_fields):
-            return False
-        
-        # 检查是否过期
-        now = datetime.now().timestamp()
-        expires_at = token.get('expires_at', 0)
-        
-        return now < expires_at
-    
-    def get_client_info(self) -> Dict[str, str]:
-        """获取客户端配置信息"""
-        return {
-            'client_id': self.client_id[:10] + "..." if self.client_id else "未设置",
-            'client_secret': "已设置" if self.client_secret else "未设置",
-            'token_url': self.token_url
-        }
-
-
-class MultiUserOAuthManager(OAuthManager):
-    """多用户OAuth管理器"""
-    
-    def __init__(self, user_id: str, **kwargs):
-        """
-        初始化多用户OAuth管理器
-        
-        Args:
-            user_id: 用户ID，用于区分不同用户的令牌
-        """
-        self.user_id = user_id
-        super().__init__(**kwargs)
-    
-    def get_user_token_key(self) -> str:
-        """获取用户特定的令牌键"""
-        return f"yahoo_token_{self.user_id}"
-
-
-class OAuthTokenCache:
-    """OAuth令牌缓存"""
-    
-    def __init__(self):
-        self._cache = {}
-        self._cache_timeout = 300  # 5分钟缓存超时
-    
-    def get(self, key: str) -> Optional[Dict[str, Any]]:
-        """从缓存获取令牌"""
-        if key in self._cache:
-            token_data, timestamp = self._cache[key]
-            if time.time() - timestamp < self._cache_timeout:
-                return token_data
-            else:
-                del self._cache[key]
-        return None
-    
-    def set(self, key: str, token: Dict[str, Any]) -> None:
-        """设置令牌到缓存"""
-        self._cache[key] = (token, time.time())
-    
-    def clear(self) -> None:
-        """清空缓存"""
-        self._cache.clear() 

@@ -1,16 +1,13 @@
 """
-Fantasy ETL Package
-==================
+Fantasy Tool - Yahoo Fantasy Sports分析工具
 
-Yahoo Fantasy Sports数据ETL管道
-
-主要模块：
-- auth: 认证管理
-- config: 配置管理
-- extract: 数据提取
-- transform: 数据转换
-- load: 数据加载
+这是重构后的标准化架构，包含以下模块：
+- auth: OAuth认证管理
+- data: ETL数据管道 (extract, transform, load)
+- analytics: 分析引擎 (team, trading, stats)
+- core: 核心功能 (config, database, utils)
+- api: API接口层
 """
 
-__version__ = "1.0.0"
-__author__ = "Fantasy ETL Team" 
+__version__ = "2.0.0"
+__author__ = "Fantasy Tool Team"
