@@ -1,7 +1,7 @@
 """
-数据加载模块
+数据加载模块 - 数据库写入操作
 
-包含所有 load_* 函数和数据库写入功能
+包含所有数据加载类
 """
 
 from .core import CoreLoaders
@@ -10,6 +10,6 @@ from .stats import StatsLoaders
 
 __all__ = [
     'CoreLoaders',
-    'BatchLoaders', 
+    'BatchLoaders',
     'StatsLoaders'
 ]

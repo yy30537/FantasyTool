@@ -1,7 +1,7 @@
 """
 数据转换模块
 
-包含所有 transform_* 函数，按业务领域分组
+包含所有数据转换类，按业务领域分组
 """
 
 from .core import CoreTransformers

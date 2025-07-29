@@ -3,7 +3,7 @@
 包含统计相关的写入函数，从 archive/database_writer.py 迁移
 """
 
-from typing import Dict, Optional
+from typing import Dict, Optional, List
 from datetime import date, datetime
 from sqlalchemy.orm import Session
 from fantasy_etl.database import (

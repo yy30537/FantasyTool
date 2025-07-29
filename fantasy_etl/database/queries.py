@@ -3,9 +3,17 @@
 包含所有 get_* 函数，从多个源文件迁移
 """
 
-from typing import Optional, Dict, Tuple
+from typing import Optional, Dict, Tuple, List
 from datetime import datetime, date, timedelta
 from .connection import DatabaseConnection
+from .model import (
+    League, Team, Player, Manager, Game,
+    LeagueSettings, StatCategory, PlayerEligiblePosition,
+    RosterDaily, PlayerDailyStats, PlayerSeasonStats,
+    TeamStatsWeekly, LeagueStandings, TeamMatchups,
+    Transaction, TransactionPlayer, DateDimension,
+    LeagueRosterPosition
+)
 
 
 class DatabaseQueries:
@@ -33,9 +41,6 @@ class DatabaseQueries:
         迁移自: archive/yahoo_api_data.py _get_leagues_from_database() 第78行
         """
         try:
-            # TODO: 需要导入League模型类
-            # from ..models import League
-            
             session = self._get_session()
             leagues = session.query(League).all()
             if not leagues:
@@ -99,9 +104,6 @@ class DatabaseQueries:
             return {}
         
         try:
-            # TODO: 需要导入League模型类
-            # from ..models import League
-            
             session = self._get_session()
             league_db = session.query(League).filter_by(
                 league_key=league_key
@@ -155,9 +157,6 @@ class DatabaseQueries:
         迁移自: archive/yahoo_api_data.py _get_teams_data_from_db() 第2638行
         """
         try:
-            # TODO: 需要导入Team模型类
-            # from ..models import Team
-            
             session = self._get_session()
             teams = session.query(Team).filter_by(
                 league_key=league_key
@@ -330,9 +329,6 @@ class DatabaseQueries:
         迁移自: archive/database_writer.py get_stat_category_info() 第400行
         """
         try:
-            # TODO: 需要导入StatCategory模型类
-            # from ..models import StatCategory
-            
             session = self._get_session()
             stat_cat = session.query(StatCategory).filter_by(
                 league_key=league_key,
@@ -359,14 +355,6 @@ class DatabaseQueries:
         迁移自: archive/database_writer.py get_database_summary() 第1784行
         """
         summary = {}
-        
-        # TODO: 需要导入所有模型类
-        # from ..models import (
-        #     Game, League, LeagueSettings, StatCategory, Team, Manager,
-        #     Player, PlayerEligiblePosition, PlayerSeasonStats, PlayerDailyStats,
-        #     TeamStatsWeekly, LeagueStandings, TeamMatchups, RosterDaily,
-        #     Transaction, TransactionPlayer, DateDimension
-        # )
         
         # 定义所有表和对应的模型类
         tables = {

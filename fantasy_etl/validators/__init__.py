@@ -1,7 +1,7 @@
 """
-验证模块
+验证器模块 - 数据验证和检查
 
-包含所有 verify_* 函数
+包含数据验证类
 """
 
 from .core import CoreValidators
