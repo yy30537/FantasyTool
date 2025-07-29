@@ -86,8 +86,12 @@ fantasy_etl/
 
 ##### Player Data Methods
 - `fetch_all_league_players(self, league_key: str) -> List[Dict]`
-- `fetch_player_season_stats(self, players: List, league_key: str, season: str) -> Optional[Dict]`
+- `fetch_player_season_stats(self, players: List, league_key: str, season: str) -> List[Dict]`
 - `fetch_player_daily_stats_for_range(self, players: List, league_key: str, season: str, start_date: date, end_date: date) -> int`
+
+##### User Data Methods
+- `fetch_user_teams(self) -> Optional[List[Dict]]`
+- `fetch_games_data(self) -> Optional[Dict]`
 
 ---
 
@@ -114,6 +118,7 @@ fantasy_etl/
 Contains SQLAlchemy ORM models for all database tables:
 
 #### Core Models
+- `Game`: Game information
 - `League`: League information and settings
 - `Team`: Team information and metadata
 - `Player`: Player information and attributes
@@ -126,6 +131,7 @@ Contains SQLAlchemy ORM models for all database tables:
 - `TeamStatsWeekly`: Team weekly statistics
 - `LeagueStandings`: League standings
 - `TeamMatchups`: Team matchup records
+- `PlayerEligiblePosition`: Player position eligibility
 
 #### Transaction Models
 - `Transaction`: All transaction records
@@ -135,6 +141,9 @@ Contains SQLAlchemy ORM models for all database tables:
 - `LeagueSettings`: League configuration
 - `StatCategory`: Statistical categories
 - `LeagueRosterPosition`: Roster position requirements
+
+#### Utility Models
+- `DateDimension`: Date dimension for analytics
 
 ### 2.3 Queries Module (`queries.py`)
 
@@ -167,6 +176,8 @@ Contains SQLAlchemy ORM models for all database tables:
 - `transform_league_settings(self, settings_data: Dict) -> Dict`
 - `transform_team_standings_info(self, team_data) -> Dict`
 - `transform_transaction_data(self, transaction_data: Dict) -> Dict`
+- `transform_draft_results(self, draft_data: List[Dict]) -> List[Dict]`
+- `transform_waiver_claim(self, waiver_data: Dict) -> Dict`
 
 ### 3.2 Team Transformers (`team.py`)
 
@@ -180,6 +191,7 @@ Contains SQLAlchemy ORM models for all database tables:
 - `transform_team_matchups(self, matchups_data: Dict, team_key: str) -> List[Dict]`
 - `transform_matchup_info(self, matchup_info, team_key: str) -> Dict`
 - `transform_team_matchup_details(self, teams_data, target_team_key: str) -> Dict`
+- `transform_team_stats_from_matchup_data(self, matchup_data: Dict, team_key: str) -> Dict`
 
 ### 3.3 Player Transformers (`player.py`)
 
@@ -225,7 +237,7 @@ Contains SQLAlchemy ORM models for all database tables:
 
 **Key Methods**:
 - `load_roster_data(self, roster_list: List[Dict], selected_league: Dict) -> bool`
-- `load_teams_to_db(self, teams_data: Dict, league_key: str) -> bool`
+- `load_teams_to_db(self, teams_data: Dict, league_key: str) -> int`
 - `load_transactions_to_db(self, transactions: List[Dict], league_key: str) -> bool`
 - `load_league_standings_to_db(self, team_info: Dict, league_key: str, season: str) -> bool`
 - `load_team_matchups(self, matchup_list: List[Dict], selected_league: Dict) -> bool`
@@ -237,7 +249,7 @@ Contains SQLAlchemy ORM models for all database tables:
 **Location**: `fantasy_etl/loaders/batch.py`
 
 **Key Methods**:
-- `write_teams_batch(self, teams_data: List[Dict], league_key: str) -> bool`
+- `write_teams_batch(self, teams_data: List[Dict], league_key: str) -> int`
 - `write_players_batch(self, players_data: List[Dict], league_key: str) -> bool`
 - `write_transactions_batch(self, transactions_data: List[Dict], league_key: str) -> bool`
 
@@ -265,11 +277,13 @@ Contains SQLAlchemy ORM models for all database tables:
 **Key Methods**:
 - `verify_league_exists_in_db(self) -> bool`
 - `verify_league_selected(self) -> bool`
-- `verify_league_data(self, league_data: Dict) -> bool`
-- `verify_team_data(self, team_data: Dict) -> bool`
-- `verify_player_data(self, player_data: Dict) -> bool`
-- `verify_transaction_data(self, transaction_data: Dict) -> bool`
-- `verify_stats_data(self, stats_data: Dict) -> bool`
+- `verify_database_connection(self) -> bool`
+- `verify_api_credentials(self) -> bool`
+- `verify_season_data_integrity(self, league_key: str, season: str) -> bool`
+- `verify_table_exists(self, table_name: str) -> bool`
+- `verify_required_tables(self) -> bool`
+
+**Note**: The validator class focuses on system and database validation rather than data structure validation.
 
 ---
 
@@ -277,20 +291,18 @@ Contains SQLAlchemy ORM models for all database tables:
 
 ### 6.1 Date Utilities (`date_utils.py`)
 
-Functions:
-- `get_current_week(league_start_date: datetime) -> int`
-- `get_week_dates(week: int, league_start_date: datetime) -> Tuple[datetime, datetime]`
-- `parse_yahoo_date(date_string: str) -> datetime`
-- `format_date_for_db(date: datetime) -> str`
+#### Class: `DateUtils`
+**Purpose**: Date handling utilities
+**Location**: `fantasy_etl/utils/date_utils.py`
+
+**Methods**:
+- `parse_coverage_date(date_str: Union[str, None]) -> Optional[date]`
+- `parse_week(week_str: Union[str, int, None]) -> Optional[int]`
+- `parse_yahoo_date(date_str: str) -> Optional[datetime]`
 
 ### 6.2 Helper Functions (`helpers.py`)
 
-Functions:
-- `clean_player_name(name: str) -> str`
-- `calculate_win_percentage(wins: int, losses: int, ties: int = 0) -> float`
-- `parse_position_string(position: str) -> List[str]`
-- `generate_unique_key(prefix: str, *args) -> str`
-- `batch_list(items: List, batch_size: int) -> List[List]`
+Contains various helper functions and utilities for the ETL process.
 
 ---
 
@@ -320,21 +332,24 @@ Functions:
    loader = CoreLoaders(db_writer)
    ```
 
-2. **Fetch Data**
+2. **Validate System**
+   ```python
+   # Validate database and API setup
+   if not validator.verify_database_connection():
+       # Handle database connection error
+   if not validator.verify_api_credentials():
+       # Handle API credential error
+   ```
+
+3. **Fetch Data**
    ```python
    raw_data = fetcher.fetch_leagues_data(game_key)
    ```
 
-3. **Transform Data**
+4. **Transform Data**
    ```python
    leagues = transformer.transform_leagues_from_data(raw_data, game_key)
    clean_data = transformer.transform_league_data(leagues[0])
-   ```
-
-4. **Validate Data**
-   ```python
-   if validator.verify_league_data(clean_data):
-       # Proceed to load
    ```
 
 5. **Load Data**
@@ -365,7 +380,7 @@ Each class includes appropriate error handling and logging for debugging and mon
 ## Module Dependencies
 
 ```
-api -> utils
+api -> utils, oauth_authenticator
 transformers -> utils
 validators -> database models
 database -> SQLAlchemy models
