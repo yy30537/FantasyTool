@@ -116,30 +116,3 @@ class PlayerTransformers:
         normalized['updated_at'] = datetime.now()
         
         return normalized
-
-# ============================================================================
-# 独立函数接口 - 为了保持与文档的一致性
-# ============================================================================
-
-def transform_player_data(raw_data: Dict) -> Dict:
-    """转换球员数据"""
-    transformer = PlayerTransformers()
-    return transformer.transform_player_info(raw_data)
-
-def transform_player_stats(raw_data: Dict) -> Dict:
-    """转换球员统计"""
-    transformer = PlayerTransformers()
-    # 这个函数在类中不存在，需要从stats模块获取
-    return raw_data
-
-def transform_player_ownership(raw_data: Dict) -> Dict:
-    """转换球员所有权数据"""
-    transformer = PlayerTransformers()
-    # 这个函数在类中不存在，需要实现
-    return raw_data
-
-def transform_draft_analysis(raw_data: Dict) -> Dict:
-    """转换选秀分析数据"""
-    transformer = PlayerTransformers()
-    # 这个函数在类中不存在，需要实现
-    return raw_data

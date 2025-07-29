@@ -1,21 +1,11 @@
 """
 数据库模块 - 数据库操作和查询
 
-包含所有 get_* 函数和数据库模型
+包含数据库连接、查询类和数据库模型
 """
 
 from .connection import DatabaseConnection
-from .queries import (
-    DatabaseQueries,
-    # 独立函数接口
-    get_league_by_key,
-    get_team_by_key,
-    get_player_by_key,
-    get_team_roster,
-    get_player_stats,
-    get_league_standings,
-    get_matchups_by_week
-)
+from .queries import DatabaseQueries
 # 导入所有模型
 from .model import (
     Base,
@@ -48,14 +38,6 @@ from .model import (
 __all__ = [
     'DatabaseConnection',
     'DatabaseQueries',
-    # 独立函数
-    'get_league_by_key',
-    'get_team_by_key', 
-    'get_player_by_key',
-    'get_team_roster',
-    'get_player_stats',
-    'get_league_standings',
-    'get_matchups_by_week',
     # 模型类
     'Base',
     'Game',

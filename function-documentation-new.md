@@ -2,17 +2,17 @@
 
 ## Overview
 
-This document provides comprehensive documentation for all functions in the modularized Fantasy ETL system. The system has been reorganized into distinct modules for better maintainability and separation of concerns.
+This document provides comprehensive documentation for all classes and methods in the modularized Fantasy ETL system. The system has been reorganized into distinct modules for better maintainability and separation of concerns.
 
 ## Module Structure
 
 ```
 fantasy_etl/
-├── api/              # API data fetching (fetch_* functions)
-├── database/         # Database operations (get_* functions)
-├── transformers/     # Data transformation (transform_* functions)
-├── loaders/         # Data loading (load_* functions)
-├── validators/      # Data validation (verify_* functions)
+├── api/              # API data fetching (YahooFantasyFetcher class)
+├── database/         # Database operations (DatabaseQueries class)
+├── transformers/     # Data transformation (various Transformer classes)
+├── loaders/         # Data loading (various Loader classes)
+├── validators/      # Data validation (CoreValidators class)
 └── utils/           # Utility functions
 ```
 
@@ -22,19 +22,28 @@ fantasy_etl/
 
 ### 1.1 Client Module (`client.py`)
 
-#### Class: `YahooFantasyClient`
+#### Class: `YahooFantasyAPIClient`
 **Purpose**: Main client for interacting with Yahoo Fantasy API
 **Location**: `fantasy_etl/api/client.py`
 
 **Methods**:
-- `__init__(self, consumer_key: str, consumer_secret: str, token_file: str = "oauth2.json")`
+- `__init__(self, delay: int = 2)`
   - Initializes the Yahoo Fantasy client with OAuth credentials
   - Sets up authentication and base URL
 
-- `make_request(self, url: str, params: Optional[Dict] = None) -> Dict`
+- `get_api_data(self, url: str, max_retries: int = 3) -> Optional[Dict]`
   - Makes authenticated HTTP requests to Yahoo API
   - Handles rate limiting and retries
   - Returns parsed JSON response
+
+- `refresh_token_if_needed(self, token) -> Optional[Dict]`
+  - Refreshes expired access tokens
+  
+- `save_token(self, token) -> bool`
+  - Saves OAuth tokens to file
+  
+- `load_token(self) -> Optional[Dict]`
+  - Loads OAuth tokens from file
 
 ### 1.2 OAuth Authenticator (`oauth_authenticator.py`)
 
@@ -58,137 +67,27 @@ fantasy_etl/
 
 ### 1.3 Fetchers Module (`fetchers.py`)
 
-#### League Data Fetchers
+#### Class: `YahooFantasyFetcher`
+**Purpose**: Contains all data fetching methods
+**Location**: `fantasy_etl/api/fetchers.py`
 
-1. **`fetch_leagues(client: YahooFantasyClient, game_key: str) -> List[Dict]`**
-   - Fetches all leagues for a given game
-   - Returns list of league metadata
+**Key Methods**:
 
-2. **`fetch_league_settings(client: YahooFantasyClient, league_key: str) -> Dict`**
-   - Fetches detailed league settings
-   - Includes scoring settings, roster positions, etc.
+##### League Data Methods
+- `fetch_leagues_data(self, game_key: str) -> Optional[Dict]`
+- `fetch_league_settings(self, league_key: str) -> Optional[Dict]`
+- `fetch_and_process_league_standings(self, league_key: str, season: str) -> Optional[Dict]`
+- `fetch_all_league_transactions(self, league_key: str, max_count: Optional[int] = None) -> List[Dict]`
 
-3. **`fetch_league_standings(client: YahooFantasyClient, league_key: str) -> List[Dict]`**
-   - Fetches current league standings
-   - Returns team rankings and records
+##### Team Data Methods
+- `fetch_teams_data(self, league_key: str) -> Optional[Dict]`
+- `fetch_team_roster(self, team_key: str, week: Optional[int] = None) -> Optional[Dict]`
+- `fetch_team_matchups(self, team_key: str) -> Optional[Dict]`
 
-4. **`fetch_league_transactions(client: YahooFantasyClient, league_key: str) -> List[Dict]`**
-   - Fetches all league transactions
-   - Includes trades, adds, drops
-
-5. **`fetch_league_scoreboard(client: YahooFantasyClient, league_key: str, week: Optional[int] = None) -> Dict`**
-   - Fetches matchup scores for a given week
-   - Returns all matchup results
-
-#### Team Data Fetchers
-
-6. **`fetch_teams(client: YahooFantasyClient, league_key: str) -> List[Dict]`**
-   - Fetches all teams in a league
-   - Returns team metadata
-
-7. **`fetch_team_info(client: YahooFantasyClient, team_key: str) -> Dict`**
-   - Fetches detailed team information
-   - Includes manager info, team settings
-
-8. **`fetch_team_roster(client: YahooFantasyClient, team_key: str, week: Optional[int] = None) -> List[Dict]`**
-   - Fetches team roster for a specific week
-   - Returns all players on roster
-
-9. **`fetch_team_stats(client: YahooFantasyClient, team_key: str, week: Optional[int] = None) -> Dict`**
-   - Fetches team statistics
-   - Returns aggregated team stats
-
-10. **`fetch_team_matchups(client: YahooFantasyClient, team_key: str) -> List[Dict]`**
-    - Fetches all matchups for a team
-    - Returns season-long matchup data
-
-#### Player Data Fetchers
-
-11. **`fetch_players(client: YahooFantasyClient, league_key: str, start: int = 0, count: int = 25) -> List[Dict]`**
-    - Fetches players with pagination
-    - Returns player metadata
-
-12. **`fetch_player_info(client: YahooFantasyClient, player_key: str) -> Dict`**
-    - Fetches detailed player information
-    - Includes bio, team, position
-
-13. **`fetch_player_stats(client: YahooFantasyClient, player_key: str, week: Optional[int] = None) -> Dict`**
-    - Fetches player statistics
-    - Returns stats for specified period
-
-14. **`fetch_player_ownership(client: YahooFantasyClient, league_key: str, player_keys: List[str]) -> Dict`**
-    - Fetches ownership data for players
-    - Returns ownership percentages
-
-15. **`fetch_player_draft_analysis(client: YahooFantasyClient, league_key: str) -> List[Dict]`**
-    - Fetches draft analysis data
-    - Returns draft picks and values
-
-#### Matchup Data Fetchers
-
-16. **`fetch_matchups(client: YahooFantasyClient, league_key: str, week: int) -> List[Dict]`**
-    - Fetches all matchups for a week
-    - Returns matchup pairings and scores
-
-17. **`fetch_matchup_grades(client: YahooFantasyClient, team_key: str, week: int) -> Dict`**
-    - Fetches matchup grades
-    - Returns performance grades
-
-#### Transaction Data Fetchers
-
-18. **`fetch_transactions(client: YahooFantasyClient, league_key: str, types: Optional[List[str]] = None) -> List[Dict]`**
-    - Fetches filtered transactions
-    - Returns transaction history
-
-19. **`fetch_waiver_claims(client: YahooFantasyClient, league_key: str) -> List[Dict]`**
-    - Fetches pending waiver claims
-    - Returns claim details
-
-20. **`fetch_trades(client: YahooFantasyClient, league_key: str) -> List[Dict]`**
-    - Fetches trade transactions
-    - Returns trade history
-
-#### Draft Data Fetchers
-
-21. **`fetch_draft_results(client: YahooFantasyClient, league_key: str) -> List[Dict]`**
-    - Fetches complete draft results
-    - Returns all draft picks
-
-22. **`fetch_predraft_rankings(client: YahooFantasyClient, league_key: str) -> List[Dict]`**
-    - Fetches pre-draft player rankings
-    - Returns ranked player list
-
-#### Metadata Fetchers
-
-23. **`fetch_game_weeks(client: YahooFantasyClient, game_key: str) -> List[Dict]`**
-    - Fetches game week information
-    - Returns week schedule data
-
-24. **`fetch_stat_categories(client: YahooFantasyClient, game_key: str) -> List[Dict]`**
-    - Fetches available stat categories
-    - Returns stat definitions
-
-25. **`fetch_roster_positions(client: YahooFantasyClient, league_key: str) -> List[Dict]`**
-    - Fetches roster position settings
-    - Returns position requirements
-
-26. **`fetch_transaction_types(client: YahooFantasyClient, league_key: str) -> List[str]`**
-    - Fetches available transaction types
-    - Returns transaction type list
-
-#### User Data Fetchers
-
-27. **`fetch_user_games(client: YahooFantasyClient) -> List[Dict]`**
-    - Fetches all games for authenticated user
-    - Returns user's game history
-
-28. **`fetch_user_leagues(client: YahooFantasyClient, game_key: str) -> List[Dict]`**
-    - Fetches user's leagues for a game
-    - Returns league participation
-
-29. **`fetch_user_teams(client: YahooFantasyClient) -> List[Dict]`**
-    - Fetches all user's teams
-    - Returns team ownership data
+##### Player Data Methods
+- `fetch_all_league_players(self, league_key: str) -> List[Dict]`
+- `fetch_player_season_stats(self, players: List, league_key: str, season: str) -> Optional[Dict]`
+- `fetch_player_daily_stats_for_range(self, players: List, league_key: str, season: str, start_date: date, end_date: date) -> int`
 
 ---
 
@@ -201,7 +100,7 @@ fantasy_etl/
 **Location**: `fantasy_etl/database/connection.py`
 
 **Methods**:
-- `__init__(self, connection_string: str)`
+- `__init__(self, connection_string: Optional[str] = None)`
   - Initializes database connection
   
 - `get_session(self) -> Session`
@@ -221,56 +120,34 @@ Contains SQLAlchemy ORM models for all database tables:
 - `Manager`: Team manager information
 
 #### Relationship Models
-- `TeamRoster`: Team-player relationships with dates
-- `PlayerStats`: Player statistics by period
-- `TeamStats`: Team statistics by period
-- `Matchup`: Weekly matchup information
-- `MatchupRoster`: Roster for each matchup
+- `RosterDaily`: Daily roster records
+- `PlayerDailyStats`: Player statistics by date
+- `PlayerSeasonStats`: Player season statistics
+- `TeamStatsWeekly`: Team weekly statistics
+- `LeagueStandings`: League standings
+- `TeamMatchups`: Team matchup records
 
 #### Transaction Models
 - `Transaction`: All transaction records
 - `TransactionPlayer`: Players involved in transactions
-- `WaiverClaim`: Waiver claim records
-- `Trade`: Trade transaction details
-
-#### Draft Models
-- `DraftPick`: Draft pick records
-- `PreDraftRanking`: Pre-draft player rankings
 
 #### Settings Models
-- `ScoringSettings`: League scoring configuration
-- `RosterPosition`: Roster position requirements
+- `LeagueSettings`: League configuration
 - `StatCategory`: Statistical categories
+- `LeagueRosterPosition`: Roster position requirements
 
 ### 2.3 Queries Module (`queries.py`)
 
-1. **`get_league_by_key(session: Session, league_key: str) -> Optional[League]`**
-   - Retrieves league by Yahoo key
-   - Returns League object or None
+#### Class: `DatabaseQueries`
+**Purpose**: Contains all database query methods
+**Location**: `fantasy_etl/database/queries.py`
 
-2. **`get_team_by_key(session: Session, team_key: str) -> Optional[Team]`**
-   - Retrieves team by Yahoo key
-   - Returns Team object or None
-
-3. **`get_player_by_key(session: Session, player_key: str) -> Optional[Player]`**
-   - Retrieves player by Yahoo key
-   - Returns Player object or None
-
-4. **`get_team_roster(session: Session, team_id: int, week: Optional[int] = None) -> List[Player]`**
-   - Retrieves team roster for a week
-   - Returns list of Player objects
-
-5. **`get_player_stats(session: Session, player_id: int, week: Optional[int] = None) -> Optional[PlayerStats]`**
-   - Retrieves player statistics
-   - Returns PlayerStats object or None
-
-6. **`get_league_standings(session: Session, league_id: int) -> List[Team]`**
-   - Retrieves league standings
-   - Returns ordered list of teams
-
-7. **`get_matchups_by_week(session: Session, league_id: int, week: int) -> List[Matchup]`**
-   - Retrieves matchups for a week
-   - Returns list of Matchup objects
+**Key Methods**:
+- `get_leagues_from_database(self) -> Optional[Dict]`
+- `get_season_date_info(self, league_key: str) -> Dict`
+- `get_teams_data_from_db(self, league_key: str) -> Optional[Dict]`
+- `get_stat_category_info(self, league_key: str, stat_id: int) -> Optional[Dict]`
+- `get_database_summary(self) -> Dict[str, int]`
 
 ---
 
@@ -278,127 +155,63 @@ Contains SQLAlchemy ORM models for all database tables:
 
 ### 3.1 Core Transformers (`core.py`)
 
-1. **`transform_league_data(raw_data: Dict) -> Dict`**
-   - Transforms raw league data from API
-   - Standardizes league information
+#### Class: `CoreTransformers`
+**Purpose**: Core data transformation methods
+**Location**: `fantasy_etl/transformers/core.py`
 
-2. **`transform_game_data(raw_data: Dict) -> Dict`**
-   - Transforms game metadata
-   - Extracts game configuration
-
-3. **`transform_settings_data(raw_data: Dict) -> Dict`**
-   - Transforms league settings
-   - Parses scoring and roster settings
-
-4. **`transform_standings_data(raw_data: List[Dict]) -> List[Dict]`**
-   - Transforms standings data
-   - Calculates rankings and records
-
-5. **`transform_draft_data(raw_data: List[Dict]) -> List[Dict]`**
-   - Transforms draft results
-   - Standardizes pick information
-
-6. **`transform_transaction_data(raw_data: Dict) -> Dict`**
-   - Transforms transaction data
-   - Parses transaction details
-
-7. **`transform_waiver_data(raw_data: Dict) -> Dict`**
-   - Transforms waiver claim data
-   - Extracts claim information
+**Key Methods**:
+- `transform_position_string(self, position_data) -> Optional[str]`
+- `transform_game_keys(self, games_data: Dict) -> List[str]`
+- `transform_leagues_from_data(self, data: Dict, game_key: str) -> List[Dict]`
+- `transform_league_data(self, league_data: Dict) -> Dict`
+- `transform_league_settings(self, settings_data: Dict) -> Dict`
+- `transform_team_standings_info(self, team_data) -> Dict`
+- `transform_transaction_data(self, transaction_data: Dict) -> Dict`
 
 ### 3.2 Team Transformers (`team.py`)
 
-8. **`transform_team_data(raw_data: Dict) -> Dict`**
-   - Transforms team information
-   - Standardizes team metadata
+#### Class: `TeamTransformers`
+**Purpose**: Team-related data transformations
+**Location**: `fantasy_etl/transformers/team.py`
 
-9. **`transform_team_stats(raw_data: Dict) -> Dict`**
-   - Transforms team statistics
-   - Aggregates team performance
-
-10. **`transform_matchup_data(raw_data: Dict) -> Dict`**
-    - Transforms matchup information
-    - Calculates matchup results
-
-11. **`transform_manager_data(raw_data: Dict) -> Dict`**
-    - Transforms manager information
-    - Extracts manager details
+**Key Methods**:
+- `transform_team_data_from_api(self, team_data: List) -> Dict`
+- `transform_team_keys_from_data(self, teams_data: Dict) -> List[str]`
+- `transform_team_matchups(self, matchups_data: Dict, team_key: str) -> List[Dict]`
+- `transform_matchup_info(self, matchup_info, team_key: str) -> Dict`
+- `transform_team_matchup_details(self, teams_data, target_team_key: str) -> Dict`
 
 ### 3.3 Player Transformers (`player.py`)
 
-12. **`transform_player_data(raw_data: Dict) -> Dict`**
-    - Transforms player information
-    - Standardizes player attributes
+#### Class: `PlayerTransformers`
+**Purpose**: Player-related data transformations
+**Location**: `fantasy_etl/transformers/player.py`
 
-13. **`transform_player_stats(raw_data: Dict) -> Dict`**
-    - Transforms player statistics
-    - Calculates statistical values
-
-14. **`transform_player_ownership(raw_data: Dict) -> Dict`**
-    - Transforms ownership data
-    - Calculates ownership metrics
-
-15. **`transform_draft_analysis(raw_data: Dict) -> Dict`**
-    - Transforms draft analysis
-    - Calculates draft values
+**Key Methods**:
+- `transform_players_from_league_data(self, players_data: Dict) -> List[Dict]`
+- `transform_player_info(self, player_info: Dict) -> Dict`
 
 ### 3.4 Roster Transformers (`roster.py`)
 
-16. **`transform_roster_data(raw_data: List[Dict]) -> List[Dict]`**
-    - Transforms roster information
-    - Standardizes roster entries
+#### Class: `RosterTransformers`
+**Purpose**: Roster-related data transformations
+**Location**: `fantasy_etl/transformers/roster.py`
 
-17. **`transform_roster_positions(raw_data: List[Dict]) -> List[Dict]`**
-    - Transforms position data
-    - Maps position requirements
-
-18. **`transform_lineup_data(raw_data: Dict) -> Dict`**
-    - Transforms lineup settings
-    - Extracts active lineup
+**Key Methods**:
+- `transform_roster_data(self, roster_data: Dict, team_key: str) -> Optional[List[Dict]]`
 
 ### 3.5 Stats Transformers (`stats.py`)
 
-19. **`transform_stat_categories(raw_data: List[Dict]) -> List[Dict]`**
-    - Transforms stat category definitions
-    - Standardizes stat metadata
+#### Class: `StatsTransformers`
+**Purpose**: Statistics-related data transformations
+**Location**: `fantasy_etl/transformers/stats.py`
 
-20. **`transform_scoring_settings(raw_data: Dict) -> Dict`**
-    - Transforms scoring configuration
-    - Parses point values
-
-21. **`transform_weekly_stats(raw_data: Dict) -> Dict`**
-    - Transforms weekly statistics
-    - Aggregates weekly performance
-
-22. **`transform_season_stats(raw_data: Dict) -> Dict`**
-    - Transforms season statistics
-    - Calculates season totals
-
-23. **`transform_projected_stats(raw_data: Dict) -> Dict`**
-    - Transforms projected statistics
-    - Standardizes projections
-
-24. **`transform_matchup_grades(raw_data: Dict) -> Dict`**
-    - Transforms matchup grades
-    - Calculates performance grades
-
-### 3.6 Additional Transformers
-
-25. **`transform_trade_data(raw_data: Dict) -> Dict`**
-    - Transforms trade information
-    - Parses trade details
-
-26. **`transform_schedule_data(raw_data: List[Dict]) -> List[Dict]`**
-    - Transforms schedule information
-    - Standardizes game schedule
-
-27. **`transform_game_weeks(raw_data: List[Dict]) -> List[Dict]`**
-    - Transforms week information
-    - Maps week boundaries
-
-28. **`transform_metadata(raw_data: Dict) -> Dict`**
-    - Transforms API metadata
-    - Extracts meta information
+**Key Methods**:
+- `transform_core_player_season_stats(self, stats_data: Dict) -> Dict`
+- `transform_core_daily_stats(self, stats_data: Dict) -> Dict`
+- `transform_core_team_weekly_stats(self, categories_won: int, win: Optional[bool] = None) -> Dict`
+- `transform_team_season_stats(self, stats_data: Dict) -> Dict`
+- `transform_team_weekly_stats_from_stats_data(self, stats_data: Dict) -> Dict`
 
 ---
 
@@ -406,123 +219,38 @@ Contains SQLAlchemy ORM models for all database tables:
 
 ### 4.1 Core Loaders (`core.py`)
 
-1. **`load_league(session: Session, league_data: Dict) -> League`**
-   - Loads league data to database
-   - Creates or updates League record
+#### Class: `CoreLoaders`
+**Purpose**: Core data loading methods
+**Location**: `fantasy_etl/loaders/core.py`
 
-2. **`load_team(session: Session, team_data: Dict) -> Team`**
-   - Loads team data to database
-   - Creates or updates Team record
-
-3. **`load_player(session: Session, player_data: Dict) -> Player`**
-   - Loads player data to database
-   - Creates or updates Player record
-
-4. **`load_manager(session: Session, manager_data: Dict) -> Manager`**
-   - Loads manager data to database
-   - Creates or updates Manager record
-
-5. **`load_settings(session: Session, settings_data: Dict) -> None`**
-   - Loads league settings
-   - Updates configuration tables
-
-6. **`load_roster_positions(session: Session, positions_data: List[Dict]) -> None`**
-   - Loads roster position settings
-   - Updates position requirements
-
-7. **`load_stat_categories(session: Session, categories_data: List[Dict]) -> None`**
-   - Loads stat category definitions
-   - Updates category metadata
-
-8. **`load_scoring_settings(session: Session, scoring_data: Dict) -> None`**
-   - Loads scoring configuration
-   - Updates point values
+**Key Methods**:
+- `load_roster_data(self, roster_list: List[Dict], selected_league: Dict) -> bool`
+- `load_teams_to_db(self, teams_data: Dict, league_key: str) -> bool`
+- `load_transactions_to_db(self, transactions: List[Dict], league_key: str) -> bool`
+- `load_league_standings_to_db(self, team_info: Dict, league_key: str, season: str) -> bool`
+- `load_team_matchups(self, matchup_list: List[Dict], selected_league: Dict) -> bool`
 
 ### 4.2 Batch Loaders (`batch.py`)
 
-9. **`load_teams_batch(session: Session, teams_data: List[Dict]) -> List[Team]`**
-   - Batch loads multiple teams
-   - Optimized for bulk operations
+#### Class: `BatchLoaders`
+**Purpose**: Batch data loading operations
+**Location**: `fantasy_etl/loaders/batch.py`
 
-10. **`load_players_batch(session: Session, players_data: List[Dict]) -> List[Player]`**
-    - Batch loads multiple players
-    - Handles large player sets
-
-11. **`load_roster_batch(session: Session, roster_data: List[Dict]) -> None`**
-    - Batch loads roster entries
-    - Updates team rosters
-
-12. **`load_transactions_batch(session: Session, transactions_data: List[Dict]) -> None`**
-    - Batch loads transactions
-    - Processes transaction history
-
-13. **`load_draft_picks_batch(session: Session, picks_data: List[Dict]) -> None`**
-    - Batch loads draft picks
-    - Updates draft results
-
-14. **`load_matchups_batch(session: Session, matchups_data: List[Dict]) -> None`**
-    - Batch loads matchups
-    - Updates matchup records
+**Key Methods**:
+- `write_teams_batch(self, teams_data: List[Dict], league_key: str) -> bool`
+- `write_players_batch(self, players_data: List[Dict], league_key: str) -> bool`
+- `write_transactions_batch(self, transactions_data: List[Dict], league_key: str) -> bool`
 
 ### 4.3 Stats Loaders (`stats.py`)
 
-15. **`load_player_stats(session: Session, stats_data: Dict) -> PlayerStats`**
-    - Loads player statistics
-    - Creates stats records
+#### Class: `StatsLoaders`
+**Purpose**: Statistics data loading
+**Location**: `fantasy_etl/loaders/stats.py`
 
-16. **`load_team_stats(session: Session, stats_data: Dict) -> TeamStats`**
-    - Loads team statistics
-    - Creates team stats records
-
-17. **`load_weekly_stats_batch(session: Session, stats_data: List[Dict]) -> None`**
-    - Batch loads weekly stats
-    - Processes weekly performance
-
-18. **`load_season_stats_batch(session: Session, stats_data: List[Dict]) -> None`**
-    - Batch loads season stats
-    - Updates season totals
-
-19. **`load_projected_stats(session: Session, projections_data: Dict) -> None`**
-    - Loads projected statistics
-    - Updates projection data
-
-20. **`load_matchup_results(session: Session, results_data: Dict) -> None`**
-    - Loads matchup results
-    - Updates scores and outcomes
-
-### 4.4 Additional Loaders
-
-21. **`load_transaction(session: Session, transaction_data: Dict) -> Transaction`**
-    - Loads single transaction
-    - Creates transaction record
-
-22. **`load_waiver_claim(session: Session, claim_data: Dict) -> WaiverClaim`**
-    - Loads waiver claim
-    - Creates claim record
-
-23. **`load_trade(session: Session, trade_data: Dict) -> Trade`**
-    - Loads trade transaction
-    - Creates trade record
-
-24. **`load_standings(session: Session, standings_data: List[Dict]) -> None`**
-    - Loads league standings
-    - Updates team rankings
-
-25. **`load_schedule(session: Session, schedule_data: List[Dict]) -> None`**
-    - Loads game schedule
-    - Updates week information
-
-26. **`load_draft_rankings(session: Session, rankings_data: List[Dict]) -> None`**
-    - Loads pre-draft rankings
-    - Updates ranking data
-
-27. **`load_ownership_data(session: Session, ownership_data: Dict) -> None`**
-    - Loads ownership percentages
-    - Updates ownership metrics
-
-28. **`load_matchup_grades(session: Session, grades_data: Dict) -> None`**
-    - Loads matchup grades
-    - Updates performance grades
+**Key Methods**:
+- `write_player_season_stat_values(self, player_key: str, editorial_player_key: str, league_key: str, season: str, stats_data: Dict) -> bool`
+- `write_player_daily_stat_values(self, player_key: str, editorial_player_key: str, league_key: str, season: str, date_obj: date, stats_data: Dict, week: Optional[int] = None) -> bool`
+- `write_team_stat_values(self, team_key: str, league_key: str, season: str, coverage_type: str, stats_data: Dict, ...) -> bool`
 
 ---
 
@@ -530,30 +258,18 @@ Contains SQLAlchemy ORM models for all database tables:
 
 ### 5.1 Core Validators (`core.py`)
 
-1. **`verify_league_data(league_data: Dict) -> bool`**
-   - Validates league data structure
-   - Checks required fields and formats
-   - Returns True if valid, raises ValidationError if not
+#### Class: `CoreValidators`
+**Purpose**: Data validation methods
+**Location**: `fantasy_etl/validators/core.py`
 
-2. **`verify_team_data(team_data: Dict) -> bool`**
-   - Validates team data structure
-   - Ensures team integrity
-   - Returns validation status
-
-3. **`verify_player_data(player_data: Dict) -> bool`**
-   - Validates player data structure
-   - Checks player attributes
-   - Returns validation status
-
-4. **`verify_transaction_data(transaction_data: Dict) -> bool`**
-   - Validates transaction data
-   - Ensures transaction consistency
-   - Returns validation status
-
-5. **`verify_stats_data(stats_data: Dict) -> bool`**
-   - Validates statistics data
-   - Checks stat values and types
-   - Returns validation status
+**Key Methods**:
+- `verify_league_exists_in_db(self) -> bool`
+- `verify_league_selected(self) -> bool`
+- `verify_league_data(self, league_data: Dict) -> bool`
+- `verify_team_data(self, team_data: Dict) -> bool`
+- `verify_player_data(self, player_data: Dict) -> bool`
+- `verify_transaction_data(self, transaction_data: Dict) -> bool`
+- `verify_stats_data(self, stats_data: Dict) -> bool`
 
 ---
 
@@ -561,43 +277,20 @@ Contains SQLAlchemy ORM models for all database tables:
 
 ### 6.1 Date Utilities (`date_utils.py`)
 
-1. **`get_current_week(league_start_date: datetime) -> int`**
-   - Calculates current fantasy week
-   - Based on league start date
-
-2. **`get_week_dates(week: int, league_start_date: datetime) -> Tuple[datetime, datetime]`**
-   - Returns start and end dates for a week
-   - Calculates week boundaries
-
-3. **`parse_yahoo_date(date_string: str) -> datetime`**
-   - Parses Yahoo date format
-   - Returns datetime object
-
-4. **`format_date_for_db(date: datetime) -> str`**
-   - Formats date for database storage
-   - Returns ISO format string
+Functions:
+- `get_current_week(league_start_date: datetime) -> int`
+- `get_week_dates(week: int, league_start_date: datetime) -> Tuple[datetime, datetime]`
+- `parse_yahoo_date(date_string: str) -> datetime`
+- `format_date_for_db(date: datetime) -> str`
 
 ### 6.2 Helper Functions (`helpers.py`)
 
-5. **`clean_player_name(name: str) -> str`**
-   - Cleans player name formatting
-   - Removes special characters
-
-6. **`calculate_win_percentage(wins: int, losses: int, ties: int = 0) -> float`**
-   - Calculates win percentage
-   - Handles ties appropriately
-
-7. **`parse_position_string(position: str) -> List[str]`**
-   - Parses position eligibility
-   - Returns list of positions
-
-8. **`generate_unique_key(prefix: str, *args) -> str`**
-   - Generates unique identifier
-   - Combines prefix with arguments
-
-9. **`batch_list(items: List, batch_size: int) -> List[List]`**
-   - Splits list into batches
-   - For batch processing
+Functions:
+- `clean_player_name(name: str) -> str`
+- `calculate_win_percentage(wins: int, losses: int, ties: int = 0) -> float`
+- `parse_position_string(position: str) -> List[str]`
+- `generate_unique_key(prefix: str, *args) -> str`
+- `batch_list(items: List, batch_size: int) -> List[List]`
 
 ---
 
@@ -605,32 +298,53 @@ Contains SQLAlchemy ORM models for all database tables:
 
 ### Typical ETL Pipeline Flow:
 
-1. **Fetch Data** (API Module)
-   ```
-   client = YahooFantasyClient(key, secret)
-   raw_data = fetch_leagues(client, game_key)
+1. **Initialize Components**
+   ```python
+   from fantasy_etl.api import YahooFantasyAPIClient, YahooFantasyFetcher
+   from fantasy_etl.database import DatabaseConnection, DatabaseQueries
+   from fantasy_etl.transformers import CoreTransformers
+   from fantasy_etl.validators import CoreValidators
+   from fantasy_etl.loaders import CoreLoaders
+   
+   # Create instances
+   api_client = YahooFantasyAPIClient()
+   fetcher = YahooFantasyFetcher()
+   fetcher.api_client = api_client
+   
+   db_conn = DatabaseConnection()
+   session = db_conn.get_session()
+   queries = DatabaseQueries()
+   
+   transformer = CoreTransformers()
+   validator = CoreValidators(session=session)
+   loader = CoreLoaders(db_writer)
    ```
 
-2. **Transform Data** (Transformers Module)
-   ```
-   clean_data = transform_league_data(raw_data)
-   ```
-
-3. **Validate Data** (Validators Module)
-   ```
-   if verify_league_data(clean_data):
-       proceed_to_load()
+2. **Fetch Data**
+   ```python
+   raw_data = fetcher.fetch_leagues_data(game_key)
    ```
 
-4. **Load Data** (Loaders Module)
-   ```
-   session = DatabaseConnection(conn_str).get_session()
-   load_league(session, clean_data)
+3. **Transform Data**
+   ```python
+   leagues = transformer.transform_leagues_from_data(raw_data, game_key)
+   clean_data = transformer.transform_league_data(leagues[0])
    ```
 
-5. **Query Data** (Database Module)
+4. **Validate Data**
+   ```python
+   if validator.verify_league_data(clean_data):
+       # Proceed to load
    ```
-   league = get_league_by_key(session, league_key)
+
+5. **Load Data**
+   ```python
+   success = loader.load_teams_to_db(teams_data, league_key)
+   ```
+
+6. **Query Data**
+   ```python
+   league_info = queries.get_season_date_info(league_key)
    ```
 
 ---
@@ -644,16 +358,16 @@ All modules implement consistent error handling:
 - **DatabaseError**: For database operation failures
 - **TransformationError**: For data transformation issues
 
-Each function includes appropriate error handling and logging for debugging and monitoring.
+Each class includes appropriate error handling and logging for debugging and monitoring.
 
 ---
 
 ## Module Dependencies
 
 ```
-api -> None (standalone)
-transformers -> None (standalone)
-validators -> None (standalone)
+api -> utils
+transformers -> utils
+validators -> database models
 database -> SQLAlchemy models
 loaders -> database, validators
 utils -> None (standalone)

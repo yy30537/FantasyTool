@@ -1,120 +1,89 @@
-# Fantasy ETL 代码迁移后的一致性修复总结
+# Fantasy ETL 代码清理总结
 
 ## 概述
 
-在将旧的单文件架构迁移到新的模块化架构后，发现了多个命名和接口不一致的问题。本文档总结了所有已修复的不一致性问题。
+根据用户要求，已删除所有向后兼容的代码，包括别名和独立函数包装器。现在代码结构更加清晰，只保留必要的类和方法。
 
-## 主要修复内容
+## 主要清理内容
 
-### 1. API模块不一致性修复
+### 1. API模块
+- **删除**: `YahooFantasyClient` 别名
+- **保留**: 只使用 `YahooFantasyAPIClient` 类名
+- **删除**: 所有独立的 `fetch_*` 函数
+- **保留**: `YahooFantasyFetcher` 类及其方法
 
-#### 问题
-- 文档中使用 `YahooFantasyClient` 类名，但实际代码使用 `YahooFantasyAPIClient`
-- 文档显示独立函数 `fetch_leagues(client, game_key)`，但实际是类方法
+### 2. Transformers模块
+- **删除**: 所有独立的 `transform_*` 函数
+- **保留**: 各个Transformer类（`CoreTransformers`, `TeamTransformers`, `PlayerTransformers`, `RosterTransformers`, `StatsTransformers`）
 
-#### 修复
-- 在 `fantasy_etl/api/client.py` 添加别名：
-  ```python
-  YahooFantasyClient = YahooFantasyAPIClient
-  ```
-- 在 `fantasy_etl/api/fetchers.py` 添加独立函数包装器
-- 在 `fantasy_etl/api/__init__.py` 导出所有独立函数和别名
+### 3. Database模块
+- **删除**: 所有独立的 `get_*` 查询函数
+- **保留**: `DatabaseQueries` 类及其方法
+- **保留**: 所有数据库模型类的导出
 
-### 2. Transformers模块不一致性修复
+### 4. Loaders模块
+- **删除**: 所有独立的 `load_*` 函数
+- **保留**: 各个Loader类（`CoreLoaders`, `BatchLoaders`, `StatsLoaders`）
 
-#### 问题
-- 文档显示独立函数如 `transform_league_data(raw_data)`
-- 实际代码中这些是类方法
+### 5. Validators模块
+- **删除**: 所有独立的 `verify_*` 函数
+- **保留**: `CoreValidators` 类及其方法
 
-#### 修复
-- 在每个transformer文件末尾添加独立函数包装器：
-  - `fantasy_etl/transformers/core.py`
-  - `fantasy_etl/transformers/team.py`
-  - `fantasy_etl/transformers/player.py`
-  - `fantasy_etl/transformers/roster.py`
-  - `fantasy_etl/transformers/stats.py`
-- 在 `fantasy_etl/transformers/__init__.py` 导出所有独立函数
+## 清理后的使用方式
 
-### 3. Database模块不一致性修复
-
-#### 问题
-- 查询函数应该是独立函数，但实际是类方法
-- 数据库模型类没有正确导出
-- 代码中的TODO注释引用了错误的模型名称
-
-#### 修复
-- 在 `fantasy_etl/database/queries.py` 添加独立函数包装器
-- 修复了所有模型导入（如 `TeamRoster` → `RosterDaily`）
-- 在 `fantasy_etl/database/__init__.py` 导出所有模型类和函数
-
-### 4. Loaders模块不一致性修复
-
-#### 问题
-- 加载函数应该是独立函数，但实际是类方法
-
-#### 修复
-- 在每个loader文件末尾添加独立函数包装器：
-  - `fantasy_etl/loaders/core.py`
-  - `fantasy_etl/loaders/batch.py`
-  - `fantasy_etl/loaders/stats.py`
-- 在 `fantasy_etl/loaders/__init__.py` 导出所有独立函数
-
-### 5. Validators模块不一致性修复
-
-#### 问题
-- 验证函数应该是独立函数，但实际是类方法
-
-#### 修复
-- 在 `fantasy_etl/validators/core.py` 添加独立函数包装器
-- 在 `fantasy_etl/validators/__init__.py` 导出所有独立函数
-
-## 修复后的ETL流程
-
-现在可以按照文档中描述的方式使用ETL流程：
+现在必须通过类实例来使用所有功能：
 
 ```python
-# 1. Fetch - 获取数据
-from fantasy_etl.api import YahooFantasyClient, fetch_leagues
-client = YahooFantasyClient()
-raw_data = fetch_leagues(client, game_key)
+# API模块
+from fantasy_etl.api import YahooFantasyAPIClient, YahooFantasyFetcher
 
-# 2. Transform - 转换数据
-from fantasy_etl.transformers import transform_league_data
-clean_data = transform_league_data(raw_data)
+api_client = YahooFantasyAPIClient()
+fetcher = YahooFantasyFetcher()
+fetcher.api_client = api_client
+raw_data = fetcher.fetch_leagues_data(game_key)
 
-# 3. Validate - 验证数据
-from fantasy_etl.validators import verify_league_data
-if verify_league_data(clean_data):
-    # 4. Load - 加载数据
-    from fantasy_etl.database import DatabaseConnection
-    from fantasy_etl.loaders import load_league
-    
-    session = DatabaseConnection().get_session()
-    load_league(session, clean_data)
-    
-    # 5. Query - 查询数据
-    from fantasy_etl.database import get_league_by_key
-    league = get_league_by_key(session, league_key)
+# Transformers模块
+from fantasy_etl.transformers import CoreTransformers
+
+transformer = CoreTransformers()
+clean_data = transformer.transform_league_data(raw_data)
+
+# Validators模块
+from fantasy_etl.validators import CoreValidators
+
+validator = CoreValidators()
+is_valid = validator.verify_league_data(clean_data)
+
+# Database模块
+from fantasy_etl.database import DatabaseConnection, DatabaseQueries
+
+db_conn = DatabaseConnection()
+session = db_conn.get_session()
+queries = DatabaseQueries()
+league_info = queries.get_season_date_info(league_key)
+
+# Loaders模块
+from fantasy_etl.loaders import CoreLoaders
+
+loader = CoreLoaders(db_writer)
+success = loader.load_teams_to_db(teams_data, league_key)
 ```
 
-## 关键改进
+## 优点
 
-1. **向后兼容性**：保留了原有的类结构，通过包装器提供独立函数接口
-2. **一致的命名约定**：
-   - `fetch_*` - API数据获取
-   - `transform_*` - 数据转换
-   - `verify_*` - 数据验证
-   - `load_*` - 数据加载
-   - `get_*` - 数据库查询
-3. **统一的接口**：所有模块都提供了类和独立函数两种使用方式
-4. **正确的模型导出**：数据库模型类现在可以直接从 `fantasy_etl.database` 导入
+1. **更清晰的代码结构**: 没有重复的函数定义
+2. **统一的接口**: 所有功能都通过类方法访问
+3. **更好的封装**: 相关功能组织在类中
+4. **减少混淆**: 只有一种方式来使用每个功能
 
-## 测试验证
+## 文档更新
 
-创建了两个测试脚本来验证修复：
-- `test_etl_flow.py` - 完整的ETL流程测试
-- `test_etl_flow_minimal.py` - 最小化的模块结构测试
+`function-documentation-new.md` 已更新，反映了新的类基础架构，包括：
+- 每个模块的主要类
+- 类的关键方法
+- 正确的使用示例
+- 完整的ETL流程示例
 
 ## 结论
 
-所有主要的命名和接口不一致性问题已经修复。新的模块化架构现在完全符合文档中描述的接口规范，同时保持了与原有代码的兼容性。用户可以按照文档中的示例代码完整地测试ETL流程。
+通过删除所有向后兼容的代码，Fantasy ETL系统现在有了更清晰、更一致的API。用户需要使用类实例来访问所有功能，这提供了更好的代码组织和封装。

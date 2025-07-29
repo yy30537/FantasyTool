@@ -227,6 +227,3 @@ class YahooFantasyAPIClient:
                 return None
         
         return None
-
-# 为了与文档保持一致，创建别名
-YahooFantasyClient = YahooFantasyAPIClient
