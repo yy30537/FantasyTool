@@ -13,31 +13,62 @@ The project has been refactored into a modular ETL system:
 
 ```
 fantasy_etl/
-├── core/
-│   ├── auth.py           # OAuth authentication (extracted from yahoo_api_utils.py)
-│   └── config.py         # Configuration management
+├── config/
+│   ├── settings.py       # Configuration management
+│   └── constants.py      # API URLs and constants
+├── auth/
+│   └── oauth_manager.py  # OAuth authentication (extracted from yahoo_api_utils.py)
+├── api/
+│   ├── base_client.py    # Base API client
+│   └── yahoo_client.py   # Yahoo API client
+├── models/
+│   ├── base.py           # Base database models
+│   ├── league.py         # League models
+│   ├── team.py           # Team models
+│   ├── player.py         # Player models
+│   ├── stats.py          # Statistics models
+│   ├── transaction.py    # Transaction models
+│   └── dimension.py      # Dimension tables
 ├── extractors/
 │   ├── base.py           # Base extractor with common API logic
-│   ├── leagues.py        # League data extraction
-│   ├── teams.py          # Team data extraction  
-│   ├── players.py        # Player data extraction
-│   └── transactions.py   # Transaction data extraction
+│   ├── league.py         # League data extraction
+│   ├── team.py           # Team data extraction  
+│   ├── player.py         # Player data extraction
+│   ├── stats.py          # Statistics data extraction
+│   └── transaction.py    # Transaction data extraction
+├── transformers/
+│   ├── base.py           # Base transformer
+│   ├── league.py         # League data transformation
+│   ├── team.py           # Team data transformation
+│   ├── player.py         # Player data transformation
+│   ├── stats.py          # Statistics data transformation
+│   ├── transaction.py    # Transaction data transformation
+│   └── dimension.py      # Dimension data transformation
 ├── loaders/
 │   ├── base.py           # Base loader with common DB logic
-│   ├── league_loader.py  # League data loading
-│   ├── team_loader.py    # Team data loading
-│   ├── player_loader.py  # Player data loading
-│   └── transaction_loader.py # Transaction data loading
-├── etl_coordinator.py    # Main ETL orchestrator
-├── cli.py               # Command-line interface
-└── compat.py            # Compatibility layer for legacy code
+│   ├── postgres_loader.py # PostgreSQL data loading
+│   ├── batch_loader.py   # Batch loading utilities
+│   └── utility_loader.py # Utility loading functions
+├── orchestrator/
+│   ├── etl_orchestrator.py    # Main ETL orchestrator
+│   ├── workflow_manager.py    # Workflow management
+│   └── league_orchestrator.py # League-specific orchestration
+├── cli/
+│   ├── commands.py       # Command-line interface
+│   └── __main__.py       # CLI entry point
+├── utils/
+│   ├── logger.py         # Logging and progress tracking
+│   ├── error_handler.py  # Error handling and rollback
+│   ├── date_utils.py     # Date processing utilities
+│   └── retry.py          # Retry mechanisms
+└── dto/                  # Data transfer objects
 ```
 
 ### Legacy Files (Still Available)
-- **yahoo_api_utils.py**: OAuth认证、API请求管理 → Replaced by `fantasy_etl/core/auth.py`
-- **yahoo_api_data.py**: 数据提取逻辑 (2797 lines) → Replaced by `fantasy_etl/extractors/` + `etl_coordinator.py`
+- **yahoo_api_utils.py**: OAuth认证、API请求管理 → Replaced by `fantasy_etl/auth/oauth_manager.py`
+- **yahoo_api_data.py**: 数据提取逻辑 (2797 lines) → Replaced by `fantasy_etl/extractors/` + `fantasy_etl/orchestrator/`
 - **database_writer.py**: 批量数据写入 (2135 lines) → Replaced by `fantasy_etl/loaders/`
-- **model.py**: SQLAlchemy数据库模式定义 (unchanged)
+- **model.py**: SQLAlchemy数据库模式定义 → Enhanced with `fantasy_etl/models/`
 
 ### Authentication & Web Interface
 - **app.py**: Flask web应用，Yahoo OAuth认证和令牌管理
@@ -95,8 +126,8 @@ python -m fantasy_etl.cli league <key>       # Process single league
 python -m fantasy_etl.cli all                # Process all leagues
 python -m fantasy_etl.cli user-info          # Extract user info only
 
-# 4. Migration from legacy system:
-python migrate_to_modular.py                 # Guided migration wizard
+# 4. Additional CLI commands:
+python -m fantasy_etl.cli pipeline nba.l.123456 nba.l.789012  # Pipeline processing
 ```
 
 #### Legacy System (Still Available)
@@ -117,17 +148,19 @@ python yahoo_api_data.py
 ```bash
 # Using the new modular system programmatically:
 python -c "
-from fantasy_etl import ETLCoordinator, LeagueExtractor
-coordinator = ETLCoordinator()
-results = coordinator.process_league_data('nba.l.123456')
-print(coordinator.get_processing_summary())
+from fantasy_etl.orchestrator.etl_orchestrator import ETLOrchestrator
+orchestrator = ETLOrchestrator()
+result = orchestrator.process_complete_league_data('nba.l.123456')
+print(orchestrator.get_execution_summary())
 "
 
 # Component testing:
 python -c "
-from fantasy_etl.extractors.leagues import LeagueExtractor
-extractor = LeagueExtractor()
-leagues = extractor.extract_user_leagues()
+from fantasy_etl.extractors.league import LeagueExtractor
+from fantasy_etl.api.yahoo_client import YahooFantasyAPIClient
+client = YahooFantasyAPIClient()
+extractor = LeagueExtractor('', client)
+leagues = extractor.extract()
 print(leagues)
 "
 ```
@@ -145,13 +178,13 @@ python database_writer.py  # Direct database interface
 
 ### OAuth Token Management
 - Tokens stored in `tokens/yahoo_token.token` (pickle format)
-- Automatic refresh in `yahoo_api_utils.py`
-- Hardcoded credentials in `yahoo_api_utils.py` (移到环境变量)
+- Automatic refresh in `fantasy_etl/auth/oauth_manager.py`
+- Credentials loaded from environment variables via `fantasy_etl/config/settings.py`
 
 ### API Rate Limiting
-- Exponential backoff retry mechanism
+- Exponential backoff retry mechanism in `fantasy_etl/utils/retry.py`
 - Configurable delays between requests
-- Comprehensive 401/403 error handling
+- Comprehensive 401/403 error handling in `fantasy_etl/api/yahoo_client.py`
 
 ### Data Storage Strategy
 - Direct database writes with batch processing
@@ -164,25 +197,29 @@ python database_writer.py  # Direct database interface
 The large monolithic files have been successfully refactored into a modular system:
 
 1. **yahoo_api_data.py** (2797 lines) → **Modularized**:
-   - ✅ `fantasy_etl/extractors/leagues.py` - 联盟数据提取
-   - ✅ `fantasy_etl/extractors/teams.py` - 团队数据提取
-   - ✅ `fantasy_etl/extractors/players.py` - 球员数据提取
-   - ✅ `fantasy_etl/extractors/transactions.py` - 交易数据提取
-   - ✅ `fantasy_etl/etl_coordinator.py` - 统一协调器
+   - ✅ `fantasy_etl/extractors/league.py` - 联盟数据提取
+   - ✅ `fantasy_etl/extractors/team.py` - 团队数据提取
+   - ✅ `fantasy_etl/extractors/player.py` - 球员数据提取
+   - ✅ `fantasy_etl/extractors/stats.py` - 统计数据提取
+   - ✅ `fantasy_etl/extractors/transaction.py` - 交易数据提取
+   - ✅ `fantasy_etl/orchestrator/etl_orchestrator.py` - 统一协调器
 
 2. **database_writer.py** (2135 lines) → **Modularized**:
-   - ✅ `fantasy_etl/loaders/league_loader.py` - 联盟数据加载
-   - ✅ `fantasy_etl/loaders/team_loader.py` - 团队数据加载
-   - ✅ `fantasy_etl/loaders/player_loader.py` - 球员数据加载
-   - ✅ `fantasy_etl/loaders/transaction_loader.py` - 交易数据加载
+   - ✅ `fantasy_etl/loaders/postgres_loader.py` - PostgreSQL数据加载
+   - ✅ `fantasy_etl/loaders/batch_loader.py` - 批量加载器
+   - ✅ `fantasy_etl/loaders/utility_loader.py` - 工具加载器
+   - ✅ `fantasy_etl/transformers/` - 数据转换层
 
 3. **yahoo_api_utils.py** → **Modularized**:
-   - ✅ `fantasy_etl/core/auth.py` - OAuth认证管理
-   - ✅ `fantasy_etl/core/config.py` - 配置管理
+   - ✅ `fantasy_etl/auth/oauth_manager.py` - OAuth认证管理
+   - ✅ `fantasy_etl/config/settings.py` - 配置管理
+   - ✅ `fantasy_etl/api/yahoo_client.py` - API客户端
 
-### Migration Support
-- ✅ `fantasy_etl/compat.py` - 兼容性层，支持渐进式迁移
-- ✅ `migrate_to_modular.py` - 迁移向导和验证工具
+### New Features Added
+- ✅ `fantasy_etl/utils/logger.py` - 结构化日志和进度跟踪
+- ✅ `fantasy_etl/utils/error_handler.py` - 错误处理和事务回滚
+- ✅ `fantasy_etl/orchestrator/workflow_manager.py` - 工作流依赖管理
+- ✅ `fantasy_etl/cli/` - 专业命令行界面
 
 ## Code Conventions
 
@@ -196,27 +233,33 @@ The large monolithic files have been successfully refactored into a modular syst
 ### 🎯 NEW: Using Modular System
 
 #### Adding New Data Types
-1. 在 `model.py` 中定义新表
+1. 在 `model.py` 或 `fantasy_etl/models/` 中定义新表
 2. 在相应的 `fantasy_etl/extractors/` 模块中添加提取逻辑
-3. 在相应的 `fantasy_etl/loaders/` 模块中实现写入器
-4. 在 `fantasy_etl/etl_coordinator.py` 中集成新功能
-5. 使用 `main_etl.py` 或 CLI 测试
+3. 在相应的 `fantasy_etl/transformers/` 模块中添加转换逻辑
+4. 在相应的 `fantasy_etl/loaders/` 模块中实现加载器
+5. 在 `fantasy_etl/orchestrator/etl_orchestrator.py` 中集成新功能
+6. 使用 `main_etl.py` 或 CLI 测试
 
 #### Adding New Extractors
 1. 继承 `fantasy_etl/extractors/base.py::BaseExtractor`
 2. 实现 `extract()` 方法
-3. 在 `fantasy_etl/etl_coordinator.py` 中集成
+3. 在 `fantasy_etl/orchestrator/etl_orchestrator.py` 中注册
+
+#### Adding New Transformers
+1. 继承 `fantasy_etl/transformers/base.py::BaseTransformer`
+2. 实现 `transform()` 方法
+3. 在 `fantasy_etl/orchestrator/etl_orchestrator.py` 中注册
 
 #### Adding New Loaders  
 1. 继承 `fantasy_etl/loaders/base.py::BaseLoader`
 2. 实现 `load()` 方法
-3. 在 `fantasy_etl/etl_coordinator.py` 中集成
+3. 在 `fantasy_etl/orchestrator/etl_orchestrator.py` 中注册
 
 ### ✅ Completed: Large Files Refactoring
 The monolithic files have been successfully modularized:
-- ✅ `yahoo_api_data.py` → `fantasy_etl/extractors/` + `etl_coordinator.py`
-- ✅ `database_writer.py` → `fantasy_etl/loaders/`
-- ✅ API接口兼容性通过 `fantasy_etl/compat.py` 保持
+- ✅ `yahoo_api_data.py` → `fantasy_etl/extractors/` + `fantasy_etl/orchestrator/`
+- ✅ `database_writer.py` → `fantasy_etl/loaders/` + `fantasy_etl/transformers/`
+- ✅ `yahoo_api_utils.py` → `fantasy_etl/auth/` + `fantasy_etl/api/`
 
 ### Database Schema Changes
 1. 修改 `model.py` 中的模型
@@ -232,14 +275,23 @@ The monolithic files have been successfully modularized:
 - **New Features**: CLI interface, ETL coordinator, modular extractors/loaders
 
 ### System Notes
-- OAuth凭据通过 `fantasy_etl/core/auth.py` 从环境变量读取
-- 模块化loaders包含自动表结构验证和重建功能
+- OAuth凭据通过 `fantasy_etl/auth/oauth_manager.py` 从环境变量读取
+- 模块化系统包含完整的错误处理和事务支持
+- 结构化日志记录和进度跟踪功能
 - 样本数据存储在 `sample_data/` 目录
 - API文档位于 `doc/` 目录
-- **✅ Architecture Optimized**: 从adhoc解决方案升级到模块化、可维护的系统
+- **✅ Architecture Optimized**: 从monolithic解决方案升级到模块化、企业级系统
 
-### Migration Support
-- Use `migrate_to_modular.py` for guided migration
-- Use `main_etl.py` to test the new modular system
+### Usage Instructions
+- Use `main_etl.py` for interactive demo and testing
 - Use `python -m fantasy_etl.cli --help` for CLI options
-- Legacy code compatibility maintained via `fantasy_etl/compat.py`
+- Use `python -m fantasy_etl.cli list-leagues` to start
+- All legacy files remain available for backward compatibility
+
+### Enterprise Features
+- **Error Handling**: Comprehensive error classification and recovery
+- **Transaction Support**: Automatic rollback on failures  
+- **Progress Tracking**: Real-time progress with ETAs
+- **Workflow Management**: Dependency-aware execution
+- **CLI Tools**: Professional command-line interface
+- **Logging**: Structured logging with context tracking

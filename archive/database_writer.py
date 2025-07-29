@@ -431,7 +431,7 @@ class FantasyDatabaseWriter:
             ).first()
             
             # 提取核心统计项
-            core_stats = self._extract_core_player_season_stats(stats_data)
+            core_stats = self.transform_player_season_stats(stats_data)
             
             if existing:
                 # 更新现有记录
@@ -484,8 +484,8 @@ class FantasyDatabaseWriter:
             self.session.rollback()
             return 0
     
-    def _extract_core_player_season_stats(self, stats_data: Dict) -> Dict:
-        """从球员赛季统计数据中提取完整的11个统计项"""
+    def transform_player_season_stats(self, stats_data: Dict) -> Dict:
+        """转换球员赛季统计数据为标准化的11个统计项"""
         core_stats = {}
         
         try:
@@ -571,7 +571,7 @@ class FantasyDatabaseWriter:
             ).first()
             
             # 提取核心统计项
-            core_stats = self._extract_core_daily_stats(stats_data)
+            core_stats = self.transform_player_daily_stats(stats_data)
             
             if existing:
                 # 更新现有记录
@@ -627,8 +627,8 @@ class FantasyDatabaseWriter:
             self.session.rollback()
             return 0
     
-    def _extract_core_daily_stats(self, stats_data: Dict) -> Dict:
-        """从统计数据中提取完整的11个日期统计项"""
+    def transform_player_daily_stats(self, stats_data: Dict) -> Dict:
+        """转换球员日统计数据为标准化的11个统计项"""
         core_stats = {}
         
         try:
@@ -723,7 +723,7 @@ class FantasyDatabaseWriter:
             ).first()
             
             # 提取完整的团队周统计项
-            core_stats = self._extract_team_weekly_stats(stats_data)
+            core_stats = self.transform_team_weekly_stats_from_stats_data(stats_data)
             
             if existing:
                 # 更新现有记录
@@ -775,7 +775,7 @@ class FantasyDatabaseWriter:
             self.session.rollback()
             return 0
     
-    def _extract_core_team_weekly_stats(self, categories_won: int, win: Optional[bool] = None) -> Dict:
+    def transform_core_team_weekly_stats(self, categories_won: int, win: Optional[bool] = None) -> Dict:
         """从matchup数据中提取核心统计项"""
         core_stats = {}
         
@@ -1891,7 +1891,7 @@ class FantasyDatabaseWriter:
     
 
     
-    def _extract_team_season_stats(self, stats_data: Dict) -> Dict:
+    def transform_team_season_stats(self, stats_data: Dict) -> Dict:
         """从团队赛季统计数据中提取完整统计项"""
         core_stats = {}
         
@@ -1928,7 +1928,7 @@ class FantasyDatabaseWriter:
         
         return core_stats
     
-    def _extract_team_weekly_stats(self, stats_data: Dict) -> Dict:
+    def transform_team_weekly_stats_from_stats_data(self, stats_data: Dict) -> Dict:
         """从团队周统计数据中提取完整的11个统计项"""
         core_stats = {}
         
@@ -2030,7 +2030,7 @@ class FantasyDatabaseWriter:
             ).first()
             
             # 提取完整的团队周统计项
-            core_stats = self._extract_team_weekly_stats(team_stats_data)
+            core_stats = self.transform_team_weekly_stats_from_stats_data(team_stats_data)
             
             if existing:
                 # 更新现有记录
