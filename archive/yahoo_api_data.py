@@ -17,7 +17,7 @@ from yahoo_api_utils import (
     select_league_interactively
 )
 from database_writer import FantasyDatabaseWriter
-from model import RosterDaily, Player, DateDimension, LeagueStandings, TeamMatchups, LeagueSettings, Manager
+from fantasy_etl.database.model import RosterDaily, Player, DateDimension, LeagueStandings, TeamMatchups, LeagueSettings, Manager
 
 class YahooFantasyDataFetcher:
     """Yahoo Fantasy统一数据获取器"""
@@ -78,7 +78,7 @@ class YahooFantasyDataFetcher:
     def _get_leagues_from_database(self) -> Optional[Dict]:
         """从数据库获取联盟数据，格式化为选择界面需要的格式"""
         try:
-            from model import League
+            from fantasy_etl.database.model import League
             
             leagues = self.db_writer.session.query(League).all()
             if not leagues:
@@ -276,7 +276,7 @@ class YahooFantasyDataFetcher:
         
         try:
             # 检查联盟是否已存在于数据库中
-            from model import League, Game
+            from fantasy_etl.database.model import League, Game
             existing_league = self.db_writer.session.query(League).filter_by(
                 league_key=league_key
             ).first()
@@ -474,7 +474,7 @@ class YahooFantasyDataFetcher:
         # 直接从数据库的League表获取赛季结束日期，不使用系统today
         roster_date = None
         try:
-            from model import League
+            from fantasy_etl.database.model import League
             from datetime import datetime
             
             league_key = self.selected_league['league_key']
@@ -1199,7 +1199,7 @@ class YahooFantasyDataFetcher:
         try:
             print("🔧 检测到数据库错误，尝试修复...")
             
-            from model import recreate_tables, create_database_engine
+            from fantasy_etl.database.model import recreate_tables, create_database_engine
             
             # 尝试重新创建数据库表
             engine = create_database_engine()
@@ -1226,7 +1226,7 @@ class YahooFantasyDataFetcher:
         league_key = self.selected_league['league_key']
         
         try:
-            from model import League
+            from fantasy_etl.database.model import League
             from datetime import datetime, date
             
             league_db = self.db_writer.session.query(League).filter_by(
@@ -1451,7 +1451,7 @@ class YahooFantasyDataFetcher:
         
         # 获取数据库中的球员列表
         try:
-            from model import Player
+            from fantasy_etl.database.model import Player
             players = self.db_writer.session.query(Player).filter_by(
                 league_key=league_key
             ).all()
@@ -1478,7 +1478,7 @@ class YahooFantasyDataFetcher:
     def show_database_summary(self):
         """显示数据库摘要"""
         try:
-            from model import (League, Team, Player, Game, Transaction, 
+            from fantasy_etl.database.model import (League, Team, Player, Game, Transaction, 
                              RosterDaily, TeamStatsWeekly,
                              LeagueStandings, TeamMatchups, LeagueSettings, Manager,
                              PlayerSeasonStats, PlayerDailyStats, StatCategory,
@@ -1914,7 +1914,7 @@ class YahooFantasyDataFetcher:
         
         # 获取数据库中的球员列表
         try:
-            from model import Player
+            from fantasy_etl.database.model import Player
             players = self.db_writer.session.query(Player).filter_by(
                 league_key=league_key
             ).all()
@@ -2194,7 +2194,7 @@ class YahooFantasyDataFetcher:
         end_date = None
         
         try:
-            from model import League
+            from fantasy_etl.database.model import League
             league_db = self.db_writer.session.query(League).filter_by(
                 league_key=league_key
             ).first()
@@ -2348,7 +2348,7 @@ class YahooFantasyDataFetcher:
         
         # 获取数据库中的球员列表
         try:
-            from model import Player
+            from fantasy_etl.database.model import Player
             players = self.db_writer.session.query(Player).filter_by(
                 league_key=league_key
             ).all()
@@ -2446,7 +2446,7 @@ class YahooFantasyDataFetcher:
         season = self.selected_league.get('season', '2024')
         
         try:
-            from model import TeamMatchups
+            from fantasy_etl.database.model import TeamMatchups
             
             # 获取该联盟的所有 team_matchups 记录
             matchups = self.db_writer.session.query(TeamMatchups).filter_by(
@@ -2464,7 +2464,7 @@ class YahooFantasyDataFetcher:
             processed_weeks = set()
             
             # 检查团队每周统计数据是否已存在
-            from model import TeamStatsWeekly
+            from fantasy_etl.database.model import TeamStatsWeekly
             stats = self.db_writer.session.query(TeamStatsWeekly).filter_by(
                 league_key=league_key,
                 season=season
@@ -2592,7 +2592,7 @@ class YahooFantasyDataFetcher:
             return False
         
         try:
-            from model import LeagueStandings
+            from fantasy_etl.database.model import LeagueStandings
             
             league_key = self.selected_league["league_key"]
             season = self.selected_league["season"]
@@ -2638,7 +2638,7 @@ class YahooFantasyDataFetcher:
     def _get_teams_data_from_db(self, league_key: str) -> Optional[Dict]:
         """从数据库获取团队数据，转换为API格式以供后续方法使用"""
         try:
-            from model import Team
+            from fantasy_etl.database.model import Team
             
             teams = self.db_writer.session.query(Team).filter_by(
                 league_key=league_key

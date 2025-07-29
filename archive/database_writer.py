@@ -13,7 +13,7 @@ from sqlalchemy import and_, or_
 
 # 确保可以正确导入模块
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from model import (
+from fantasy_etl.database.model import (
     create_database_engine, create_tables, recreate_tables, get_session,
     Game, League, LeagueSettings, Team, Manager, Player, StatCategory,
     PlayerEligiblePosition, PlayerSeasonStats, PlayerDailyStats,
@@ -1764,7 +1764,7 @@ class FantasyDatabaseWriter:
             self.close()
             
             # 使用recreate_tables重建所有表
-            from model import recreate_tables, create_database_engine
+            from fantasy_etl.database.model import recreate_tables, create_database_engine
             engine = create_database_engine()
             
             success = recreate_tables(engine)

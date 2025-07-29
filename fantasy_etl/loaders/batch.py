@@ -6,7 +6,7 @@
 from typing import Dict, List, Optional
 from datetime import date, datetime
 from sqlalchemy.orm import Session
-from fantasy_etl.database.models import (
+from fantasy_etl.database import (
     Game, League, LeagueSettings, StatCategory, Player, Team, Manager,
     Transaction, TransactionPlayer, DateDimension, PlayerEligiblePosition,
     RosterDaily, LeagueRosterPosition
@@ -161,10 +161,15 @@ class BatchLoaders:
             if isinstance(league_data, list) and len(league_data) > 1:
                 for item in league_data:
                     if isinstance(item, dict) and "settings" in item:
-                        settings = item["settings"]
+                        raw_settings = item["settings"]
+                        # 处理settings可能是列表的情况
+                        if isinstance(raw_settings, list) and len(raw_settings) > 0:
+                            settings = raw_settings[0]  # 取列表的第一个元素
+                        elif isinstance(raw_settings, dict):
+                            settings = raw_settings
                         break
             
-            if not settings:
+            if not settings or not isinstance(settings, dict):
                 return False
             
             # 检查是否已存在
@@ -202,35 +207,56 @@ class BatchLoaders:
         """提取联盟设置字段"""
         return {
             'draft_type': settings.get('draft_type'),
-            'is_auction_draft': bool(int(settings.get('is_auction_draft', '0'))),
-            'scoring_type': settings.get('scoring_type'),
-            'uses_playoff': bool(int(settings.get('uses_playoff', '0'))),
+            'is_auction_draft': self._safe_bool(settings.get('is_auction_draft', '0')),
+            # 'scoring_type': settings.get('scoring_type'),  # 不存在于模型中
+            'uses_playoff': self._safe_bool(settings.get('uses_playoff', '0')),
             'has_playoff_consolation_games': bool(settings.get('has_playoff_consolation_games', False)),
-            'playoff_start_week': int(settings.get('playoff_start_week', 0)) if settings.get('playoff_start_week') else None,
-            'uses_playoff_reseeding': bool(int(settings.get('uses_playoff_reseeding', '0'))),
-            'uses_lock_eliminated_teams': bool(int(settings.get('uses_lock_eliminated_teams', '0'))),
-            'num_playoff_teams': int(settings.get('num_playoff_teams', 0)) if settings.get('num_playoff_teams') else None,
-            'num_playoff_consolation_teams': int(settings.get('num_playoff_consolation_teams', 0)) if settings.get('num_playoff_consolation_teams') else None,
-            'uses_roster_import': bool(int(settings.get('uses_roster_import', '0'))),
-            'roster_import_deadline': settings.get('roster_import_deadline'),
+            'playoff_start_week': settings.get('playoff_start_week'),  # 保持字符串类型
+            'uses_playoff_reseeding': self._safe_bool(settings.get('uses_playoff_reseeding', '0')),
+            'uses_lock_eliminated_teams': self._safe_bool(settings.get('uses_lock_eliminated_teams', '0')),
+            'num_playoff_teams': self._safe_int(settings.get('num_playoff_teams')),
+            'num_playoff_consolation_teams': self._safe_int(settings.get('num_playoff_consolation_teams')),
+            # 'uses_roster_import': self._safe_bool(settings.get('uses_roster_import', '0')),  # 不存在于模型中
+            # 'roster_import_deadline': settings.get('roster_import_deadline'),  # 不存在于模型中
             'waiver_type': settings.get('waiver_type'),
             'waiver_rule': settings.get('waiver_rule'),
-            'uses_faab': bool(int(settings.get('uses_faab', '0'))),
-            'draft_time': int(settings.get('draft_time', 0)) if settings.get('draft_time') else None,
-            'draft_pick_time': int(settings.get('draft_pick_time', 0)) if settings.get('draft_pick_time') else None,
+            'uses_faab': self._safe_bool(settings.get('uses_faab', '0')),
+            'draft_time': settings.get('draft_time'),  # 保持字符串类型
+            'draft_pick_time': settings.get('draft_pick_time'),  # 保持字符串类型
             'post_draft_players': settings.get('post_draft_players'),
-            'max_teams': int(settings.get('max_teams', 0)) if settings.get('max_teams') else None,
-            'waiver_time': int(settings.get('waiver_time', 0)) if settings.get('waiver_time') else None,
+            'max_teams': self._safe_int(settings.get('max_teams')),
+            'waiver_time': settings.get('waiver_time'),  # 保持字符串类型
             'trade_end_date': settings.get('trade_end_date'),
             'trade_ratify_type': settings.get('trade_ratify_type'),
-            'trade_reject_time': int(settings.get('trade_reject_time', 0)) if settings.get('trade_reject_time') else None,
+            'trade_reject_time': settings.get('trade_reject_time'),  # 保持字符串类型
             'player_pool': settings.get('player_pool'),
             'cant_cut_list': settings.get('cant_cut_list'),
-            'is_publicly_viewable': bool(int(settings.get('is_publicly_viewable', '0'))),
-            'roster_positions': settings.get('roster_positions', []),
-            'stat_categories': settings.get('stat_categories', {}),
-            'max_weekly_adds': int(settings.get('max_weekly_adds', 0)) if settings.get('max_weekly_adds') else None
+            # 移除不存在于模型中的字段
+            # 'is_publicly_viewable': self._safe_bool(settings.get('is_publicly_viewable', '0')),
+            # 'roster_positions': settings.get('roster_positions', []),
+            # 'stat_categories': settings.get('stat_categories', {}),
+            # 'max_weekly_adds': self._safe_int(settings.get('max_weekly_adds')),
+            'draft_together': self._safe_bool(settings.get('draft_together', '0'))
         }
+
+    def _safe_bool(self, value) -> bool:
+        """安全转换为布尔值"""
+        if isinstance(value, bool):
+            return value
+        if isinstance(value, str):
+            return value.lower() in ('1', 'true', 'yes')
+        if isinstance(value, int):
+            return value != 0
+        return False
+
+    def _safe_int(self, value) -> int:
+        """安全转换为整数"""
+        if value is None or value == '':
+            return None
+        try:
+            return int(value)
+        except (ValueError, TypeError):
+            return None
         
     def write_stat_categories(self, league_key: str, stat_categories_data: Dict) -> int:
         """
@@ -268,8 +294,8 @@ class BatchLoaders:
                 existing.sort_order = int(stat_info.get("sort_order", 0))
                 existing.position_type = stat_info.get("position_type", "")
                 existing.is_only_display_stat = bool(stat_info.get("is_only_display_stat", False))
-                existing.is_composite_stat = bool(stat_info.get("is_composite_stat", False))
-                existing.is_core_stat = stat_id in [5, 8, 10, 12, 15, 16, 17, 18, 19, 20, 21]  # 11个核心统计
+                # existing.is_composite_stat = bool(stat_info.get("is_composite_stat", False))  # 模型中不存在
+                # existing.is_core_stat = stat_id in [5, 8, 10, 12, 15, 16, 17, 18, 19, 20, 21]  # 模型中不存在
             else:
                 # 创建新记录
                 stat_category = StatCategory(
@@ -281,8 +307,8 @@ class BatchLoaders:
                     sort_order=int(stat_info.get("sort_order", 0)),
                     position_type=stat_info.get("position_type", ""),
                     is_only_display_stat=bool(stat_info.get("is_only_display_stat", False)),
-                    is_composite_stat=bool(stat_info.get("is_composite_stat", False)),
-                    is_core_stat=stat_id in [5, 8, 10, 12, 15, 16, 17, 18, 19, 20, 21]  # 11个核心统计
+                    # is_composite_stat=bool(stat_info.get("is_composite_stat", False)),  # 模型中不存在
+                    # is_core_stat=stat_id in [5, 8, 10, 12, 15, 16, 17, 18, 19, 20, 21]  # 模型中不存在
                 )
                 self.session.add(stat_category)
                 count += 1

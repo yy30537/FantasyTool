@@ -6,7 +6,7 @@
 from typing import Dict, Optional
 from datetime import date, datetime
 from sqlalchemy.orm import Session
-from fantasy_etl.database.models import (
+from fantasy_etl.database import (
     PlayerSeasonStats, PlayerDailyStats, TeamStatsWeekly, 
     LeagueStandings, TeamMatchups
 )

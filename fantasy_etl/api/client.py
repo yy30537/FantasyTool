@@ -11,10 +11,11 @@ import os
 import pickle
 import pathlib
 from datetime import datetime
-from dotenv import load_dotenv
-
-# 加载环境变量
-load_dotenv()
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
 
 # 路径配置
 BASE_DIR = pathlib.Path(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
@@ -33,14 +34,13 @@ def ensure_tokens_directory():
     """确保tokens目录存在"""
     if not TOKENS_DIR.exists():
         TOKENS_DIR.mkdir(parents=True, exist_ok=True)
-        print(f"创建目录: {TOKENS_DIR}")
 
 # 在模块加载时创建tokens目录
 ensure_tokens_directory()
 
 
-class APIClient:
-    """Yahoo Fantasy API客户端基础类"""
+class YahooFantasyAPIClient:
+    """Yahoo Fantasy API客户端"""
     
     def __init__(self, delay: int = 2):
         """
@@ -51,14 +51,18 @@ class APIClient:
         """
         self.delay = delay
         
+        # OAuth配置
+        self.client_id = CLIENT_ID
+        self.client_secret = CLIENT_SECRET
+        self.token_url = TOKEN_URL
+        self.token_file_path = DEFAULT_TOKEN_FILE
+        
     def wait(self, message: Optional[str] = None):
         """
         实现API速率限制等待机制
         
         迁移自: archive/yahoo_api_data.py YahooFantasyDataFetcher.wait() 第35行
         """
-        if message:
-            print(f"⏳ {message}")
         time.sleep(self.delay)
         
     def save_token(self, token):
@@ -72,10 +76,8 @@ class APIClient:
             DEFAULT_TOKEN_FILE.parent.mkdir(parents=True, exist_ok=True)
             with open(DEFAULT_TOKEN_FILE, 'wb') as f:
                 pickle.dump(token, f)
-            print(f"令牌已保存到: {DEFAULT_TOKEN_FILE}")
             return True
-        except Exception as e:
-            print(f"保存令牌时出错: {str(e)}")
+        except Exception:
             return False
 
     def load_token(self):
@@ -90,7 +92,7 @@ class APIClient:
                 with open(DEFAULT_TOKEN_FILE, 'rb') as f:
                     return pickle.load(f)
             except Exception as e:
-                print(f"加载令牌时出错: {str(e)}")
+                pass
         else:
             # 如果统一位置不存在，尝试从其他可能的位置加载并迁移
             possible_token_paths = [
@@ -104,13 +106,12 @@ class APIClient:
                         with open(token_path, 'rb') as f:
                             token = pickle.load(f)
                             # 迁移到统一位置
-                            if self.save_token(token):
-                                print(f"已将令牌从 {token_path} 迁移到 {DEFAULT_TOKEN_FILE}")
+                            self.save_token(token)
                             return token
-                    except Exception as e:
-                        print(f"从 {token_path} 加载令牌时出错: {str(e)}")
+                    except Exception:
+                        pass
             
-            print("未找到token文件，请先运行app.py完成授权")
+            pass
         
         return None
 
@@ -130,7 +131,7 @@ class APIClient:
         # 如果令牌已过期或即将过期（提前60秒刷新）
         if now >= (expires_at - 60):
             try:
-                print("刷新令牌...")
+                pass
                 refresh_token = token.get('refresh_token')
                 
                 data = {
@@ -154,13 +155,10 @@ class APIClient:
                     # 保存更新的令牌
                     self.save_token(new_token)
                     
-                    print("令牌刷新成功")
                     return new_token
                 else:
-                    print(f"令牌刷新失败: {response.status_code} - {response.text}")
                     return None
-            except Exception as e:
-                print(f"刷新令牌时出错: {str(e)}")
+            except Exception:
                 return None
         
         return token
@@ -181,13 +179,13 @@ class APIClient:
         # 加载令牌
         token = self.load_token()
         if not token:
-            print("未找到有效令牌，请先运行app.py完成授权")
+            pass
             return None
         
         # 刷新令牌（如果需要）
         token = self.refresh_token_if_needed(token)
         if not token:
-            print("令牌刷新失败")
+            pass
             return None
         
         # 设置请求头
@@ -205,29 +203,25 @@ class APIClient:
                     return response.json()
                 elif response.status_code == 401:
                     # 授权问题，尝试刷新令牌
-                    print("授权失败，尝试刷新令牌...")
+                    pass
                     token = self.refresh_token_if_needed(token)
                     if token:
                         headers['Authorization'] = f"Bearer {token['access_token']}"
                         continue
                     else:
-                        print("令牌刷新失败，无法继续请求")
+                        pass
                         return None
                 else:
-                    print(f"请求失败: {response.status_code} - {response.text}")
                     # 如果不是最后一次尝试，等待后重试
                     if attempt < max_retries - 1:
                         wait_time = (attempt + 1) * 2  # 指数退避
-                        print(f"等待 {wait_time} 秒后重试...")
                         time.sleep(wait_time)
                         continue
                     return None
-            except Exception as e:
-                print(f"请求时出错: {str(e)}")
+            except Exception:
                 # 如果不是最后一次尝试，等待后重试
                 if attempt < max_retries - 1:
                     wait_time = (attempt + 1) * 2  # 指数退避
-                    print(f"等待 {wait_time} 秒后重试...")
                     time.sleep(wait_time)
                     continue
                 return None

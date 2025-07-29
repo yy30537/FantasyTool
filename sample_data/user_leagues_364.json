@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "fetched_at": "2025-06-10T14:06:32.561224",
+    "fetched_at": "2025-07-29T22:14:33.455476",
     "description": "游戏 364 的用户联盟数据",
     "filename": "user_leagues_364"
   },
@@ -50,6 +50,7 @@
                               "renew": "",
                               "renewed": "375_7446",
                               "felo_tier": "silver",
+                              "matchup_week": 22,
                               "iris_group_chat_id": "",
                               "allow_add_to_dl_extra_pos": 0,
                               "is_pro_league": "0",
@@ -78,7 +79,7 @@
         },
         "count": 1
       },
-      "time": "40.980100631714ms",
+      "time": "424.12805557251ms",
       "copyright": "Certain Data by Sportradar, Stats Perform and Rotowire",
       "refresh_rate": "60"
     }

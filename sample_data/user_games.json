@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "fetched_at": "2025-06-10T14:06:30.545732",
+    "fetched_at": "2025-07-29T22:14:32.225647",
     "description": "用户参与的所有Fantasy游戏",
     "filename": "user_games"
   },
@@ -170,11 +170,11 @@
                       "name": "Basketball",
                       "code": "nba",
                       "type": "full",
-                      "url": "https://basketball.fantasysports.yahoo.com/nba",
+                      "url": "https://basketball.fantasysports.yahoo.com/2024/nba",
                       "season": "2024",
                       "is_registration_over": 1,
                       "is_game_over": 1,
-                      "is_offseason": 0
+                      "is_offseason": 1
                     }
                   ]
                 },
@@ -203,7 +203,7 @@
         },
         "count": 1
       },
-      "time": "180.68385124207ms",
+      "time": "1632.276058197ms",
       "copyright": "Certain Data by Sportradar, Stats Perform and Rotowire",
       "refresh_rate": "60"
     }

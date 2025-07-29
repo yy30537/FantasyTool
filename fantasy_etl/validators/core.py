@@ -38,14 +38,14 @@ class CoreValidators:
             return False
         
         if not self.session:
-            print("❌ 数据库会话未初始化")
+            pass
             return False
         
         league_key = self.selected_league['league_key']
         
         try:
             # 检查联盟是否已存在于数据库中
-            from fantasy_etl.database.models import League
+            from fantasy_etl.database import League
             existing_league = self.session.query(League).filter_by(
                 league_key=league_key
             ).first()
@@ -54,11 +54,11 @@ class CoreValidators:
                 return True
             
             # 联盟不存在，说明数据库中缺少完整数据，建议重新获取
-            print(f"⚠️ 联盟 {league_key} 不存在于数据库中")
+            pass
             return False
                 
         except Exception as e:
-            print(f"❌ 验证联盟存在性失败: {e}")
+            pass
             return False
         
     def verify_league_selected(self) -> bool:
@@ -71,7 +71,7 @@ class CoreValidators:
             是否已选择联盟
         """
         if not self.selected_league:
-            print("❌ 请先选择联盟")
+            pass
             return False
         return True
         
@@ -89,7 +89,7 @@ class CoreValidators:
             数据库连接是否正常
         """
         if not self.session:
-            print("❌ 数据库会话未初始化")
+            pass
             return False
         
         try:
@@ -166,11 +166,11 @@ class CoreValidators:
             数据是否完整
         """
         if not self.session:
-            print("❌ 数据库会话未初始化")
+            pass
             return False
         
         try:
-            from fantasy_etl.database.models import (
+            from fantasy_etl.database import (
                 League, Team, Player, DateDimension
             )
             

@@ -6,7 +6,7 @@ Yahoo Fantasy API数据获取器
 import time
 from typing import Optional, Dict, List
 from datetime import date, datetime, timedelta
-from .client import APIClient
+from .client import YahooFantasyAPIClient
 
 """
 fetch_* 函数 - API 数据获取
@@ -28,7 +28,7 @@ class YahooFantasyFetcher:
     
     def __init__(self, delay: int = 2):
         """初始化获取器"""
-        self.api_client = APIClient(delay)
+        self.api_client = YahooFantasyAPIClient()
         self.delay = delay
         # 这些属性需要由调用者设置
         self.selected_league = None
@@ -235,9 +235,9 @@ class YahooFantasyFetcher:
         迁移自: archive/yahoo_api_data.py fetch_team_rosters() 第468行
         注意：原函数包含数据库写入逻辑，现在只负责获取数据
         """
-        from ..transformers.team import TeamTransformer
+        from ..transformers.team import TeamTransformers
         
-        team_transformer = TeamTransformer()
+        team_transformer = TeamTransformers()
         team_keys = team_transformer.transform_team_keys_from_data(teams_data)
         
         if not team_keys:
@@ -275,9 +275,9 @@ class YahooFantasyFetcher:
         迁移自: archive/yahoo_api_data.py fetch_team_rosters_for_date_range() 第708行
         注意：原函数包含数据库写入逻辑，现在只负责获取数据
         """
-        from ..transformers.team import TeamTransformer
+        from ..transformers.team import TeamTransformers
         
-        team_transformer = TeamTransformer()
+        team_transformer = TeamTransformers()
         team_keys = team_transformer.transform_team_keys_from_data(teams_data)
         
         if not team_keys:
@@ -670,8 +670,8 @@ class YahooFantasyFetcher:
             if not teams_data:
                 return result
         
-        from ..transformers.team import TeamTransformer
-        team_transformer = TeamTransformer()
+        from ..transformers.team import TeamTransformers
+        team_transformer = TeamTransformers()
         team_keys = team_transformer.transform_team_keys_from_data(teams_data)
         
         if not team_keys:

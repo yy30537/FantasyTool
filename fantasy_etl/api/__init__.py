@@ -5,6 +5,6 @@ API模块 - Yahoo Fantasy API数据获取
 """
 
 from .fetchers import YahooFantasyFetcher
-from .client import APIClient
+from .client import YahooFantasyAPIClient
 
-__all__ = ['YahooFantasyFetcher', 'APIClient']
+__all__ = ['YahooFantasyFetcher', 'YahooFantasyAPIClient']

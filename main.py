@@ -18,92 +18,53 @@ sys.path.insert(0, archive_dir)
 def run_web_app():
     """启动Web应用进行OAuth认证"""
     try:
-        # 先检查令牌状态
-        from archive.yahoo_api_utils import load_token, DEFAULT_TOKEN_FILE
+        # 检查令牌状态
+        from fantasy_etl.api.client import YahooFantasyAPIClient
         from datetime import datetime
+        
+        client = YahooFantasyAPIClient()
+        DEFAULT_TOKEN_FILE = client.token_file_path
         
         token_exists = DEFAULT_TOKEN_FILE.exists()
         token_valid = check_token_status_silent()
         
         if token_exists and not token_valid:
-            # 令牌存在但已过期
-            print("\n⚠️ 检测到过期的OAuth令牌")
-            print("选择操作:")
-            print("1. 重新进行OAuth认证")
-            print("2. 查看当前令牌状态")
-            print("3. 返回主菜单")
-            
-            while True:
-                choice = input("\n请选择 (1-3): ").strip()
-                if choice == "1":
-                    print("🔄 将重新进行OAuth认证...")
-                    break
-                elif choice == "2":
-                    check_token_status()
-                    print("\n按任意键继续...")
-                    input()
-                    print("\n选择操作:")
-                    print("1. 重新进行OAuth认证")
-                    print("2. 查看当前令牌状态")
-                    print("3. 返回主菜单")
-                elif choice == "3":
-                    print("💡 返回主菜单，需要有效令牌才能使用数据获取功能")
-                    return
-                else:
-                    print("❌ 无效选择，请重试")
-                    
+            print("⚠️ 令牌已过期")
+            confirm = input("重新认证? (y/n): ").strip().lower()
+            if confirm != 'y':
+                return
         elif token_valid:
-            # 令牌有效
-            print("\n✅ 检测到有效的OAuth令牌")
-            print("选择操作:")
-            print("1. 重新进行OAuth认证")
-            print("2. 查看当前令牌状态")
-            print("3. 返回主菜单 (默认)")
-            
-            while True:
-                choice = input("\n请选择 (1-3, 直接按Enter返回主菜单): ").strip()
-                if choice == "1":
-                    print("🔄 将重新进行OAuth认证...")
-                    break
-                elif choice == "2":
-                    check_token_status()
-                    print("\n按任意键继续...")
-                    input()
-                    print("\n选择操作:")
-                    print("1. 重新进行OAuth认证")
-                    print("2. 查看当前令牌状态")
-                    print("3. 返回主菜单 (默认)")
-                elif choice == "3" or choice == "":
-                    print("💡 返回主菜单，可以直接使用数据获取功能")
-                    return
-                else:
-                    print("❌ 无效选择，请重试")
+            print("✅ 令牌有效")
+            confirm = input("重新认证? (y/n): ").strip().lower()
+            if confirm != 'y':
+                return
         else:
-            # 没有令牌文件，直接进行OAuth认证
-            print("\n🔐 首次使用，需要进行OAuth认证")
+            print("🔐 需要OAuth认证")
         
         # 导入OAuth认证器
-        from oauth_authenticator import start_oauth_server
+        from fantasy_etl.api.oauth_authenticator import start_oauth_server
         
         # 启动OAuth认证服务器
-        start_oauth_server(host='localhost', port=8000, debug=True, use_https=True)
+        start_oauth_server(host='localhost', port=8000, debug=False, use_https=True)
         
     except KeyboardInterrupt:
-        print("\n\n🛑 OAuth认证服务已停止")
-        print("💡 如果已完成授权，现在可以使用数据获取功能")
+        print("\n🛑 认证服务已停止")
     except Exception as e:
-        print(f"\n❌ OAuth认证服务启动失败: {str(e)}")
-        print("💡 请检查端口8000是否被占用")
+        print(f"❌ 认证失败: {str(e)}")
 
 def check_token_status_silent():
     """静默检查OAuth令牌状态（不打印信息），包含自动刷新功能"""
     try:
-        from archive.yahoo_api_utils import load_token, refresh_token_if_needed, DEFAULT_TOKEN_FILE
+        from fantasy_etl.api.client import YahooFantasyAPIClient
+        from datetime import datetime
+        
+        client = YahooFantasyAPIClient()
+        DEFAULT_TOKEN_FILE = client.token_file_path
         
         if not DEFAULT_TOKEN_FILE.exists():
             return False
         
-        token = load_token()
+        token = client.load_token()
         if not token:
             return False
         
@@ -113,12 +74,11 @@ def check_token_status_silent():
             return False
         
         # 尝试刷新令牌（如果需要）
-        refreshed_token = refresh_token_if_needed(token)
+        refreshed_token = client.refresh_token_if_needed(token)
         if not refreshed_token:
             return False
         
         # 检查刷新后的令牌是否仍然有效
-        from datetime import datetime
         now = datetime.now().timestamp()
         expires_at = refreshed_token.get('expires_at', 0)
         
@@ -130,23 +90,159 @@ def check_token_status_silent():
 def run_data_fetcher():
     """运行数据获取器交互式菜单"""
     try:
-        # 导入数据获取器
-        from yahoo_api_data import YahooFantasyDataFetcher
+        # 使用新的模块化ETL系统
+        from fantasy_etl.api.fetchers import YahooFantasyFetcher
+        from fantasy_etl.loaders.batch import BatchLoaders
+        from fantasy_etl.transformers.core import CoreTransformers
+        from fantasy_etl.validators.core import CoreValidators
+        from fantasy_etl.database import create_database_engine, get_session
         
-        print("\n🚀 启动Yahoo Fantasy数据获取工具...")
+        print("🚀 启动模块化ETL工具...")
         
-        # 创建数据获取器
-        fetcher = YahooFantasyDataFetcher(delay=2, batch_size=100)
+        # 创建组件实例
+        fetcher = YahooFantasyFetcher()
         
-        try:
-            # 运行交互式菜单
-            fetcher.run_interactive_menu()
-        finally:
-            # 确保清理资源
-            fetcher.close()
+        # 尝试创建数据库会话
+        engine = create_database_engine()
+        session = get_session(engine)
+        if session:
+            loader = BatchLoaders(session)
+            print("✅ 数据库会话已创建")
+        else:
+            print("⚠️ 数据库会话创建失败，使用占位符")
+            loader = None
+            
+        transformer = CoreTransformers()
+        validator = CoreValidators()
+        
+        print("ETL组件:")
+        print("1. 完整联盟数据获取")
+        print("2. 查看数据库状态") 
+        print("3. 选择联盟进行详细处理")
+        print("0. 返回")
+        
+        while True:
+            choice = input("选择 (0-3): ").strip()
+            
+            if choice == "0":
+                break
+            elif choice == "1":
+                print("📄 完整联盟数据获取")
+                try:
+                    # 使用已迁移的完整功能
+                    print("🚀 获取基础联盟数据...")
+                    leagues_data = fetcher.fetch_and_select_league()
+                    
+                    if leagues_data:
+                        games_data = leagues_data.get('games_data')
+                        leagues_data_dict = leagues_data.get('leagues_data', {})
+                        
+                        # 写入基础数据
+                        if games_data:
+                            games_count = loader.write_games_data(games_data)
+                            print(f"✅ 写入 {games_count} 个游戏记录")
+                        
+                        total_leagues = 0
+                        for game_key, leagues_list in leagues_data_dict.items():
+                            leagues_count = loader.write_leagues_data({game_key: leagues_list})
+                            total_leagues += leagues_count
+                            
+                            # 获取联盟详细设置
+                            for league_info in leagues_list:
+                                league_key = league_info.get('league_key')
+                                if league_key:
+                                    settings_data = fetcher.fetch_league_settings(league_key)
+                                    if settings_data:
+                                        loader.write_league_settings(league_key, settings_data)
+                        
+                        print(f"✅ 共处理 {total_leagues} 个联盟")
+                    else:
+                        print("❌ 未获取到联盟数据")
+                        
+                except Exception as e:
+                    print(f"❌ 联盟数据获取失败: {str(e)}")
+                
+                input("按Enter继续...")
+                
+            elif choice == "2":
+                print("📊 数据库状态")
+                try:
+                    from fantasy_etl.database import League, Team, Player
+                    
+                    league_count = session.query(League).count()
+                    team_count = session.query(Team).count()
+                    player_count = session.query(Player).count()
+                    
+                    print(f"✅ 联盟数量: {league_count}")
+                    print(f"✅ 团队数量: {team_count}")
+                    print(f"✅ 球员数量: {player_count}")
+                    
+                    if league_count > 0:
+                        print("\n📋 可用联盟:")
+                        leagues = session.query(League).all()
+                        for league in leagues:
+                            print(f"  - {league.name} ({league.league_key})")
+                    
+                except Exception as e:
+                    print(f"❌ 数据库查询失败: {str(e)}")
+                
+                input("按Enter继续...")
+                
+            elif choice == "3":
+                print("🎯 选择联盟进行详细处理")
+                try:
+                    from fantasy_etl.database import League
+                    leagues = session.query(League).all()
+                    
+                    if not leagues:
+                        print("❌ 未找到联盟数据，请先执行选项1")
+                        input("按Enter继续...")
+                        continue
+                    
+                    print("📋 可用联盟:")
+                    for i, league in enumerate(leagues):
+                        print(f"{i+1}. {league.name} ({league.league_key})")
+                    
+                    try:
+                        choice_idx = int(input("选择联盟 (输入数字): ")) - 1
+                        if 0 <= choice_idx < len(leagues):
+                            selected_league = leagues[choice_idx]
+                            league_key = selected_league.league_key
+                            season = selected_league.season
+                            
+                            print(f"🚀 处理联盟: {selected_league.name}")
+                            
+                            # 使用已迁移的完整联盟数据获取功能
+                            complete_data = fetcher.fetch_complete_league_data(league_key, season)
+                            
+                            # 写入各类数据
+                            if complete_data.get('players_data'):
+                                players_count = loader.write_players_batch(complete_data['players_data'], league_key)
+                                print(f"✅ 球员数据: {players_count} 条记录")
+                            
+                            if complete_data.get('teams_data'):
+                                # 暂时跳过团队数据批量写入，需要进一步开发转换逻辑
+                                print("⚠️ 团队数据转换功能需要进一步开发")
+                            
+                            if complete_data.get('transactions_data'):
+                                trans_count = loader.write_transactions_batch(complete_data['transactions_data'], league_key)
+                                print(f"✅ 交易数据: {trans_count} 条记录")
+                            
+                            print("✅ 联盟数据处理完成")
+                        else:
+                            print("❌ 无效选择")
+                    except ValueError:
+                        print("❌ 请输入有效数字")
+                        
+                except Exception as e:
+                    print(f"❌ 联盟处理失败: {str(e)}")
+                
+                input("按Enter继续...")
+            else:
+                print("无效选择")
             
     except Exception as e:
-        print(f"❌ 数据获取器启动失败: {str(e)}")
+        print(f"❌ ETL工具启动失败: {str(e)}")
         raise
 
 def run_sample_fetcher():
@@ -169,17 +265,12 @@ def run_sample_fetcher():
 def setup_database():
     """初始化数据库"""
     try:
-        from model import create_database_engine, create_tables
+        from fantasy_etl.database import create_database_engine, create_tables
         
-        print("\n🗄️ 初始化数据库...")
-        
-        # 创建数据库引擎
+        print("🗄️ 初始化数据库...")
         engine = create_database_engine()
-        
-        # 创建所有表
         create_tables(engine)
-        
-        print("✅ 数据库初始化完成！")
+        print("✅ 完成")
         
     except Exception as e:
         print(f"❌ 数据库初始化失败: {str(e)}")
@@ -188,51 +279,51 @@ def setup_database():
 def check_token_status():
     """检查OAuth令牌状态（带详细输出和自动刷新）"""
     try:
-        from archive.yahoo_api_utils import load_token, refresh_token_if_needed, DEFAULT_TOKEN_FILE
+        from fantasy_etl.api.client import YahooFantasyAPIClient
+        from datetime import datetime
         
-        print("\n🔍 检查OAuth令牌状态...")
+        client = YahooFantasyAPIClient()
+        DEFAULT_TOKEN_FILE = client.token_file_path
+        
+        print("🔍 检查令牌状态...")
         
         if not DEFAULT_TOKEN_FILE.exists():
-            print("❌ 未找到令牌文件")
-            print(f"   令牌文件路径: {DEFAULT_TOKEN_FILE}")
-            print("💡 请先运行 'python main.py --web' 完成OAuth授权")
+            print("❌ 未找到令牌")
+            print("💡 请先运行OAuth授权")
             return False
         
-        token = load_token()
+        token = client.load_token()
         if not token:
-            print("❌ 令牌文件存在但无法加载")
+            print("❌ 无法加载令牌")
             return False
         
-        # 检查令牌是否有必要的字段
+        # 检查令牌字段
         required_fields = ['access_token', 'expires_at']
         missing_fields = [field for field in required_fields if field not in token]
         
         if missing_fields:
-            print(f"❌ 令牌缺少必要字段: {missing_fields}")
+            print(f"❌ 令牌字段缺失: {missing_fields}")
             return False
         
-        # 检查令牌是否过期并尝试刷新
-        from datetime import datetime
+        # 检查过期状态
         now = datetime.now().timestamp()
         expires_at = token.get('expires_at', 0)
         
-        if now >= (expires_at - 60):  # 提前60秒检查
-            print("⚠️ 令牌已过期或即将过期，尝试自动刷新...")
-            refreshed_token = refresh_token_if_needed(token)
+        if now >= (expires_at - 60):
+            print("⚠️ 令牌过期，尝试刷新...")
+            refreshed_token = client.refresh_token_if_needed(token)
             
             if refreshed_token:
-                # 刷新成功，检查新令牌状态
                 new_expires_at = refreshed_token.get('expires_at', 0)
                 remaining_time = int((new_expires_at - now) / 3600)
-                print(f"✅ 令牌刷新成功，剩余时间: {remaining_time} 小时")
+                print(f"✅ 刷新成功，剩余 {remaining_time}h")
                 return True
             else:
-                print("❌ 令牌刷新失败")
-                print("💡 请重新运行OAuth授权: python main.py --web")
+                print("❌ 刷新失败")
                 return False
         else:
             remaining_time = int((expires_at - now) / 3600)
-            print(f"✅ 令牌有效，剩余时间: {remaining_time} 小时")
+            print(f"✅ 令牌有效，剩余 {remaining_time}h")
             return True
         
     except Exception as e:
@@ -241,16 +332,13 @@ def check_token_status():
 
 def show_menu():
     """显示主菜单"""
-    print("\n" + "="*60)
-    print("🚀 Yahoo Fantasy Sports ETL 工具")
-    print("="*60)
-    print("请选择操作:")
-    print("1. 启动Web界面 (OAuth认证)")
-    print("2. 启动数据获取工具")
-    print("3. 启动样本数据获取工具") 
+    print("\n🚀 Yahoo Fantasy ETL")
+    print("1. OAuth认证")
+    print("2. 数据获取")
+    print("3. 样本数据") 
     print("4. 初始化数据库")
-    print("5. 检查令牌状态")
-    print("6. 显示详细帮助")
+    print("5. 检查令牌")
+    print("6. 帮助")
     print("0. 退出")
 
 def show_help():
@@ -316,44 +404,37 @@ def main():
         show_menu()
         
         while True:
-            choice = input("\n请选择 (0-6): ").strip()
+            choice = input("选择: ").strip()
             
             if choice == "0":
-                print("👋 退出程序")
+                print("退出")
                 break
             elif choice == "1":
                 run_web_app()
                 show_menu()
             elif choice == "2":
-                # 运行数据获取前先检查令牌
                 if not check_token_status_silent():
-                    print("\n❌ 未找到有效的OAuth令牌")
-                    print("💡 请先选择选项1完成OAuth认证")
+                    print("❌ 需要先认证")
                     continue
                 run_data_fetcher()
                 show_menu()
             elif choice == "3":
-                # 运行样本数据获取前先检查令牌
                 if not check_token_status_silent():
-                    print("\n❌ 未找到有效的OAuth令牌")
-                    print("💡 请先选择选项1完成OAuth认证")
+                    print("❌ 需要先认证")
                     continue
                 run_sample_fetcher()
                 show_menu()
             elif choice == "4":
                 setup_database()
-                print("\n按任意键继续...")
-                input()
+                input("按Enter继续...")
             elif choice == "5":
                 check_token_status()
-                print("\n按任意键继续...")
-                input()
+                input("按Enter继续...")
             elif choice == "6":
                 show_help()
-                print("\n按任意键继续...")
-                input()
+                input("按Enter继续...")
             else:
-                print("❌ 无效选择，请重试")
+                print("无效选择")
     else:
         # 有参数，执行对应功能
         if args.help_detailed:

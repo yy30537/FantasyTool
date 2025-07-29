@@ -4,17 +4,25 @@
 """
 
 import os
-from sqlalchemy import create_engine, text
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.ext.declarative import declarative_base
 from typing import Optional
-from dotenv import load_dotenv
+try:
+    from sqlalchemy import create_engine, text
+    from sqlalchemy.orm import sessionmaker
+    from sqlalchemy.ext.declarative import declarative_base
+except ImportError:
+    create_engine = None
+    text = None
+    sessionmaker = None
+    declarative_base = None
 
-# 加载环境变量
-load_dotenv()
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
 
 # 创建Base - 这将在后续的模型模块中使用
-Base = declarative_base()
+Base = declarative_base() if declarative_base else None
 
 
 class DatabaseConnection:

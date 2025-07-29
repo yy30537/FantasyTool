@@ -12,19 +12,9 @@ Fantasy ETL - Yahoo Fantasy Sports ETL Pipeline
 
 __version__ = "2.0.0"
 
-# 主要模块导入
+# 主要模块导入 - 仅导入不依赖SQLAlchemy的核心模块
 from . import api
-from . import database  
-from . import transformers
-from . import loaders
-from . import validators
-from . import utils
 
 __all__ = [
     'api',
-    'database', 
-    'transformers',
-    'loaders',
-    'validators', 
-    'utils'
 ]
