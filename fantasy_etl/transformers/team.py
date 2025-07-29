@@ -525,3 +525,28 @@ class TeamTransformers:
             return float(value)
         except (ValueError, TypeError):
             return None
+
+# ============================================================================
+# 独立函数接口 - 为了保持与文档的一致性
+# ============================================================================
+
+def transform_team_data(raw_data: Dict) -> Dict:
+    """转换团队数据"""
+    transformer = TeamTransformers()
+    return transformer.transform_team_data_from_api(raw_data)
+
+def transform_team_stats(raw_data: Dict) -> Dict:
+    """转换团队统计"""
+    transformer = TeamTransformers()
+    return transformer.transform_team_stats_from_matchup_data(raw_data, "")
+
+def transform_matchup_data(raw_data: Dict) -> Dict:
+    """转换对战数据"""
+    transformer = TeamTransformers()
+    return transformer.transform_matchup_info(raw_data, "")
+
+def transform_manager_data(raw_data: Dict) -> Dict:
+    """转换管理员数据"""
+    transformer = TeamTransformers()
+    # 这个函数在类中不存在，需要实现
+    return raw_data

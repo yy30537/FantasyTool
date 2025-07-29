@@ -866,3 +866,37 @@ class BatchLoaders:
     def get_stats_summary(self) -> Dict[str, int]:
         """获取写入统计摘要"""
         return self.stats.copy()
+
+# ============================================================================
+# 独立函数接口 - 为了保持与文档的一致性
+# ============================================================================
+
+def load_teams_batch(session, teams_data: List[Dict]):
+    """批量加载团队"""
+    # TODO: 需要实现直接的数据库加载
+    return []
+
+def load_players_batch(session, players_data: List[Dict]):
+    """批量加载球员"""
+    # TODO: 需要实现直接的数据库加载
+    return []
+
+def load_roster_batch(session, roster_data: List[Dict]):
+    """批量加载阵容"""
+    # TODO: 需要实现直接的数据库加载
+    pass
+
+def load_transactions_batch(session, transactions_data: List[Dict]):
+    """批量加载交易"""
+    # TODO: 需要实现直接的数据库加载
+    pass
+
+def load_draft_picks_batch(session, picks_data: List[Dict]):
+    """批量加载选秀"""
+    # TODO: 需要实现直接的数据库加载
+    pass
+
+def load_matchups_batch(session, matchups_data: List[Dict]):
+    """批量加载对战"""
+    # TODO: 需要实现直接的数据库加载
+    pass

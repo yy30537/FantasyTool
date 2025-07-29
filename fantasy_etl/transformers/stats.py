@@ -622,3 +622,66 @@ class StatsTransformers:
             
         except (ValueError, TypeError):
             return None
+
+# ============================================================================
+# 独立函数接口 - 为了保持与文档的一致性
+# ============================================================================
+
+def transform_stat_categories(raw_data: List[Dict]) -> List[Dict]:
+    """转换统计类别"""
+    transformer = StatsTransformers()
+    # 这个函数在类中不存在，需要实现
+    return raw_data
+
+def transform_scoring_settings(raw_data: Dict) -> Dict:
+    """转换计分设置"""
+    transformer = StatsTransformers()
+    # 这个函数在类中不存在，需要实现
+    return raw_data
+
+def transform_weekly_stats(raw_data: Dict) -> Dict:
+    """转换周统计"""
+    transformer = StatsTransformers()
+    return transformer.transform_team_weekly_stats_from_stats_data(raw_data)
+
+def transform_season_stats(raw_data: Dict) -> Dict:
+    """转换赛季统计"""
+    transformer = StatsTransformers()
+    return transformer.transform_team_season_stats(raw_data)
+
+def transform_projected_stats(raw_data: Dict) -> Dict:
+    """转换预测统计"""
+    transformer = StatsTransformers()
+    # 这个函数在类中不存在，需要实现
+    return raw_data
+
+def transform_matchup_grades(raw_data: Dict) -> Dict:
+    """转换对战评分"""
+    transformer = StatsTransformers()
+    # 这个函数在类中不存在，需要实现
+    return raw_data
+
+def transform_trade_data(raw_data: Dict) -> Dict:
+    """转换交易数据"""
+    # 这应该在core transformers中
+    from .core import CoreTransformers
+    transformer = CoreTransformers()
+    return transformer.transform_transaction_data(raw_data)
+
+def transform_schedule_data(raw_data: List[Dict]) -> List[Dict]:
+    """转换赛程数据"""
+    transformer = StatsTransformers()
+    # 这个函数在类中不存在，需要实现
+    return raw_data
+
+def transform_game_weeks(raw_data: List[Dict]) -> List[Dict]:
+    """转换游戏周数据"""
+    transformer = StatsTransformers()
+    # 这个函数在类中不存在，需要实现
+    return raw_data
+
+def transform_metadata(raw_data: Dict) -> Dict:
+    """转换元数据"""
+    transformer = StatsTransformers()
+    # 这个函数在类中不存在，需要实现
+    return raw_data

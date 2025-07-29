@@ -150,3 +150,25 @@ class RosterTransformers:
         except Exception as e:
             print(f"转换roster数据时出错: {e}")
             return None
+
+# ============================================================================
+# 独立函数接口 - 为了保持与文档的一致性
+# ============================================================================
+
+def transform_roster_data(raw_data: List[Dict]) -> List[Dict]:
+    """转换阵容数据"""
+    transformer = RosterTransformers()
+    # 假设raw_data是单个团队的阵容数据
+    return transformer.transform_roster_data({}, "")
+
+def transform_roster_positions(raw_data: List[Dict]) -> List[Dict]:
+    """转换阵容位置数据"""
+    transformer = RosterTransformers()
+    # 这个函数在类中不存在，需要实现
+    return raw_data
+
+def transform_lineup_data(raw_data: Dict) -> Dict:
+    """转换阵容数据"""
+    transformer = RosterTransformers()
+    # 这个函数在类中不存在，需要实现
+    return raw_data

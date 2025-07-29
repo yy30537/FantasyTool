@@ -3,9 +3,17 @@
 包含所有 get_* 函数，从多个源文件迁移
 """
 
-from typing import Optional, Dict, Tuple
+from typing import Optional, Dict, Tuple, List
 from datetime import datetime, date, timedelta
 from .connection import DatabaseConnection
+from .model import (
+    League, Team, Player, Manager, Game,
+    LeagueSettings, StatCategory, PlayerEligiblePosition,
+    RosterDaily, PlayerDailyStats, PlayerSeasonStats,
+    TeamStatsWeekly, LeagueStandings, TeamMatchups,
+    Transaction, TransactionPlayer, DateDimension,
+    LeagueRosterPosition
+)
 
 
 class DatabaseQueries:
@@ -33,9 +41,6 @@ class DatabaseQueries:
         迁移自: archive/yahoo_api_data.py _get_leagues_from_database() 第78行
         """
         try:
-            # TODO: 需要导入League模型类
-            # from ..models import League
-            
             session = self._get_session()
             leagues = session.query(League).all()
             if not leagues:
@@ -99,9 +104,6 @@ class DatabaseQueries:
             return {}
         
         try:
-            # TODO: 需要导入League模型类
-            # from ..models import League
-            
             session = self._get_session()
             league_db = session.query(League).filter_by(
                 league_key=league_key
@@ -155,9 +157,6 @@ class DatabaseQueries:
         迁移自: archive/yahoo_api_data.py _get_teams_data_from_db() 第2638行
         """
         try:
-            # TODO: 需要导入Team模型类
-            # from ..models import Team
-            
             session = self._get_session()
             teams = session.query(Team).filter_by(
                 league_key=league_key
@@ -330,9 +329,6 @@ class DatabaseQueries:
         迁移自: archive/database_writer.py get_stat_category_info() 第400行
         """
         try:
-            # TODO: 需要导入StatCategory模型类
-            # from ..models import StatCategory
-            
             session = self._get_session()
             stat_cat = session.query(StatCategory).filter_by(
                 league_key=league_key,
@@ -359,14 +355,6 @@ class DatabaseQueries:
         迁移自: archive/database_writer.py get_database_summary() 第1784行
         """
         summary = {}
-        
-        # TODO: 需要导入所有模型类
-        # from ..models import (
-        #     Game, League, LeagueSettings, StatCategory, Team, Manager,
-        #     Player, PlayerEligiblePosition, PlayerSeasonStats, PlayerDailyStats,
-        #     TeamStatsWeekly, LeagueStandings, TeamMatchups, RosterDaily,
-        #     Transaction, TransactionPlayer, DateDimension
-        # )
         
         # 定义所有表和对应的模型类
         tables = {
@@ -405,3 +393,146 @@ class DatabaseQueries:
         self.db_connection.close()
         if self.session:
             self.session = None
+
+# ============================================================================
+# 独立函数接口 - 为了保持与文档的一致性
+# ============================================================================
+
+def get_league_by_key(session, league_key: str):
+    """
+    通过键值获取联盟
+    
+    Args:
+        session: SQLAlchemy会话
+        league_key: 联盟键值
+        
+    Returns:
+        League对象或None
+    """
+    try:
+        return session.query(League).filter_by(league_key=league_key).first()
+    except Exception:
+        return None
+
+def get_team_by_key(session, team_key: str):
+    """
+    通过键值获取团队
+    
+    Args:
+        session: SQLAlchemy会话
+        team_key: 团队键值
+        
+    Returns:
+        Team对象或None
+    """
+    try:
+        return session.query(Team).filter_by(team_key=team_key).first()
+    except Exception:
+        return None
+
+def get_player_by_key(session, player_key: str):
+    """
+    通过键值获取球员
+    
+    Args:
+        session: SQLAlchemy会话
+        player_key: 球员键值
+        
+    Returns:
+        Player对象或None
+    """
+    try:
+        return session.query(Player).filter_by(player_key=player_key).first()
+    except Exception:
+        return None
+
+def get_team_roster(session, team_id: int, week: Optional[int] = None):
+    """
+    获取团队阵容
+    
+    Args:
+        session: SQLAlchemy会话
+        team_id: 团队ID
+        week: 周数（可选）
+        
+    Returns:
+        球员列表
+    """
+    try:
+        # 使用RosterDaily表来获取团队阵容
+        query = session.query(Player).join(RosterDaily).filter(
+            RosterDaily.team_id == team_id
+        )
+        if week:
+            # RosterDaily是按日期的，需要转换week到日期范围
+            pass
+        return query.all()
+    except Exception:
+        return []
+
+def get_player_stats(session, player_id: int, week: Optional[int] = None):
+    """
+    获取球员统计
+    
+    Args:
+        session: SQLAlchemy会话
+        player_id: 球员ID
+        week: 周数（可选）
+        
+    Returns:
+        PlayerStats对象或None
+    """
+    try:
+        # 根据是否有week参数决定查询日统计还是赛季统计
+        if week:
+            # 查询周统计（需要转换为日期范围）
+            return session.query(PlayerDailyStats).filter_by(
+                player_id=player_id
+            ).first()
+        else:
+            # 查询赛季统计
+            return session.query(PlayerSeasonStats).filter_by(
+                player_id=player_id
+            ).first()
+    except Exception:
+        return None
+
+def get_league_standings(session, league_id: int):
+    """
+    获取联盟排名
+    
+    Args:
+        session: SQLAlchemy会话
+        league_id: 联盟ID
+        
+    Returns:
+        排序后的团队列表
+    """
+    try:
+        teams = session.query(Team).join(LeagueStandings).filter(
+            Team.league_id == league_id
+        ).order_by(LeagueStandings.rank).all()
+        return teams
+    except Exception:
+        return []
+
+def get_matchups_by_week(session, league_id: int, week: int):
+    """
+    获取指定周的对战
+    
+    Args:
+        session: SQLAlchemy会话
+        league_id: 联盟ID
+        week: 周数
+        
+    Returns:
+        对战列表
+    """
+    try:
+        # 使用TeamMatchups表
+        return session.query(TeamMatchups).filter_by(
+            league_id=league_id,
+            week=week
+        ).all()
+    except Exception:
+        return []

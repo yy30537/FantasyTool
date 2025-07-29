@@ -3,7 +3,7 @@
 包含统计相关的写入函数，从 archive/database_writer.py 迁移
 """
 
-from typing import Dict, Optional
+from typing import Dict, Optional, List
 from datetime import date, datetime
 from sqlalchemy.orm import Session
 from fantasy_etl.database import (
@@ -926,3 +926,77 @@ class StatsLoaders:
     def get_stats_summary(self) -> Dict[str, int]:
         """获取写入统计摘要"""
         return self.stats.copy()
+
+# ============================================================================
+# 独立函数接口 - 为了保持与文档的一致性
+# ============================================================================
+
+def load_player_stats(session, stats_data: Dict):
+    """加载球员统计"""
+    # TODO: 需要实现直接的数据库加载
+    return None
+
+def load_team_stats(session, stats_data: Dict):
+    """加载团队统计"""
+    # TODO: 需要实现直接的数据库加载
+    return None
+
+def load_weekly_stats_batch(session, stats_data: List[Dict]):
+    """批量加载周统计"""
+    # TODO: 需要实现直接的数据库加载
+    pass
+
+def load_season_stats_batch(session, stats_data: List[Dict]):
+    """批量加载赛季统计"""
+    # TODO: 需要实现直接的数据库加载
+    pass
+
+def load_projected_stats(session, projections_data: Dict):
+    """加载预测统计"""
+    # TODO: 需要实现直接的数据库加载
+    pass
+
+def load_matchup_results(session, results_data: Dict):
+    """加载对战结果"""
+    # TODO: 需要实现直接的数据库加载
+    pass
+
+def load_transaction(session, transaction_data: Dict):
+    """加载单个交易"""
+    # TODO: 需要实现直接的数据库加载
+    return None
+
+def load_waiver_claim(session, claim_data: Dict):
+    """加载waiver claim"""
+    # TODO: 需要实现直接的数据库加载
+    return None
+
+def load_trade(session, trade_data: Dict):
+    """加载交易"""
+    # TODO: 需要实现直接的数据库加载
+    return None
+
+def load_standings(session, standings_data: List[Dict]):
+    """加载排名"""
+    # TODO: 需要实现直接的数据库加载
+    pass
+
+def load_schedule(session, schedule_data: List[Dict]):
+    """加载赛程"""
+    # TODO: 需要实现直接的数据库加载
+    pass
+
+def load_draft_rankings(session, rankings_data: List[Dict]):
+    """加载选秀排名"""
+    # TODO: 需要实现直接的数据库加载
+    pass
+
+def load_ownership_data(session, ownership_data: Dict):
+    """加载所有权数据"""
+    # TODO: 需要实现直接的数据库加载
+    pass
+
+def load_matchup_grades(session, grades_data: Dict):
+    """加载对战评分"""
+    # TODO: 需要实现直接的数据库加载
+    pass

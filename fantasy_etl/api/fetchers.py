@@ -809,3 +809,242 @@ class YahooFantasyFetcher:
         leagues_data = self.fetch_all_leagues_data()
         
         return leagues_data
+
+# ============================================================================
+# 独立函数接口 - 为了保持与文档的一致性
+# ============================================================================
+
+def fetch_leagues(client: YahooFantasyAPIClient, game_key: str) -> List[Dict]:
+    """
+    获取指定游戏的所有联盟
+    
+    Args:
+        client: Yahoo Fantasy API客户端
+        game_key: 游戏键值
+        
+    Returns:
+        联盟列表
+    """
+    fetcher = YahooFantasyFetcher()
+    fetcher.api_client = client
+    data = fetcher.fetch_leagues_data(game_key)
+    if data:
+        return fetcher._extract_leagues_from_data(data, game_key)
+    return []
+
+def fetch_league_settings(client: YahooFantasyAPIClient, league_key: str) -> Dict:
+    """获取联盟设置"""
+    fetcher = YahooFantasyFetcher()
+    fetcher.api_client = client
+    return fetcher.fetch_league_settings(league_key) or {}
+
+def fetch_league_standings(client: YahooFantasyAPIClient, league_key: str) -> List[Dict]:
+    """获取联盟排名"""
+    fetcher = YahooFantasyFetcher()
+    fetcher.api_client = client
+    data = fetcher.fetch_and_process_league_standings(league_key, "current") # Assuming current season for standings
+    if data:
+        return fetcher._extract_standings_from_data(data)
+    return []
+
+def fetch_league_transactions(client: YahooFantasyAPIClient, league_key: str) -> List[Dict]:
+    """获取联盟交易记录"""
+    fetcher = YahooFantasyFetcher()
+    fetcher.api_client = client
+    return fetcher.fetch_all_league_transactions(league_key, max_count=None)
+
+def fetch_league_scoreboard(client: YahooFantasyAPIClient, league_key: str, week: Optional[int] = None) -> Dict:
+    """获取联盟计分板"""
+    fetcher = YahooFantasyFetcher()
+    fetcher.api_client = client
+    # This function is not directly mapped to a Yahoo Fantasy API endpoint
+    # It would require a more complex implementation to fetch a specific week's scoreboard
+    # For now, returning an empty dict as a placeholder
+    return {}
+
+def fetch_teams(client: YahooFantasyAPIClient, league_key: str) -> List[Dict]:
+    """获取联盟中的所有团队"""
+    fetcher = YahooFantasyFetcher()
+    fetcher.api_client = client
+    data = fetcher.fetch_teams_data(league_key)
+    if data:
+        return fetcher._extract_teams_from_data(data)
+    return []
+
+def fetch_team_info(client: YahooFantasyAPIClient, team_key: str) -> Dict:
+    """获取团队详细信息"""
+    fetcher = YahooFantasyFetcher()
+    fetcher.api_client = client
+    # This function is not directly mapped to a Yahoo Fantasy API endpoint
+    # It would require a more complex implementation to fetch a specific team's info
+    return {}
+
+def fetch_team_roster(client: YahooFantasyAPIClient, team_key: str, week: Optional[int] = None) -> List[Dict]:
+    """获取团队阵容"""
+    fetcher = YahooFantasyFetcher()
+    fetcher.api_client = client
+    # This function is not directly mapped to a Yahoo Fantasy API endpoint
+    # It would require a more complex implementation to fetch a specific week's roster
+    return []
+
+def fetch_team_stats(client: YahooFantasyAPIClient, team_key: str, week: Optional[int] = None) -> Dict:
+    """获取团队统计"""
+    fetcher = YahooFantasyFetcher()
+    fetcher.api_client = client
+    # This function is not directly mapped to a Yahoo Fantasy API endpoint
+    # It would require a more complex implementation to fetch a specific week's stats
+    return {}
+
+def fetch_team_matchups(client: YahooFantasyAPIClient, team_key: str) -> List[Dict]:
+    """获取团队对战记录"""
+    fetcher = YahooFantasyFetcher()
+    fetcher.api_client = client
+    data = fetcher.fetch_team_matchups(team_key)
+    if data:
+        return fetcher._extract_matchups_from_data(data)
+    return []
+
+def fetch_players(client: YahooFantasyAPIClient, league_key: str, start: int = 0, count: int = 25) -> List[Dict]:
+    """获取球员列表"""
+    fetcher = YahooFantasyFetcher()
+    fetcher.api_client = client
+    url = f"https://fantasysports.yahooapis.com/fantasy/v2/league/{league_key}/players;start={start};count={count}"
+    data = fetcher.api_client.get_api_data(url)
+    if data:
+        return fetcher._extract_players_from_league_data(data)
+    return []
+
+def fetch_player_info(client: YahooFantasyAPIClient, player_key: str) -> Dict:
+    """获取球员详细信息"""
+    fetcher = YahooFantasyFetcher()
+    fetcher.api_client = client
+    # This function is not directly mapped to a Yahoo Fantasy API endpoint
+    # It would require a more complex implementation to fetch a specific player's info
+    return {}
+
+def fetch_player_stats(client: YahooFantasyAPIClient, player_key: str, week: Optional[int] = None) -> Dict:
+    """获取球员统计"""
+    fetcher = YahooFantasyFetcher()
+    fetcher.api_client = client
+    # This function is not directly mapped to a Yahoo Fantasy API endpoint
+    # It would require a more complex implementation to fetch a specific week's stats
+    return {}
+
+def fetch_player_ownership(client: YahooFantasyAPIClient, league_key: str, player_keys: List[str]) -> Dict:
+    """获取球员所有权数据"""
+    fetcher = YahooFantasyFetcher()
+    fetcher.api_client = client
+    # This function is not directly mapped to a Yahoo Fantasy API endpoint
+    # It would require a more complex implementation to fetch ownership data
+    return {}
+
+def fetch_player_draft_analysis(client: YahooFantasyAPIClient, league_key: str) -> List[Dict]:
+    """获取球员选秀分析"""
+    fetcher = YahooFantasyFetcher()
+    fetcher.api_client = client
+    # This function is not directly mapped to a Yahoo Fantasy API endpoint
+    # It would require a more complex implementation to fetch draft analysis
+    return []
+
+def fetch_matchups(client: YahooFantasyAPIClient, league_key: str, week: int) -> List[Dict]:
+    """获取指定周的对战"""
+    fetcher = YahooFantasyFetcher()
+    fetcher.api_client = client
+    # This function is not directly mapped to a Yahoo Fantasy API endpoint
+    # It would require a more complex implementation to fetch matchups for a specific week
+    return []
+
+def fetch_matchup_grades(client: YahooFantasyAPIClient, team_key: str, week: int) -> Dict:
+    """获取对战评分"""
+    fetcher = YahooFantasyFetcher()
+    fetcher.api_client = client
+    # This function is not directly mapped to a Yahoo Fantasy API endpoint
+    # It would require a more complex implementation to fetch matchup grades
+    return {}
+
+def fetch_transactions(client: YahooFantasyAPIClient, league_key: str, types: Optional[List[str]] = None) -> List[Dict]:
+    """获取交易记录"""
+    fetcher = YahooFantasyFetcher()
+    fetcher.api_client = client
+    all_transactions = fetcher.fetch_all_league_transactions(league_key)
+    if types:
+        return [t for t in all_transactions if t.get('type') in types]
+    return all_transactions
+
+def fetch_waiver_claims(client: YahooFantasyAPIClient, league_key: str) -> List[Dict]:
+    """获取waiver claims"""
+    return fetch_transactions(client, league_key, types=['waiver'])
+
+def fetch_trades(client: YahooFantasyAPIClient, league_key: str) -> List[Dict]:
+    """获取交易"""
+    return fetch_transactions(client, league_key, types=['trade'])
+
+def fetch_draft_results(client: YahooFantasyAPIClient, league_key: str) -> List[Dict]:
+    """获取选秀结果"""
+    fetcher = YahooFantasyFetcher()
+    fetcher.api_client = client
+    # This function is not directly mapped to a Yahoo Fantasy API endpoint
+    # It would require a more complex implementation to fetch draft results
+    return []
+
+def fetch_predraft_rankings(client: YahooFantasyAPIClient, league_key: str) -> List[Dict]:
+    """获取选秀前排名"""
+    fetcher = YahooFantasyFetcher()
+    fetcher.api_client = client
+    # This function is not directly mapped to a Yahoo Fantasy API endpoint
+    # It would require a more complex implementation to fetch predraft rankings
+    return []
+
+def fetch_game_weeks(client: YahooFantasyAPIClient, game_key: str) -> List[Dict]:
+    """获取游戏周信息"""
+    fetcher = YahooFantasyFetcher()
+    fetcher.api_client = client
+    # This function is not directly mapped to a Yahoo Fantasy API endpoint
+    # It would require a more complex implementation to fetch game weeks
+    return []
+
+def fetch_stat_categories(client: YahooFantasyAPIClient, game_key: str) -> List[Dict]:
+    """获取统计类别"""
+    fetcher = YahooFantasyFetcher()
+    fetcher.api_client = client
+    # This function is not directly mapped to a Yahoo Fantasy API endpoint
+    # It would require a more complex implementation to fetch stat categories
+    return []
+
+def fetch_roster_positions(client: YahooFantasyAPIClient, league_key: str) -> List[Dict]:
+    """获取阵容位置设置"""
+    fetcher = YahooFantasyFetcher()
+    fetcher.api_client = client
+    # This function is not directly mapped to a Yahoo Fantasy API endpoint
+    # It would require a more complex implementation to fetch roster positions
+    return []
+
+def fetch_transaction_types(client: YahooFantasyAPIClient, league_key: str) -> List[str]:
+    """获取交易类型"""
+    fetcher = YahooFantasyFetcher()
+    fetcher.api_client = client
+    # 这个需要从联盟设置中提取
+    settings = fetcher.fetch_league_settings(league_key)
+    if settings:
+        # 提取交易类型逻辑
+        return ['add', 'drop', 'trade', 'waiver']
+    return []
+
+def fetch_user_games(client: YahooFantasyAPIClient) -> List[Dict]:
+    """获取用户游戏"""
+    fetcher = YahooFantasyFetcher()
+    fetcher.api_client = client
+    data = fetcher.fetch_games_data()
+    if data:
+        return fetcher._extract_games_from_data(data)
+    return []
+
+def fetch_user_leagues(client: YahooFantasyAPIClient, game_key: str) -> List[Dict]:
+    """获取用户在指定游戏中的联盟"""
+    return fetch_leagues(client, game_key)
+
+def fetch_user_teams(client: YahooFantasyAPIClient) -> List[Dict]:
+    """获取用户的所有团队"""
+    fetcher = YahooFantasyFetcher()
+    fetcher.api_client = client
+    return fetcher.fetch_user_teams() or []

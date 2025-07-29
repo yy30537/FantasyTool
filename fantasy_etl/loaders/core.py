@@ -349,3 +349,47 @@ class CoreLoaders:
         """关闭数据库连接"""
         if hasattr(self.db_writer, 'close'):
             self.db_writer.close()
+
+# ============================================================================
+# 独立函数接口 - 为了保持与文档的一致性
+# ============================================================================
+
+def load_league(session, league_data: Dict):
+    """加载联盟数据"""
+    # TODO: 需要实现直接的数据库加载
+    return None
+
+def load_team(session, team_data: Dict):
+    """加载团队数据"""
+    # TODO: 需要实现直接的数据库加载
+    return None
+
+def load_player(session, player_data: Dict):
+    """加载球员数据"""
+    # TODO: 需要实现直接的数据库加载
+    return None
+
+def load_manager(session, manager_data: Dict):
+    """加载管理员数据"""
+    # TODO: 需要实现直接的数据库加载
+    return None
+
+def load_settings(session, settings_data: Dict):
+    """加载设置数据"""
+    # TODO: 需要实现直接的数据库加载
+    pass
+
+def load_roster_positions(session, positions_data: List[Dict]):
+    """加载阵容位置设置"""
+    # TODO: 需要实现直接的数据库加载
+    pass
+
+def load_stat_categories(session, categories_data: List[Dict]):
+    """加载统计类别"""
+    # TODO: 需要实现直接的数据库加载
+    pass
+
+def load_scoring_settings(session, scoring_data: Dict):
+    """加载计分设置"""
+    # TODO: 需要实现直接的数据库加载
+    pass

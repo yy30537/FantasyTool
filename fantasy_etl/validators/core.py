@@ -270,3 +270,32 @@ class CoreValidators:
     def set_session(self, session: Session):
         """设置数据库会话"""
         self.session = session
+
+# ============================================================================
+# 独立函数接口 - 为了保持与文档的一致性
+# ============================================================================
+
+def verify_league_data(league_data: Dict) -> bool:
+    """验证联盟数据"""
+    validator = CoreValidators()
+    return validator.verify_league_data(league_data)
+
+def verify_team_data(team_data: Dict) -> bool:
+    """验证团队数据"""
+    validator = CoreValidators()
+    return validator.verify_team_data(team_data)
+
+def verify_player_data(player_data: Dict) -> bool:
+    """验证球员数据"""
+    validator = CoreValidators()
+    return validator.verify_player_data(player_data)
+
+def verify_transaction_data(transaction_data: Dict) -> bool:
+    """验证交易数据"""
+    validator = CoreValidators()
+    return validator.verify_transaction_data(transaction_data)
+
+def verify_stats_data(stats_data: Dict) -> bool:
+    """验证统计数据"""
+    validator = CoreValidators()
+    return validator.verify_stats_data(stats_data)
