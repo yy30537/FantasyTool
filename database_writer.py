@@ -324,7 +324,7 @@ class FantasyDatabaseWriter:
             stat_categories = settings_info.get("stat_categories")
             if stat_categories:
                 categories_count = self.write_stat_categories(league_key, stat_categories)
-                print(f"✓ 提取并写入 {categories_count} 个统计类别定义")
+                print(f"✓ 提取并写入 {categories_count} 个stat_categories")
             
             # 解析并写入 roster_positions
             roster_positions_data = settings_info.get("roster_positions")
@@ -711,6 +711,102 @@ class FantasyDatabaseWriter:
         
         return core_stats
     
+    def _process_player_daily_stats_data(self, stats_data: Dict, league_key: str, 
+                                       season: str, date_obj: date) -> int:
+        """处理球员日统计数据"""
+        success_count = 0
+        
+        try:
+            fantasy_content = stats_data["fantasy_content"]
+            league_data = fantasy_content["league"]
+            
+            # 查找players容器
+            players_container = None
+            if isinstance(league_data, list) and len(league_data) > 1:
+                for item in league_data:
+                    if isinstance(item, dict) and "players" in item:
+                        players_container = item["players"]
+                        break
+            elif isinstance(league_data, dict) and "players" in league_data:
+                players_container = league_data["players"]
+            
+            if not players_container:
+                return 0
+            
+            players_count = int(players_container.get("count", 0))
+            
+            for i in range(players_count):
+                str_index = str(i)
+                if str_index not in players_container:
+                    continue
+                
+                player_data = players_container[str_index]
+                if "player" not in player_data:
+                    continue
+                
+                player_info_list = player_data["player"]
+                if not isinstance(player_info_list, list) or len(player_info_list) < 2:
+                    continue
+                
+                # 提取球员基本信息
+                player_basic_info = player_info_list[0]
+                player_key = None
+                editorial_player_key = None
+                
+                if isinstance(player_basic_info, list):
+                    for item in player_basic_info:
+                        if isinstance(item, dict):
+                            if "player_key" in item:
+                                player_key = item["player_key"]
+                            elif "editorial_player_key" in item:
+                                editorial_player_key = item["editorial_player_key"]
+                elif isinstance(player_basic_info, dict):
+                    player_key = player_basic_info.get("player_key")
+                    editorial_player_key = player_basic_info.get("editorial_player_key")
+                
+                if not player_key:
+                    continue
+                
+                # 提取统计数据
+                stats_container = player_info_list[1]
+                if not isinstance(stats_container, dict) or "player_stats" not in stats_container:
+                    continue
+                
+                player_stats = stats_container["player_stats"]
+                if not isinstance(player_stats, dict) or "stats" not in player_stats:
+                    continue
+                
+                stats_list = player_stats["stats"]
+                if not isinstance(stats_list, list):
+                    continue
+                
+                # 转换统计数据为字典格式
+                stats_dict = {}
+                for stat_item in stats_list:
+                    if "stat" in stat_item:
+                        stat_info = stat_item["stat"]
+                        stat_id = stat_info.get("stat_id")
+                        value = stat_info.get("value")
+                        if stat_id is not None:
+                            stats_dict[str(stat_id)] = value
+                
+                # 写入数据库
+                if stats_dict:
+                    if self.write_player_daily_stat_values(
+                        player_key=player_key,
+                        editorial_player_key=editorial_player_key or player_key,
+                        league_key=league_key,
+                        season=season,
+                        date_obj=date_obj,
+                        stats_data=stats_dict
+                    ):
+                        success_count += 1
+            
+        except Exception as e:
+            pass
+        
+        return success_count
+    
     def write_team_stat_values(self, team_key: str, league_key: str, season: str,
                              coverage_type: str, stats_data: Dict,
                              week: Optional[int] = None, date_obj: Optional[date] = None,
@@ -852,6 +948,61 @@ class FantasyDatabaseWriter:
             self.session.rollback()
             return False
     
+    def write_league_standings_from_data(self, team_info: Dict, league_key: str, season: str) -> bool:
+        """将league standings数据写入数据库"""
+        try:
+            team_key = team_info["team_key"]
+            team_standings = team_info.get("team_standings", {})
+            team_points = team_info.get("team_points", {})
+            
+            # 提取standings数据
+            rank = None
+            wins = 0
+            losses = 0
+            ties = 0
+            win_percentage = 0.0
+            games_back = "-"
+            playoff_seed = None
+            
+            if isinstance(team_standings, dict):
+                rank = team_standings.get("rank")
+                wins = int(team_standings.get("outcome_totals", {}).get("wins", 0))
+                losses = int(team_standings.get("outcome_totals", {}).get("losses", 0))
+                ties = int(team_standings.get("outcome_totals", {}).get("ties", 0))
+                win_percentage = float(team_standings.get("outcome_totals", {}).get("percentage", 0))
+                games_back = team_standings.get("games_back", "-")
+                playoff_seed = team_standings.get("playoff_seed")
+                
+                # 分区记录
+                divisional_outcome = team_standings.get("divisional_outcome_totals", {})
+                divisional_wins = int(divisional_outcome.get("wins", 0))
+                divisional_losses = int(divisional_outcome.get("losses", 0))
+                divisional_ties = int(divisional_outcome.get("ties", 0))
+            else:
+                divisional_wins = 0
+                divisional_losses = 0
+                divisional_ties = 0
+            
+            # 写入数据库（不再需要存储 JSON 数据，所有字段已结构化）
+            return self.write_league_standings(
+                league_key=league_key,
+                team_key=team_key,
+                season=season,
+                rank=rank,
+                playoff_seed=playoff_seed,
+                wins=wins,
+                losses=losses,
+                ties=ties,
+                win_percentage=win_percentage,
+                games_back=games_back,
+                divisional_wins=divisional_wins,
+                divisional_losses=divisional_losses,
+                divisional_ties=divisional_ties
+            )
+            
+        except Exception as e:
+            return False
+
     def write_team_matchup(self, league_key: str, team_key: str, season: str, week: int,
                           week_start: Optional[str] = None, week_end: Optional[str] = None,
                           status: Optional[str] = None, opponent_team_key: Optional[str] = None,
@@ -965,6 +1116,116 @@ class FantasyDatabaseWriter:
             self.session.rollback()
             return False
     
+    def process_team_matchups_to_db(self, matchups_data: Dict, team_key: str, 
+                                   league_key: str, season: str) -> bool:
+        """处理团队matchups数据并写入数据库（使用新的结构化字段）"""
+        try:
+            fantasy_content = matchups_data["fantasy_content"]
+            team_data = fantasy_content["team"]
+            
+            # 查找matchups容器
+            matchups_container = None
+            if isinstance(team_data, list) and len(team_data) > 1:
+                for item in team_data:
+                    if isinstance(item, dict) and "matchups" in item:
+                        matchups_container = item["matchups"]
+                        break
+            
+            if not matchups_container:
+                return False
+            
+            matchups_count = int(matchups_container.get("count", 0))
+            success_count = 0
+            
+            for i in range(matchups_count):
+                str_index = str(i)
+                if str_index not in matchups_container:
+                    continue
+                
+                matchup_data = matchups_container[str_index]
+                if "matchup" not in matchup_data:
+                    continue
+                
+                matchup_info = matchup_data["matchup"]
+                
+                # 使用新的方法直接从matchup数据写入数据库
+                if self.write_team_matchup_from_data(matchup_info, team_key, league_key, season):
+                    success_count += 1
+                    
+                    # 同时写入TeamStatsWeekly数据
+                    self._extract_and_write_team_weekly_stats(matchup_info, team_key, league_key, season)
+            
+            return success_count > 0
+            
+        except Exception as e:
+            print(f"处理团队matchups失败 {team_key}: {e}")
+            return False
+
+    def _extract_and_write_team_weekly_stats(self, matchup_info: Dict, team_key: str, 
+                                           league_key: str, season: str) -> bool:
+        """从matchup数据中提取并写入团队周统计数据"""
+        try:
+            week = matchup_info.get("week")
+            if week is None:
+                return False
+            
+            # 从matchup中的teams数据提取统计数据
+            teams_data = matchup_info.get("0", {}).get("teams", {})
+            team_stats_data = self._extract_team_stats_from_matchup_data(teams_data, team_key)
+            
+            if team_stats_data:
+                return self.write_team_weekly_stats_from_matchup(
+                    team_key=team_key,
+                    league_key=league_key,
+                    season=season,
+                    week=week,
+                    team_stats_data=team_stats_data
+                )
+            
+            return False
+            
+        except Exception as e:
+            print(f"提取团队周统计失败 {team_key}: {e}")
+            return False
+
+    def _extract_team_stats_from_matchup_data(self, teams_data: Dict, target_team_key: str) -> Optional[Dict]:
+        """从teams数据中提取目标团队的统计数据"""
+        try:
+            teams_count = int(teams_data.get("count", 0))
+            
+            for i in range(teams_count):
+                str_index = str(i)
+                if str_index not in teams_data:
+                    continue
+                
+                team_container = teams_data[str_index]
+                if "team" not in team_container:
+                    continue
+                
+                team_info = team_container["team"]
+                
+                # 提取team_key
+                current_team_key = None
+                if isinstance(team_info, list) and len(team_info) >= 1:
+                    team_basic_info = team_info[0]
+                    if isinstance(team_basic_info, list):
+                        for info_item in team_basic_info:
+                            if isinstance(info_item, dict) and "team_key" in info_item:
+                                current_team_key = info_item["team_key"]
+                                break
+                
+                # 如果找到目标团队，提取统计数据
+                if current_team_key == target_team_key and len(team_info) > 1:
+                    team_stats_container = team_info[1]
+                    if "team_stats" in team_stats_container:
+                        return team_stats_container["team_stats"]
+            
+            return None
+            
+        except Exception as e:
+            print(f"提取团队统计数据失败: {e}")
+            return None
+
     def write_team_matchup_from_data(self, matchup_data: Dict, team_key: str, 
                                    league_key: str, season: str) -> bool:
         """从API返回的matchup数据中解析并写入团队对战记录"""
@@ -1201,6 +1462,161 @@ class FantasyDatabaseWriter:
             self.session.rollback()
             return 0
 
+    def _extract_position_string(self, position_data) -> Optional[str]:
+        """从位置数据中提取位置字符串"""
+        if not position_data:
+            return None
+        
+        if isinstance(position_data, str):
+            return position_data
+        
+        if isinstance(position_data, dict):
+            return position_data.get("position", None)
+        
+        if isinstance(position_data, list) and len(position_data) > 0:
+            if isinstance(position_data[0], str):
+                return position_data[0]
+            elif isinstance(position_data[0], dict):
+                return position_data[0].get("position", None)
+        
+        return None
+
+    def process_roster_data_to_db(self, roster_data: Dict, team_key: str, league_key: str, season: str) -> bool:
+        """处理roster数据并写入数据库"""
+        try:
+            fantasy_content = roster_data["fantasy_content"]
+            team_data = fantasy_content["team"]
+            
+            # 获取roster信息
+            roster_info = None
+            if isinstance(team_data, list) and len(team_data) > 1:
+                for item in team_data:
+                    if isinstance(item, dict) and "roster" in item:
+                        roster_info = item["roster"]
+                        break
+            
+            if not roster_info:
+                return False
+            
+            coverage_date = roster_info.get("date")
+            is_prescoring = bool(roster_info.get("is_prescoring", False))
+            is_editable = bool(roster_info.get("is_editable", False))
+            
+            # 获取球员信息
+            players_container = None
+            if "0" in roster_info and "players" in roster_info["0"]:
+                players_container = roster_info["0"]["players"]
+            
+            if not players_container:
+                return False
+            
+            roster_list = []
+            players_count = int(players_container.get("count", 0))
+            
+            for i in range(players_count):
+                str_index = str(i)
+                if str_index not in players_container:
+                    continue
+                
+                player_data = players_container[str_index]
+                if "player" not in player_data:
+                    continue
+                
+                player_info_list = player_data["player"]
+                if not isinstance(player_info_list, list) or len(player_info_list) == 0:
+                    continue
+                
+                # 提取球员基本信息
+                player_info = player_info_list[0]
+                position_data = player_info_list[1] if len(player_info_list) > 1 else {}
+                
+                player_dict = {}
+                
+                # 处理player info
+                if isinstance(player_info, list):
+                    for item in player_info:
+                        if isinstance(item, dict):
+                            player_dict.update(item)
+                elif isinstance(player_info, dict):
+                    player_dict.update(player_info)
+                
+                # 处理position data
+                if isinstance(position_data, dict):
+                    player_dict.update(position_data)
+                
+                # 创建roster记录
+                roster_entry = {
+                    "team_key": team_key,
+                    "player_key": player_dict.get("player_key"),
+                    "coverage_date": coverage_date,
+                    "is_prescoring": is_prescoring,
+                    "is_editable": is_editable,
+                    "status": player_dict.get("status"),
+                    "status_full": player_dict.get("status_full"),
+                    "injury_note": player_dict.get("injury_note"),
+                    "selected_position": self._extract_position_string(player_dict.get("selected_position"))
+                }
+                
+                # 处理keeper信息
+                if "is_keeper" in player_dict:
+                    keeper_info = player_dict["is_keeper"]
+                    if isinstance(keeper_info, dict):
+                        roster_entry["is_keeper"] = keeper_info.get("status", False)
+                        roster_entry["keeper_cost"] = str(keeper_info.get("cost", "")) if keeper_info.get("cost") else None
+                        roster_entry["kept"] = keeper_info.get("kept", False)
+                
+                if roster_entry["player_key"]:
+                    roster_list.append(roster_entry)
+            
+            # 批量写入数据库
+            count = 0
+            for roster_entry in roster_list:
+                try:
+                    # 解析日期 - 如果无法解析则跳过该记录，不使用当前日期
+                    roster_date_str = roster_entry["coverage_date"]
+                    if not roster_date_str:
+                        continue
+                    
+                    try:
+                        roster_date = datetime.strptime(roster_date_str, '%Y-%m-%d').date()
+                    except Exception as e:
+                        continue
+                    
+                    # 判断是否首发
+                    selected_position = roster_entry["selected_position"]
+                    is_starting = selected_position not in ['BN', 'IL', 'IR'] if selected_position else False
+                    is_bench = selected_position == 'BN' if selected_position else False
+                    is_injured_reserve = selected_position in ['IL', 'IR'] if selected_position else False
+                    
+                    # 使用write_roster_daily方法
+                    if self.write_roster_daily(
+                        team_key=roster_entry["team_key"],
+                        player_key=roster_entry["player_key"],
+                        league_key=league_key,
+                        roster_date=roster_date,
+                        season=season,
+                        selected_position=selected_position,
+                        is_starting=is_starting,
+                        is_bench=is_bench,
+                        is_injured_reserve=is_injured_reserve,
+                        player_status=roster_entry["status"],
+                        status_full=roster_entry["status_full"],
+                        injury_note=roster_entry["injury_note"],
+                        is_keeper=roster_entry.get("is_keeper", False),
+                        keeper_cost=roster_entry.get("keeper_cost"),
+                        is_prescoring=roster_entry["is_prescoring"],
+                        is_editable=roster_entry["is_editable"]
+                    ):
+                        count += 1
+                        
+                except Exception as e:
+                    continue
+            
+            return count > 0
+            
+        except Exception as e:
+            return False
+
     def write_roster_daily(self, team_key: str, player_key: str, league_key: str,
                           roster_date: date, season: str,
                            week: Optional[int] = None,
@@ -1369,7 +1785,7 @@ class FantasyDatabaseWriter:
         count = 0
         skipped_count = 0
         
-        print(f"开始批量写入 {len(players_data)} 个球员记录...")
+        print(f"开始写入 {len(players_data)} 个球员记录(players_data)...")
         
         for i, player_data in enumerate(players_data):
             try:
@@ -1447,6 +1863,101 @@ class FantasyDatabaseWriter:
         
         return count
     
+    def _extract_team_data_from_api(self, team_data: List) -> Optional[Dict]:
+        """从API团队数据中提取团队信息"""
+        try:
+            # team_data[0] 应该是一个包含多个字典的列表
+            if not isinstance(team_data, list) or len(team_data) == 0:
+                return None
+            
+            team_info_list = team_data[0]
+            if not isinstance(team_info_list, list):
+                return None
+            
+            # 提取团队基本信息
+            team_dict = {}
+            managers_data = []
+            
+            for item in team_info_list:
+                if isinstance(item, dict):
+                    if "managers" in item:
+                        managers_data = item["managers"]
+                    elif "team_logos" in item and item["team_logos"]:
+                        # 处理team logo
+                        if len(item["team_logos"]) > 0 and "team_logo" in item["team_logos"][0]:
+                            team_dict["team_logo_url"] = item["team_logos"][0]["team_logo"].get("url")
+                    elif "roster_adds" in item:
+                        # 处理roster adds
+                        roster_adds = item["roster_adds"]
+                        team_dict["roster_adds_week"] = roster_adds.get("coverage_value")
+                        team_dict["roster_adds_value"] = roster_adds.get("value")
+                    elif "clinched_playoffs" in item:
+                        team_dict["clinched_playoffs"] = bool(item["clinched_playoffs"])
+                    elif "has_draft_grade" in item:
+                        team_dict["has_draft_grade"] = bool(item["has_draft_grade"])
+                    elif "number_of_trades" in item:
+                        # 处理可能是字符串的数字字段
+                        try:
+                            team_dict["number_of_trades"] = int(item["number_of_trades"])
+                        except (ValueError, TypeError):
+                            team_dict["number_of_trades"] = 0
+                    else:
+                        # 直接更新其他字段
+                        team_dict.update(item)
+            
+                        # 添加managers数据
+            team_dict["managers"] = managers_data
+            
+            # 验证必要字段
+            if not team_dict.get("team_key"):
+                return None
+            
+            return team_dict
+            
+        except Exception as e:
+            return None
+
+    def write_teams_to_db(self, teams_data: Dict, league_key: str) -> int:
+        """将团队数据写入数据库"""
+        teams_list = []
+        
+        try:
+            fantasy_content = teams_data["fantasy_content"]
+            league_data = fantasy_content["league"]
+            
+            teams_container = None
+            if isinstance(league_data, list) and len(league_data) > 1:
+                for item in league_data:
+                    if isinstance(item, dict) and "teams" in item:
+                        teams_container = item["teams"]
+                        break
+            
+            if not teams_container:
+                return 0
+            
+            teams_count = int(teams_container.get("count", 0))
+            for i in range(teams_count):
+                str_index = str(i)
+                if str_index not in teams_container:
+                    continue
+                
+                team_container = teams_container[str_index]
+                team_data = team_container["team"]
+                
+                # 处理团队数据
+                team_dict = self._extract_team_data_from_api(team_data)
+                if team_dict:
+                    teams_list.append(team_dict)
+        
+        except Exception as e:
+            return 0
+        
+        # 批量写入数据库
+        if teams_list:
+            return self.write_teams_batch(teams_list, league_key)
+        
+        return 0
+
     def write_teams_batch(self, teams_data: List[Dict], league_key: str) -> int:
         """批量写入团队数据"""
         count = 0
@@ -1565,6 +2076,13 @@ class FantasyDatabaseWriter:
         
         return count
     
+    def write_transactions_to_db(self, transactions: List[Dict], league_key: str) -> int:
+        """将transaction数据写入数据库"""
+        if not transactions:
+            return 0
+        
+        return self.write_transactions_batch(transactions, league_key)
+
     def write_transactions_batch(self, transactions_data: List[Dict], league_key: str) -> int:
         """批量写入交易数据"""
         count = 0
@@ -1757,7 +2275,6 @@ class FantasyDatabaseWriter:
         except:
             return None 
     
-    # ===== 新增：写入联盟 roster_positions =====
     def write_league_roster_positions(self, league_key: str, roster_positions_data) -> int:
         """写入联盟 roster_positions 到新表"""
         count = 0
@@ -1854,30 +2371,6 @@ class FantasyDatabaseWriter:
             return None
         except (ValueError, TypeError):
             return None
-    
-    def recreate_database_tables(self) -> bool:
-        """强制重新创建数据库表结构"""
-        try:
-            print("🔄 强制重新创建数据库表...")
-            
-            # 关闭当前session
-            if self.session:
-                self.session.close()
-            
-            # 重新创建所有表
-            success = recreate_tables(self.engine)
-            if not success:
-                return False
-            
-            # 重新初始化session
-            self.session = get_session(self.engine)
-            
-            print("✅ 数据库表重新创建成功")
-            return True
-            
-        except Exception as e:
-            print(f"重新创建数据库表失败: {e}")
-            return False
     
     def _extract_team_season_stats(self, stats_data: Dict) -> Dict:
         """从团队赛季统计数据中提取完整统计项"""
@@ -2070,5 +2563,117 @@ class FantasyDatabaseWriter:
             print(f"写入团队周统计失败 {team_key}: {e}")
             self.session.rollback()
             return False
+
+    def process_player_season_stats_data(self, stats_data: Dict, league_key: str, season: str) -> int:
+        """处理球员赛季统计数据"""
+        success_count = 0
+        
+        try:
+            fantasy_content = stats_data["fantasy_content"]
+            league_data = fantasy_content["league"]
+            
+            # 查找players容器
+            players_container = None
+            if isinstance(league_data, list) and len(league_data) > 1:
+                for item in league_data:
+                    if isinstance(item, dict) and "players" in item:
+                        players_container = item["players"]
+                        break
+            elif isinstance(league_data, dict) and "players" in league_data:
+                players_container = league_data["players"]
+            
+            if not players_container:
+                print("❌ API数据中未找到players容器")
+                return 0
+            
+            players_count = int(players_container.get("count", 0))
+            print(f"📊 API返回 {players_count} 个球员的统计数据")
+            
+            for i in range(players_count):
+                str_index = str(i)
+                if str_index not in players_container:
+                    continue
+                
+                player_data = players_container[str_index]
+                if "player" not in player_data:
+                    continue
+                
+                player_info_list = player_data["player"]
+                if not isinstance(player_info_list, list) or len(player_info_list) < 2:
+                    print(f"❌ 球员 {str_index} 数据格式不正确")
+                    continue
+                
+                # 提取球员基本信息
+                player_basic_info = player_info_list[0]
+                player_key = None
+                editorial_player_key = None
+                
+                if isinstance(player_basic_info, list):
+                    for item in player_basic_info:
+                        if isinstance(item, dict):
+                            if "player_key" in item:
+                                player_key = item["player_key"]
+                            elif "editorial_player_key" in item:
+                                editorial_player_key = item["editorial_player_key"]
+                elif isinstance(player_basic_info, dict):
+                    player_key = player_basic_info.get("player_key")
+                    editorial_player_key = player_basic_info.get("editorial_player_key")
+                
+                if not player_key:
+                    print(f"❌ 球员 {str_index} 缺少player_key")
+                    continue
+                
+                # 提取统计数据
+                stats_container = player_info_list[1]
+                if not isinstance(stats_container, dict) or "player_stats" not in stats_container:
+                    print(f"❌ 球员 {player_key} 缺少统计数据容器")
+                    continue
+                
+                player_stats = stats_container["player_stats"]
+                if not isinstance(player_stats, dict) or "stats" not in player_stats:
+                    print(f"❌ 球员 {player_key} 缺少stats字段")
+                    continue
+                
+                stats_list = player_stats["stats"]
+                if not isinstance(stats_list, list):
+                    print(f"❌ 球员 {player_key} stats不是列表格式")
+                    continue
+                
+                # 转换统计数据为字典格式
+                stats_dict = {}
+                for stat_item in stats_list:
+                    if "stat" in stat_item:
+                        stat_info = stat_item["stat"]
+                        stat_id = stat_info.get("stat_id")
+                        value = stat_info.get("value")
+                        if stat_id is not None:
+                            stats_dict[str(stat_id)] = value
+                
+                print(f"📊 球员 {player_key} 提取到 {len(stats_dict)} 个统计项")
+                
+                # 写入数据库
+                if stats_dict:
+                    write_result = self.write_player_season_stat_values(
+                        player_key=player_key,
+                        editorial_player_key=editorial_player_key or player_key,
+                        league_key=league_key,
+                        season=season,
+                        stats_data=stats_dict
+                    )
+                    if write_result:
+                        success_count += 1
+                        print(f"✓ 球员 {player_key} 赛季统计写入成功")
+                    else:
+                        print(f"❌ 球员 {player_key} 赛季统计写入失败")
+                else:
+                    print(f"❌ 球员 {player_key} 没有有效的统计数据")
+            
+        except Exception as e:
+            print(f"❌ 处理球员赛季统计数据时出错: {e}")
+            import traceback
+            traceback.print_exc()
+        
+        return success_count
+
 
 

@@ -40,55 +40,51 @@ class DatabaseOps:
         print("🔄 重新创建数据库表...")
 
         try:
-            with engine.connect() as conn:
-                trans = conn.begin()
-                try:
-                    # 首先查询数据库中的所有表
-                    result = conn.execute(text("""
-                        SELECT tablename FROM pg_tables 
-                        WHERE schemaname = 'public' 
-                        ORDER BY tablename;
-                    """))
-                    existing_tables = [row[0] for row in result.fetchall()]
-
-                    if existing_tables:
-                        print(f"发现 {len(existing_tables)} 个现有表")
-
-                        # 删除所有现有表，使用CASCADE处理依赖
-                        for table_name in existing_tables:
-                            try:
-                                conn.execute(text(f"DROP TABLE IF EXISTS {table_name} CASCADE;"))
-                                print(f"✓ 删除表 {table_name}")
-                            except Exception as e:
-                                print(f"删除表 {table_name} 时出错: {e}")
-
-                        # 确保删除可能遗留的旧表
-                        legacy_tables = ['rosters', 'roster_history', 'player_stats_history', 'player_season_stats', 'player_daily_stats', 'team_stats']
-                        for table_name in legacy_tables:
-                            try:
-                                conn.execute(text(f"DROP TABLE IF EXISTS {table_name} CASCADE;"))
-                                print(f"✓ 删除遗留表 {table_name}")
-                            except Exception as e:
-                                print(f"删除遗留表 {table_name} 时出错（可能不存在）: {e}")
-                    else:
-                        print("✓ 数据库中没有现有表")
-
-                    trans.commit()
-                    print("✓ 所有表删除完成")
-
-                except Exception as e:
-                    trans.rollback()
-                    raise e
-
+            print("删除所有表...")
+            Base.metadata.drop_all(engine)
+            print("✓ 成功删除所有表")
         except Exception as e:
-            print(f"删除表时出错: {e}")
-            print("尝试使用SQLAlchemy标准方法...")
+            print(f"SQLAlchemy标准删除失败: {e}")
+            print("尝试手动删除表...")
+            
+            # 如果标准方法失败，尝试手动删除
             try:
-                # 如果CASCADE删除失败，尝试标准删除
-                Base.metadata.drop_all(engine)
-                print("✓ 使用标准方法删除表成功")
+                with engine.connect() as conn:
+                    trans = conn.begin()
+                    try:
+                        # 首先查询数据库中的所有表
+                        result = conn.execute(text("""
+                            SELECT tablename FROM pg_tables 
+                            WHERE schemaname = 'public' 
+                            ORDER BY tablename;
+                        """))
+                        existing_tables = [row[0] for row in result.fetchall()]
+
+                        if existing_tables:
+                            print(f"发现 {len(existing_tables)} 个现有表")
+
+                            # 删除所有现有表，使用CASCADE处理依赖
+                            print("开始删除现有表...")
+                            for i, table_name in enumerate(existing_tables):
+                                try:
+                                    print(f"正在删除表 {table_name} ({i+1}/{len(existing_tables)})...")
+                                    conn.execute(text(f"DROP TABLE IF EXISTS {table_name} CASCADE;"))
+                                    print(f"✓ 删除表 {table_name}")
+                                except Exception as e:
+                                    print(f"删除表 {table_name} 时出错: {e}")
+                                    # 继续删除其他表，不要因为一个表失败就停止
+                        else:
+                            print("✓ 数据库中没有现有表")
+
+                        trans.commit()
+                        print("✓ 所有表删除完成")
+
+                    except Exception as e:
+                        trans.rollback()
+                        raise e
+
             except Exception as e2:
-                print(f"标准删除也失败: {e2}")
+                print(f"手动删除表也失败: {e2}")
                 print("⚠️ 无法自动删除表，请手动执行以下SQL:")
                 print("DROP SCHEMA public CASCADE;")
                 print("CREATE SCHEMA public;")
@@ -161,14 +157,14 @@ class DatabaseOps:
 
             engine = DatabaseOps.create_database_engine()
             session = DatabaseOps.get_session(engine)
-            
+
             for name, model in tables:
                 try:
                     count = session.query(model).count()
-                    print("table name: records")
-                    print(f"{name:12}: {count:6d}")
+                    
+                    print(f"{count:6d} {name:12}")
                 except Exception as e:
-                    print(f"{name:12}: Query Failed ({e})")
+                    print(f"{name:12}: Query Faileds ({e})")
             
             print("-" * 60)
             
