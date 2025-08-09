@@ -158,7 +158,7 @@ class FantasyDatabaseWriter:
     
     def write_player_daily_stats(self, player_key: str, editorial_player_key: str,
                                 league_key: str, stats_data: Dict, season: str,
-                                stats_date: date, week: Optional[int] = None) -> bool:
+                                stats_date: date) -> bool:
         """写入球员日期统计（旧接口兼容）"""
         count = self.write_player_daily_stat_values(
             player_key=player_key,
@@ -166,8 +166,7 @@ class FantasyDatabaseWriter:
             league_key=league_key,
             season=season,
             date_obj=stats_date,
-            stats_data=stats_data,
-            week=week
+            stats_data=stats_data
         )
         return count > 0
     
@@ -569,7 +568,7 @@ class FantasyDatabaseWriter:
     
     def write_player_daily_stat_values(self, player_key: str, editorial_player_key: str,
                                      league_key: str, season: str, date_obj: date,
-                                     stats_data: Dict, week: Optional[int] = None) -> int:
+                                     stats_data: Dict) -> int:
         """写入球员日期统计值（只存储核心统计列）"""
         try:
             # 检查是否已存在
@@ -583,7 +582,6 @@ class FantasyDatabaseWriter:
             
             if existing:
                 # 更新现有记录
-                existing.week = week
                 # 更新所有11个统计项
                 existing.field_goals_made = core_stats.get('field_goals_made')
                 existing.field_goals_attempted = core_stats.get('field_goals_attempted')
@@ -608,7 +606,6 @@ class FantasyDatabaseWriter:
                     league_key=league_key,
                     season=season,
                     date=date_obj,
-                    week=week,
                     # 所有11个统计项
                     field_goals_made=core_stats.get('field_goals_made'),
                     field_goals_attempted=core_stats.get('field_goals_attempted'),
@@ -711,10 +708,85 @@ class FantasyDatabaseWriter:
         
         return core_stats
     
+    def bulk_upsert_player_daily_stats(self, records: List[Dict]) -> int:
+        """Bulk upsert player daily stats with high performance"""
+        if not records:
+            return 0
+        
+        try:
+            from sqlalchemy.dialects.postgresql import insert as pg_insert
+            from sqlalchemy.dialects.mysql import insert as mysql_insert
+            from sqlalchemy.dialects.sqlite import insert as sqlite_insert
+            
+            # Prepare records for bulk insert
+            insert_records = []
+            for record in records:
+                core_stats = self._extract_core_daily_stats(record['stats_data'])
+                insert_record = {
+                    'player_key': record['player_key'],
+                    'editorial_player_key': record['editorial_player_key'],
+                    'league_key': record['league_key'],
+                    'season': record['season'],
+                    'date': record['date'],
+                    **core_stats,
+                    'fetched_at': datetime.utcnow(),
+                    'updated_at': datetime.utcnow()
+                }
+                insert_records.append(insert_record)
+            
+            if not insert_records:
+                return 0
+            
+            # Get database dialect
+            dialect_name = self.session.bind.dialect.name
+            
+            if dialect_name == 'postgresql':
+                # PostgreSQL ON CONFLICT
+                stmt = pg_insert(PlayerDailyStats).values(insert_records)
+                stmt = stmt.on_conflict_do_update(
+                    index_elements=['player_key', 'date'],
+                    set_={col.key: col for col in stmt.excluded if col.key not in ['id', 'fetched_at']}
+                )
+                self.session.execute(stmt)
+            elif dialect_name == 'mysql':
+                # MySQL ON DUPLICATE KEY UPDATE
+                stmt = mysql_insert(PlayerDailyStats).values(insert_records)
+                update_dict = {col: stmt.inserted[col] for col in stmt.inserted.keys() 
+                              if col not in ['id', 'fetched_at']}
+                stmt = stmt.on_duplicate_key_update(**update_dict)
+                self.session.execute(stmt)
+            else:
+                # SQLite/Other - use bulk_insert_mappings with manual conflict handling
+                try:
+                    self.session.bulk_insert_mappings(PlayerDailyStats, insert_records)
+                except Exception:
+                    # Fallback to individual upserts for existing records
+                    for record in insert_records:
+                        existing = self.session.query(PlayerDailyStats).filter_by(
+                            player_key=record['player_key'],
+                            date=record['date']
+                        ).first()
+                        
+                        if existing:
+                            for key, value in record.items():
+                                if key not in ['id', 'fetched_at']:
+                                    setattr(existing, key, value)
+                        else:
+                            self.session.add(PlayerDailyStats(**record))
+            
+            self.session.commit()
+            self.stats['player_daily_stats'] = self.stats.get('player_daily_stats', 0) + len(insert_records)
+            return len(insert_records)
+            
+        except Exception as e:
+            self.session.rollback()
+            print(f"Bulk upsert player daily stats failed: {e}")
+            return 0
+    
     def _process_player_daily_stats_data(self, stats_data: Dict, league_key: str, 
                                        season: str, date_obj: date) -> int:
-        """处理球员日统计数据"""
-        success_count = 0
+        """处理球员日统计数据 - 优化为批量处理"""
+        records = []
         
         try:
             fantasy_content = stats_data["fantasy_content"]
@@ -790,22 +862,25 @@ class FantasyDatabaseWriter:
                         if stat_id is not None:
                             stats_dict[str(stat_id)] = value
                 
-                # 写入数据库
+                # 收集记录用于批量处理
                 if stats_dict:
-                    if self.write_player_daily_stat_values(
-                        player_key=player_key,
-                        editorial_player_key=editorial_player_key or player_key,
-                        league_key=league_key,
-                        season=season,
-                        date_obj=date_obj,
-                        stats_data=stats_dict
-                    ):
-                        success_count += 1
+                    records.append({
+                        'player_key': player_key,
+                        'editorial_player_key': editorial_player_key or player_key,
+                        'league_key': league_key,
+                        'season': season,
+                        'date': date_obj,
+                        'stats_data': stats_dict
+                    })
+            
+            # 批量处理收集的记录
+            if records:
+                return self.bulk_upsert_player_daily_stats(records)
             
         except Exception as e:
             pass
         
-        return success_count
+        return 0
     
     def write_team_stat_values(self, team_key: str, league_key: str, season: str,
                              coverage_type: str, stats_data: Dict,
@@ -1568,18 +1643,18 @@ class FantasyDatabaseWriter:
                 if roster_entry["player_key"]:
                     roster_list.append(roster_entry)
             
-            # 批量写入数据库
-            count = 0
+            # 收集记录用于批量处理
+            bulk_records = []
             for roster_entry in roster_list:
                 try:
-                    # 解析日期 - 如果无法解析则跳过该记录，不使用当前日期
+                    # 解析日期 - 如果无法解析则跳过该记录
                     roster_date_str = roster_entry["coverage_date"]
                     if not roster_date_str:
                         continue
                     
                     try:
                         roster_date = datetime.strptime(roster_date_str, '%Y-%m-%d').date()
-                    except Exception as e:
+                    except Exception:
                         continue
                     
                     # 判断是否首发
@@ -1588,38 +1663,41 @@ class FantasyDatabaseWriter:
                     is_bench = selected_position == 'BN' if selected_position else False
                     is_injured_reserve = selected_position in ['IL', 'IR'] if selected_position else False
                     
-                    # 使用write_roster_daily方法
-                    if self.write_roster_daily(
-                        team_key=roster_entry["team_key"],
-                        player_key=roster_entry["player_key"],
-                        league_key=league_key,
-                        roster_date=roster_date,
-                        season=season,
-                        selected_position=selected_position,
-                        is_starting=is_starting,
-                        is_bench=is_bench,
-                        is_injured_reserve=is_injured_reserve,
-                        player_status=roster_entry["status"],
-                        status_full=roster_entry["status_full"],
-                        injury_note=roster_entry["injury_note"],
-                        is_keeper=roster_entry.get("is_keeper", False),
-                        keeper_cost=roster_entry.get("keeper_cost"),
-                        is_prescoring=roster_entry["is_prescoring"],
-                        is_editable=roster_entry["is_editable"]
-                    ):
-                        count += 1
+                    # 收集记录
+                    bulk_records.append({
+                        'team_key': roster_entry["team_key"],
+                        'player_key': roster_entry["player_key"],
+                        'league_key': league_key,
+                        'date': roster_date,
+                        'season': season,
+                        'selected_position': selected_position,
+                        'is_starting': is_starting,
+                        'is_bench': is_bench,
+                        'is_injured_reserve': is_injured_reserve,
+                        'player_status': roster_entry["status"],
+                        'status_full': roster_entry["status_full"],
+                        'injury_note': roster_entry["injury_note"],
+                        'is_keeper': roster_entry.get("is_keeper", False),
+                        'keeper_cost': roster_entry.get("keeper_cost"),
+                        'is_prescoring': roster_entry["is_prescoring"],
+                        'is_editable': roster_entry["is_editable"]
+                    })
                         
-                except Exception as e:
+                except Exception:
                     continue
             
-            return count > 0
+            # 批量处理收集的记录
+            if bulk_records:
+                count = self.bulk_upsert_roster_daily(bulk_records)
+                return count > 0
+            
+            return False
             
         except Exception as e:
             return False
 
     def write_roster_daily(self, team_key: str, player_key: str, league_key: str,
                           roster_date: date, season: str,
-                           week: Optional[int] = None,
                            selected_position: Optional[str] = None,
                            is_starting: bool = False,
                           is_bench: bool = False,
@@ -1653,7 +1731,6 @@ class FantasyDatabaseWriter:
                 existing.keeper_cost = keeper_cost
                 existing.is_prescoring = is_prescoring
                 existing.is_editable = is_editable
-                existing.week = week
                 existing.updated_at = datetime.utcnow()
             else:
                 # 创建新记录 - 使用新的date列名
@@ -1663,7 +1740,6 @@ class FantasyDatabaseWriter:
                     league_key=league_key,
                     date=roster_date,
                     season=season,
-                    week=week,
                     selected_position=selected_position,
                     is_starting=is_starting,
                     is_bench=is_bench,
@@ -1686,6 +1762,90 @@ class FantasyDatabaseWriter:
             print(f"写入每日名单失败 {team_key}/{player_key}: {e}")
             self.session.rollback()
             return False
+    
+    def bulk_upsert_roster_daily(self, records: List[Dict]) -> int:
+        """Bulk upsert roster daily records with high performance"""
+        if not records:
+            return 0
+        
+        try:
+            from sqlalchemy.dialects.postgresql import insert as pg_insert
+            from sqlalchemy.dialects.mysql import insert as mysql_insert
+            
+            # Prepare records for bulk insert
+            insert_records = []
+            for record in records:
+                insert_record = {
+                    'team_key': record['team_key'],
+                    'player_key': record['player_key'],
+                    'league_key': record['league_key'],
+                    'date': record['date'],
+                    'season': record['season'],
+                    'selected_position': record.get('selected_position'),
+                    'is_starting': record.get('is_starting', False),
+                    'is_bench': record.get('is_bench', False),
+                    'is_injured_reserve': record.get('is_injured_reserve', False),
+                    'player_status': record.get('player_status'),
+                    'status_full': record.get('status_full'),
+                    'injury_note': record.get('injury_note'),
+                    'is_keeper': record.get('is_keeper', False),
+                    'keeper_cost': record.get('keeper_cost'),
+                    'is_prescoring': record.get('is_prescoring', False),
+                    'is_editable': record.get('is_editable', False),
+                    'fetched_at': datetime.utcnow(),
+                    'updated_at': datetime.utcnow()
+                }
+                insert_records.append(insert_record)
+            
+            if not insert_records:
+                return 0
+            
+            # Get database dialect
+            dialect_name = self.session.bind.dialect.name
+            
+            if dialect_name == 'postgresql':
+                # PostgreSQL ON CONFLICT
+                stmt = pg_insert(RosterDaily).values(insert_records)
+                stmt = stmt.on_conflict_do_update(
+                    index_elements=['team_key', 'player_key', 'date'],
+                    set_={col.key: col for col in stmt.excluded if col.key not in ['id', 'fetched_at']}
+                )
+                self.session.execute(stmt)
+            elif dialect_name == 'mysql':
+                # MySQL ON DUPLICATE KEY UPDATE
+                stmt = mysql_insert(RosterDaily).values(insert_records)
+                update_dict = {col: stmt.inserted[col] for col in stmt.inserted.keys() 
+                              if col not in ['id', 'fetched_at']}
+                stmt = stmt.on_duplicate_key_update(**update_dict)
+                self.session.execute(stmt)
+            else:
+                # SQLite/Other - use bulk_insert_mappings with manual conflict handling
+                try:
+                    self.session.bulk_insert_mappings(RosterDaily, insert_records)
+                except Exception:
+                    # Fallback to individual upserts for existing records
+                    for record in insert_records:
+                        existing = self.session.query(RosterDaily).filter_by(
+                            team_key=record['team_key'],
+                            player_key=record['player_key'],
+                            date=record['date']
+                        ).first()
+                        
+                        if existing:
+                            for key, value in record.items():
+                                if key not in ['id', 'fetched_at']:
+                                    setattr(existing, key, value)
+                        else:
+                            self.session.add(RosterDaily(**record))
+            
+            self.session.commit()
+            self.stats['roster_daily'] = self.stats.get('roster_daily', 0) + len(insert_records)
+            return len(insert_records)
+            
+        except Exception as e:
+            self.session.rollback()
+            print(f"Bulk upsert roster daily failed: {e}")
+            return 0
     
     def write_date_dimension(self, date_obj: date, league_key: str, season: str) -> bool:
         """写入日期维度数据"""

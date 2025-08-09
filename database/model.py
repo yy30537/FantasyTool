@@ -297,7 +297,6 @@ class RosterDaily(Base):
     # 时间维度 - 统一为date
     date = Column(Date, nullable=False)  # 名单日期
     season = Column(String(10), nullable=False)  # 赛季
-    week = Column(Integer)  # 周数（NFL/NBA等）
     
     # 名单位置信息
     selected_position = Column(String(20))  # 当前选择的位置
@@ -418,7 +417,6 @@ class PlayerDailyStats(Base):
     league_key = Column(String(50), ForeignKey('leagues.league_key'), nullable=False)
     season = Column(String(10), nullable=False)
     date = Column(Date, nullable=False)
-    week = Column(Integer)
     
     # 完整的11个统计项为独立列（基于Yahoo stat_categories）
     # stat_id: 9004003 - Field Goals Made / Attempted (FGM/A)

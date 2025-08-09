@@ -13,6 +13,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from yahoo_api_data import YahooFantasyDataPipeline
 from database.database_ops import DatabaseOps
+from datetime import datetime
 
 
 def pipeline_process(pipeline: YahooFantasyDataPipeline) -> bool:
@@ -32,7 +33,7 @@ def pipeline_process(pipeline: YahooFantasyDataPipeline) -> bool:
     pipeline.db_writer.write_league_settings(league_key, settings_data)
 
     # Season schedule
-    dates_data = pipeline.parse_season_dates()
+    dates_data = pipeline.parse_season_dates_from_league()
     pipeline.db_writer.write_date_dimensions_batch(dates_data)
         
     # Player data
@@ -44,7 +45,7 @@ def pipeline_process(pipeline: YahooFantasyDataPipeline) -> bool:
     pipeline.db_writer.write_teams_to_db(teams_data, league_key)
 
     # Get all transactions
-    all_transactions = pipeline.fetch_api_transactions(league_key)
+    all_transactions = pipeline.fetch_api_league_transactions(league_key)
     pipeline.db_writer.write_transactions_to_db(all_transactions, league_key)
         
     # League standings data
@@ -55,7 +56,7 @@ def pipeline_process(pipeline: YahooFantasyDataPipeline) -> bool:
         pipeline.db_writer.write_league_standings_from_data(team_info, league_key, season)
 
     # League matchups data
-    team_keys = pipeline.parse_team_keys(teams_data)
+    team_keys = pipeline.parse_team_keys_from_teams(teams_data)
     for team_key in team_keys:
         matchups_data = pipeline.fetch_api_team_matchups(team_key)
         pipeline.db_writer.process_team_matchups_to_db(matchups_data, team_key, league_key, season)
@@ -67,33 +68,44 @@ def pipeline_process(pipeline: YahooFantasyDataPipeline) -> bool:
     pipeline.db_writer.process_player_season_stats_data(player_season, league_key, season)
 
     
-    start_date, end_date = pipeline.get_time_range()
+    start_date, end_date = get_time_range(pipeline, "roster")
 
     print("🚀 Fetching daily roster")
     # Get roster data for specified time range
     roster_data = pipeline.fetch_team_rosters_time_range(teams_data, start_date, end_date)
     
-    # Write roster data to database
+    # Write roster data to database in batches
     season = pipeline.selected_league.get('season')
+    print(f"📊 Processing {len(roster_data)} roster entries in bulk...")
+    roster_processed = 0
     for roster_entry in roster_data:
-        pipeline.db_writer.process_roster_data_to_db(
+        if pipeline.db_writer.process_roster_data_to_db(
             roster_entry['roster_data'], 
             roster_entry['team_key'], 
             league_key, 
             season
-        )
+        ):
+            roster_processed += 1
+    print(f"✓ Successfully processed {roster_processed} roster entries")
 
     print("🚀 Fetching player daily stats")
     players_stats = pipeline.fetch_api_players_stats_time_range(players_data, league_key, start_date, end_date)
     
-    # Write player daily stats to database
+    # Write player daily stats to database in batches
+    print(f"📊 Processing {len(players_stats)} stats entries in bulk...")
+    stats_processed = 0
+    total_records = 0
     for stats_entry in players_stats:
-        pipeline.db_writer._process_player_daily_stats_data(
+        records_processed = pipeline.db_writer._process_player_daily_stats_data(
             stats_entry['stats_data'], 
             league_key, 
             season, 
             stats_entry['date']
         )
+        if records_processed > 0:
+            stats_processed += 1
+            total_records += records_processed
+    print(f"✓ Successfully processed {stats_processed} stats entries ({total_records} total player records)")
 
     return True
 
@@ -197,6 +209,56 @@ def select_league(pipeline: YahooFantasyDataPipeline) -> bool:
         except KeyboardInterrupt:
             print("\nUser cancelled selection")
             return None 
+
+
+def get_time_range(pipeline: YahooFantasyDataPipeline, data_type: str = "data"):
+    """Interactive time selection"""
+    print(f"\n=== {data_type} Time Selection ===")
+    print("1. Specify date (YYYY-MM-DD)")
+    print("2. Specify time range (start: YYYY-MM-DD, end: YYYY-MM-DD)")
+    print("3. Days back")
+    print("0. Return")
+    
+    choice = input("\nPlease select: ").strip()
+    
+    if choice == "0":
+        return None
+    elif choice == "1":
+        target_date = input("Enter date (YYYY-MM-DD): ").strip()
+        if not target_date:
+            print("❌ Date cannot be empty")
+            return None
+        return pipeline.calculate_date_range("specific", target_date=target_date)
+    elif choice == "2":
+        start_date = input("Enter start date (YYYY-MM-DD): ").strip()
+        end_date = input("Enter end date (YYYY-MM-DD): ").strip()
+        if not start_date or not end_date:
+            print("❌ Start and end dates cannot be empty")
+            return None
+        try:
+            start_dt = datetime.strptime(start_date, '%Y-%m-%d').date()
+            end_dt = datetime.strptime(end_date, '%Y-%m-%d').date()
+            if start_dt > end_dt:
+                print("❌ Start date cannot be later than end date")
+                return None
+            return (start_dt, end_dt)
+        except ValueError:
+            print("❌ Date format error, please use YYYY-MM-DD format")
+            return None
+    elif choice == "3":
+        days_input = input("Enter days back: ").strip()
+        try:
+            days_back = int(days_input)
+            if days_back <= 0:
+                print("❌ Days must be greater than 0")
+                return None
+            return pipeline.calculate_date_range("days_back", days_back=days_back)
+        except ValueError:
+            print("❌ Days must be a valid number")
+            return None
+    else:
+        print("❌ Invalid selection")
+        return None
 
 
 def run_interactive_menu(pipeline: YahooFantasyDataPipeline):

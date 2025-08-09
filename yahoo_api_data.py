@@ -21,15 +21,20 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 class YahooFantasyDataPipeline:
     """Yahoo Fantasy unified data pipeline"""
     
+    # Configuration constants
+    DEFAULT_PAGE_SIZE = 25
+    MAX_ITERATIONS = 100
+    TRANSACTION_MAX_ITERATIONS = 200
+    BATCH_DELAY = 0.5
+    TEAM_DELAY = 0.2
+    DAY_DELAY = 1.0
+    
     def __init__(self, delay: int = 2, batch_size: int = 100):
         """Initialize data pipeline"""
         self.delay = delay
         self.batch_size = batch_size
         self.selected_league = None
         self.db_writer = FantasyDatabaseWriter(batch_size=batch_size)
-        # Add cache attributes
-        self._season_dates_cache = None
-        self._cache_league_key = None
         
     def wait(self, message: Optional[str] = None) -> None:
         """Wait for specified time"""
@@ -167,47 +172,33 @@ class YahooFantasyDataPipeline:
             if not leagues:
                 return None
             
-            # 按game_key分组
+            # Group by game_key and convert to dict
             leagues_data = {}
             for league in leagues:
                 game_key = league.game_key
                 if game_key not in leagues_data:
                     leagues_data[game_key] = []
                 
-                # 转换为字典格式
-                league_dict = {
-                    'league_key': league.league_key,
-                    'league_id': league.league_id,
-                    'game_key': league.game_key,
-                    'name': league.name,
-                    'url': league.url,
-                    'logo_url': league.logo_url,
-                    'password': league.password,
-                    'draft_status': league.draft_status,
-                    'num_teams': league.num_teams,
-                    'edit_key': league.edit_key,
-                    'weekly_deadline': league.weekly_deadline,
-                    'league_update_timestamp': league.league_update_timestamp,
-                    'scoring_type': league.scoring_type,
-                    'league_type': league.league_type,
-                    'renew': league.renew,
-                    'renewed': league.renewed,
-                    'felo_tier': league.felo_tier,
-                    'iris_group_chat_id': league.iris_group_chat_id,
-                    'short_invitation_url': league.short_invitation_url,
-                    'allow_add_to_dl_extra_pos': league.allow_add_to_dl_extra_pos,
-                    'is_pro_league': league.is_pro_league,
-                    'is_cash_league': league.is_cash_league,
-                    'current_week': league.current_week,
-                    'start_week': league.start_week,
-                    'start_date': league.start_date,
-                    'end_week': league.end_week,
-                    'end_date': league.end_date,
-                    'is_finished': league.is_finished,
-                    'is_plus_league': league.is_plus_league,
-                    'game_code': league.game_code,
-                    'season': league.season
-                }
+                # Convert league object to dict using __dict__ if available,
+                # or use essential fields only
+                if hasattr(league, '__dict__'):
+                    league_dict = {k: v for k, v in league.__dict__.items() 
+                                  if not k.startswith('_')}
+                else:
+                    # Fallback to essential fields
+                    league_dict = {
+                        'league_key': league.league_key,
+                        'league_id': league.league_id,
+                        'game_key': league.game_key,
+                        'name': league.name,
+                        'season': league.season,
+                        'num_teams': league.num_teams,
+                        'start_date': league.start_date,
+                        'end_date': league.end_date,
+                        'is_finished': league.is_finished,
+                        'game_code': league.game_code,
+                        'scoring_type': league.scoring_type
+                    }
                 leagues_data[game_key].append(league_dict)
             
             return leagues_data
@@ -260,7 +251,7 @@ class YahooFantasyDataPipeline:
                                 if isinstance(item, dict):
                                     league_info.update(item)
                         
-                        # 确保联盟信息包含game_key
+                        # Ensure league info contains game_key
                         league_info["game_key"] = game_key
                         leagues.append(league_info)
                 break
@@ -270,7 +261,7 @@ class YahooFantasyDataPipeline:
         
         return leagues
 
-    def parse_season_dates(self) -> bool:
+    def parse_season_dates_from_league(self) -> bool:
         
         if not self.selected_league:
             return False
@@ -355,11 +346,11 @@ class YahooFantasyDataPipeline:
     
     # ===== Players =====
     def fetch_api_players(self, league_key: str) -> List[Dict]:
-        """使用改进的分页逻辑获取所有球员"""
+        """Fetch all players using improved pagination logic"""
         players_data = []
         start = 0
-        page_size = 25
-        max_iterations = 100
+        page_size = self.DEFAULT_PAGE_SIZE
+        max_iterations = self.MAX_ITERATIONS
         iteration = 0
             
         while iteration < max_iterations:
@@ -385,7 +376,6 @@ class YahooFantasyDataPipeline:
                 break
                 
             start += page_size
-            #time.sleep(0.5)
             
         return players_data
     
@@ -472,7 +462,7 @@ class YahooFantasyDataPipeline:
     
     def fetch_api_players_stats_season(self, players: List, league_key: str) -> Optional[Dict]:
         """直接获取所有球员的赛季统计数据"""
-        # 支持字典和对象两种格式
+        # Support both dict and object formats
         player_keys = [
             player.player_key if hasattr(player, 'player_key') 
             else player['player_key'] 
@@ -508,8 +498,8 @@ class YahooFantasyDataPipeline:
         while current_date <= end_date:
             date_str = current_date.strftime('%Y-%m-%d')
             
-            # 分批处理球员，每批25个
-            batch_size = 25
+            # Batch process players
+            batch_size = self.DEFAULT_PAGE_SIZE
             total_batches = (len(players) + batch_size - 1) // batch_size
             
             for batch_idx in range(total_batches):
@@ -517,7 +507,7 @@ class YahooFantasyDataPipeline:
                 end_idx = min(start_idx + batch_size, len(players))
                 batch_players = players[start_idx:end_idx]
                 
-                # 支持字典和对象两种格式
+                # Support both dict and object formats
                 player_keys = [
                     player.player_key if hasattr(player, 'player_key') 
                     else player['player_key'] 
@@ -539,30 +529,27 @@ class YahooFantasyDataPipeline:
                 except Exception as e:
                     pass
                 
-                # 批次间等待
+                # Wait between batches
                 if batch_idx < total_batches - 1:
-                    time.sleep(0.5)
+                    time.sleep(self.BATCH_DELAY)
             
             current_date += timedelta(days=1)
             
-            # 只有在处理多天数据时才等待
+            # Wait only when processing multiple days
             if current_date <= end_date:
-                time.sleep(1)
+                time.sleep(self.DAY_DELAY)
         
         return all_stats_data
 
 
     # ===== Teams =====
-    def fetch_api_teams(self, league_key) -> Optional[Dict]:
-        """获取团队数据并写入数据库"""
-        league_key = self.selected_league['league_key']
+    def fetch_api_teams(self, league_key: str) -> Optional[Dict]:
+        """Fetch team data from API"""
         url = f"https://fantasysports.yahooapis.com/fantasy/v2/league/{league_key}/teams?format=json"
-        
-        teams_data = get_api_data(url)
-        return teams_data
+        return get_api_data(url)
     
-    def parse_team_keys(self, teams_data: Dict) -> List[str]:
-        """从团队数据中提取团队键"""
+    def parse_team_keys_from_teams(self, teams_data: Dict) -> List[str]:
+        """Extract team keys from teams data"""
         team_keys = []
         
         try:
@@ -584,11 +571,11 @@ class YahooFantasyDataPipeline:
                         team_container = teams_container[str_index]
                         if "team" in team_container:
                             team_data = team_container["team"]
-                            # 修复：team_data[0] 是一个字典列表，不是嵌套列表
+                            # Fix: team_data[0] is a dict list, not nested list
                             if (isinstance(team_data, list) and 
                                 len(team_data) > 0 and 
                                 isinstance(team_data[0], list)):
-                                # 从team_data[0]列表中查找包含team_key的字典
+                                # Find dict containing team_key from team_data[0] list
                                 for team_item in team_data[0]:
                                     if isinstance(team_item, dict) and "team_key" in team_item:
                                         team_key = team_item["team_key"]
@@ -596,37 +583,33 @@ class YahooFantasyDataPipeline:
                                             team_keys.append(team_key)
                                         break
         
-        except Exception as e:
+        except (KeyError, TypeError, ValueError):
             pass
         
         return team_keys
     
+    def _extract_from_nested_data(self, data, target_key):
+        """Utility to recursively extract data from nested structures"""
+        if isinstance(data, dict):
+            if target_key in data:
+                return data[target_key]
+            for value in data.values():
+                result = self._extract_from_nested_data(value, target_key)
+                if result is not None:
+                    return result
+        elif isinstance(data, list):
+            for item in data:
+                result = self._extract_from_nested_data(item, target_key)
+                if result is not None:
+                    return result
+        return None
+    
     def parse_team_standings(self, team_data) -> Optional[Dict]:
-        """从team数据中提取standings信息"""
+        """Extract standings info from team data"""
         try:
-            team_key = None
-            team_standings = None
-            team_points = None
-            
-            # team_data是复杂的嵌套结构，需要递归提取
-            def extract_from_data(data, target_key):
-                if isinstance(data, dict):
-                    if target_key in data:
-                        return data[target_key]
-                    for value in data.values():
-                        result = extract_from_data(value, target_key)
-                        if result is not None:
-                            return result
-                elif isinstance(data, list):
-                    for item in data:
-                        result = extract_from_data(item, target_key)
-                        if result is not None:
-                            return result
-                return None
-            
-            team_key = extract_from_data(team_data, "team_key")
-            team_standings = extract_from_data(team_data, "team_standings")
-            team_points = extract_from_data(team_data, "team_points")
+            team_key = self._extract_from_nested_data(team_data, "team_key")
+            team_standings = self._extract_from_nested_data(team_data, "team_standings")
+            team_points = self._extract_from_nested_data(team_data, "team_points")
             
             if not team_key:
                 return None
@@ -639,7 +622,7 @@ class YahooFantasyDataPipeline:
             
             return standings_info
             
-        except Exception as e:
+        except (KeyError, TypeError):
             return None
     
     def fetch_api_team_matchups(self, team_key: str) -> Optional[Dict]:
@@ -649,7 +632,7 @@ class YahooFantasyDataPipeline:
     
     def fetch_team_rosters_time_range(self, teams_data: Dict, start_date: date, end_date: date) -> List[Dict]:
         """获取指定日期范围内的团队roster数据"""
-        team_keys = self.parse_team_keys(teams_data)
+        team_keys = self.parse_team_keys_from_teams(teams_data)
         if not team_keys:
             return []
         
@@ -672,9 +655,9 @@ class YahooFantasyDataPipeline:
                 except Exception:
                     pass
                 
-                # 团队间间隔
+                # Delay between teams
                 if i < len(team_keys) - 1:
-                    time.sleep(0.2)
+                    time.sleep(self.TEAM_DELAY)
             
             current_date += timedelta(days=1)
             
@@ -691,12 +674,12 @@ class YahooFantasyDataPipeline:
     
     
     # ===== Transactions =====
-    def fetch_api_transactions(self, league_key: str) -> List[Dict]:
-        """获取联盟所有transactions（分页处理）"""
+    def fetch_api_league_transactions(self, league_key: str) -> List[Dict]:
+        """Fetch all league transactions with pagination"""
         all_transactions = []
         start = 0
-        page_size = 25
-        max_iterations = 200
+        page_size = self.DEFAULT_PAGE_SIZE
+        max_iterations = self.TRANSACTION_MAX_ITERATIONS
         iteration = 0
         
         while iteration < max_iterations:
@@ -727,12 +710,12 @@ class YahooFantasyDataPipeline:
                 break
             
             start += page_size
-            time.sleep(0.5)
+            time.sleep(self.BATCH_DELAY)
         
         return all_transactions
     
     def parse_transactions(self, transactions_data: Dict) -> List[Dict]:
-        """从API返回的数据中提取transaction信息"""
+        """Extract transaction info from API response data"""
         transactions = []
         
         try:
@@ -839,15 +822,15 @@ class YahooFantasyDataPipeline:
     
     def calculate_date_range(self, mode: str, days_back: int = None, 
                            target_date: str = None) -> Optional[tuple]:
-        """计算日期范围
+        """Calculate date range
         
         Args:
             mode: 'specific' | 'days_back' | 'full_season'
-            days_back: 回溯天数 (mode='days_back'时使用)
-            target_date: 目标日期 'YYYY-MM-DD' (mode='specific'时使用)
+            days_back: Number of days back (used when mode='days_back')
+            target_date: Target date 'YYYY-MM-DD' (used when mode='specific')
             
         Returns:
-            (start_date, end_date) 或 None
+            (start_date, end_date) or None
         """
         from datetime import timedelta
         
@@ -896,59 +879,3 @@ class YahooFantasyDataPipeline:
             print(f"❌ 不支持的模式: {mode}")
             return None
 
-    def get_time_range(self) -> Optional[tuple]:
-        """交互式时间选择
-        
-        Args:
-            data_type: 数据类型描述，如"阵容"、"球员统计"
-            
-        Returns:
-            (start_date, end_date) 或 None
-        """
-        print(f"\n=== 时间选择 ===")
-        print("1. 指定日期 (YYYY-MM-DD)")
-        print("2. 指定时间段 (start: YYYY-MM-DD, end: YYYY-MM-DD)")
-        print("3. 天数回溯")
-        print("0. 返回")
-        
-        choice = input("\n请选择: ").strip()
-        
-        if choice == "0":
-            return None
-        elif choice == "1":
-            target_date = input("请输入日期 (YYYY-MM-DD): ").strip()
-            if not target_date:
-                print("❌ 日期不能为空")
-                return None
-            return self.calculate_date_range("specific", target_date=target_date)
-        elif choice == "2":
-            start_date = input("请输入开始日期 (YYYY-MM-DD): ").strip()
-            end_date = input("请输入结束日期 (YYYY-MM-DD): ").strip()
-            if not start_date or not end_date:
-                print("❌ 开始和结束日期不能为空")
-                return None
-            try:
-                from datetime import datetime
-                start_dt = datetime.strptime(start_date, '%Y-%m-%d').date()
-                end_dt = datetime.strptime(end_date, '%Y-%m-%d').date()
-                if start_dt > end_dt:
-                    print("❌ 开始日期不能晚于结束日期")
-                    return None
-                return (start_dt, end_dt)
-            except ValueError:
-                print("❌ 日期格式错误，请使用 YYYY-MM-DD 格式")
-                return None
-        elif choice == "3":
-            days_input = input("请输入回溯天数: ").strip()
-            try:
-                days_back = int(days_input)
-                if days_back <= 0:
-                    print("❌ 天数必须大于0")
-                    return None
-                return self.calculate_date_range("days_back", days_back=days_back)
-            except ValueError:
-                print("❌ 天数必须是有效数字")
-                return None
-        else:
-            print("❌ 无效选择")
-            return None
